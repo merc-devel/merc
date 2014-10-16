@@ -26,20 +26,21 @@ import System.Locale
 import System.Log.Logger
 
 isWelcome :: U.User -> Bool
-isWelcome U.User{U.hostmask = U.Hostmask{U.nickname = maybeNickname, U.username = maybeUsername}} =
-  isJust maybeNickname && isJust maybeUsername
+isWelcome U.User{U.hostmask = U.Hostmask{..}} =
+  isJust nickname && isJust username
 
 welcome :: S.Client -> S.Server -> IO ()
-welcome S.Client{S.handle = handle, S.user = user} server@S.Server{S.serverName = serverName, S.networkName = networkName, S.creationTime = creationTime} = join $ atomically $ do
+welcome S.Client{..} server@S.Server{..} = join $ atomically $ do
   U.User{U.hostmask = U.Hostmask{U.nickname = Just (U.Nickname nickname)}} <- readTVar user
 
   return $ do
-    T.hPutStrLn handle $ E.emitMessage $ newServerMessage server M.RplWelcome [
-      nickname, "Welcome to the " <> networkName <> " Internet Relay Chat Network " <> nickname]
-    T.hPutStrLn handle $ E.emitMessage $ newServerMessage server M.RplYourHost [
-      nickname, "Your host is " <> serverName <> ", running mercd-master"]
-    T.hPutStrLn handle $ E.emitMessage $ newServerMessage server M.RplCreated [
-      nickname, "This server was created " <> T.pack (formatTime defaultTimeLocale "%c" creationTime)]
+    writeMessage M.RplWelcome [nickname, "Welcome to the " <> networkName <> " Internet Relay Chat Network " <> nickname]
+    writeMessage M.RplYourHost [nickname, "Your host is " <> serverName <> ", running mercd-master"]
+    writeMessage M.RplCreated [nickname, "This server was created " <> T.pack (formatTime defaultTimeLocale "%c" creationTime)]
+
+  where
+    writeMessage command params =
+      T.hPutStrLn handle $ E.emitMessage $ newServerMessage server command params
 
 newServerMessage :: S.Server -> M.Command -> [T.Text] -> M.Message
 newServerMessage S.Server{S.serverName = serverName} command params = M.Message {
@@ -51,7 +52,7 @@ newServerMessage S.Server{S.serverName = serverName} command params = M.Message 
     prefix = Just $ M.ServerPrefix serverName
 
 handleMessage :: S.Client -> S.Server -> M.Message -> IO Bool
-handleMessage client@S.Client{S.handle = handle, S.user = user} server message@M.Message{M.command = command, M.params = params} = do
+handleMessage client@S.Client{..} server message@M.Message{..} = do
   case command of
     M.Nick -> do
       let [nickname] = params

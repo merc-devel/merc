@@ -14,7 +14,7 @@ library
                        hslogger, mtl, network, old-locale, stm, text, time,
                        transformers
   hs-source-dirs:      src
-  extensions:          OverloadedStrings
+  extensions:          OverloadedStrings, RecordWildCards
   exposed-modules:     Merc.Emitter
                        Merc.Parser
                        Merc.Server

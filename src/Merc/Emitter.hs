@@ -31,9 +31,9 @@ emitParams params = T.intercalate " " initial <> " :" <> trailing
     trailing = last params
 
 emitMessage :: M.Message -> T.Text
-emitMessage M.Message{M.prefix = maybePrefix, M.command = command, M.params = params} =
+emitMessage M.Message{..} =
   front <> commandName <> back
   where
-    front = maybe "" ((<> " ") . emitPrefix) maybePrefix
+    front = maybe "" ((<> " ") . emitPrefix) prefix
     back = if params == [] then "" else " " <> emitParams params
     commandName = fromJust $ B.lookup command M.commandNames
