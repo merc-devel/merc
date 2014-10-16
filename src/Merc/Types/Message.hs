@@ -17,11 +17,14 @@ data Command = RplWelcome
              | RplYourHost
              | RplCreated
              | RplMyInfo
+             | ErrNeedMoreParams
              | Nick
              | User
              | Join
              | Names
              | Part
+             | Ping
+             | Pong
              | Privmsg
              | Quit
              | UnknownCommand T.Text
@@ -33,10 +36,13 @@ commandNames = B.fromList [
   (RplYourHost, "002"),
   (RplCreated, "003"),
   (RplMyInfo, "004"),
+  (ErrNeedMoreParams, "461"),
   (Nick, "NICK"),
   (User, "USER"),
   (Join, "JOIN"),
   (Part, "PART"),
+  (Ping, "PING"),
+  (Pong, "PONG"),
   (Names, "NAMES"),
   (Privmsg, "PRIVMSG"),
   (Quit, "QUIT")]

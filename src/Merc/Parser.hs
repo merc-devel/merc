@@ -42,8 +42,8 @@ host :: A.Parser T.Text
 host = word
 
 hostmask :: A.Parser U.Hostmask
-hostmask = U.Hostmask <$> (Just <$> nickname) <* A.char '!'
-                      <*> (Just <$> username) <* A.char '@'
+hostmask = U.Hostmask <$> nickname <* A.char '!'
+                      <*> username <* A.char '@'
                       <*> host
 
 channelName :: A.Parser C.ChannelName
@@ -64,11 +64,11 @@ messageCommand = do
 message :: A.Parser M.Message
 message = do
   prefix <- A.option Nothing (Just <$> messagePrefix <* spaces)
-  command <- messageCommand <* spaces
+  command <- messageCommand
 
-  params <- A.takeWhile1 (\c -> not (A.isHorizontalSpace c) && c /= ':') `A.sepBy` spaces
+  params <- A.option [] (spaces *> A.takeWhile1 (\c -> not (A.isHorizontalSpace c) && c /= ':') `A.sepBy` spaces)
+
   A.option () spaces
-
   trailing <- A.option [] ((:[]) <$> (A.char ':' *> A.takeText))
 
   A.endOfInput

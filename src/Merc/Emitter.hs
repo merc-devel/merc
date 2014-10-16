@@ -11,12 +11,8 @@ import qualified Merc.Types.Message as M
 import qualified Merc.Types.User as U
 
 emitHostmask :: U.Hostmask -> T.Text
-emitHostmask U.Hostmask{U.nickname = maybeNickname, U.username = maybeUsername, U.host = host} =
-  nickname <> "!" <> username <> "@" <> host
-
-  where
-    U.Nickname nickname = maybe (U.Nickname "") id maybeNickname
-    username = maybe "" id maybeUsername
+emitHostmask U.Hostmask{..} =
+  U.unwrapName nickname <> "!" <> username <> "@" <> host
 
 emitPrefix :: M.Prefix -> T.Text
 emitPrefix prefix = ":" <> case prefix of

@@ -20,8 +20,8 @@ newtype NormalizedNickname = NormalizedNickname {
 } deriving (Eq, Ord, Show)
 
 data Hostmask = Hostmask {
-  nickname :: Maybe Nickname,
-  username :: Maybe T.Text,
+  nickname :: Nickname,
+  username :: T.Text,
   host :: T.Text
 } deriving (Show)
 

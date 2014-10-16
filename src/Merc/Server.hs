@@ -8,6 +8,7 @@ import Control.Concurrent.Async
 import Control.Concurrent.STM
 import Control.Monad
 import qualified Data.Attoparsec.Text as A
+import qualified Data.Bimap as B
 import Data.Function
 import Data.Maybe
 import Data.Monoid
@@ -25,21 +26,21 @@ import System.IO
 import System.Locale
 import System.Log.Logger
 
-isWelcome :: U.User -> Bool
-isWelcome U.User{U.hostmask = U.Hostmask{..}} =
-  isJust nickname && isJust username
+isRegistered :: U.User -> Bool
+isRegistered U.User{U.hostmask = U.Hostmask{..}} =
+  U.unwrapName nickname /= "*" && username /= "*"
 
 welcome :: S.Client -> S.Server -> IO ()
 welcome S.Client{..} server@S.Server{..} = join $ atomically $ do
-  U.User{U.hostmask = U.Hostmask{U.nickname = Just (U.Nickname nickname)}} <- readTVar user
+  U.User{U.hostmask = U.Hostmask{U.nickname = U.Nickname nickname}} <- readTVar user
 
   return $ do
-    writeMessage M.RplWelcome [nickname, "Welcome to the " <> networkName <> " Internet Relay Chat Network " <> nickname]
-    writeMessage M.RplYourHost [nickname, "Your host is " <> serverName <> ", running mercd-master"]
-    writeMessage M.RplCreated [nickname, "This server was created " <> T.pack (formatTime defaultTimeLocale "%c" creationTime)]
+    send M.RplWelcome [nickname, "Welcome to the " <> networkName <> " Internet Relay Chat Network " <> nickname]
+    send M.RplYourHost [nickname, "Your host is " <> serverName <> ", running mercd-master"]
+    send M.RplCreated [nickname, "This server was created " <> T.pack (formatTime defaultTimeLocale "%c" creationTime)]
 
   where
-    writeMessage command params =
+    send command params =
       T.hPutStrLn handle $ E.emitMessage $ newServerMessage server command params
 
 newServerMessage :: S.Server -> M.Command -> [T.Text] -> M.Message
@@ -52,56 +53,61 @@ newServerMessage S.Server{S.serverName = serverName} command params = M.Message 
     prefix = Just $ M.ServerPrefix serverName
 
 handleMessage :: S.Client -> S.Server -> M.Message -> IO Bool
-handleMessage client@S.Client{..} server message@M.Message{..} = do
-  case command of
-    M.Nick -> do
-      let [nickname] = params
-
-      join $ atomically $ do
+handleMessage client@S.Client{..} server message@M.Message{..} = case command of
+  M.Nick -> do
+    case params of
+      (nickname:_) -> join $ atomically $ do
         modifyTVar user $ \user ->
           user {
             U.hostmask = (U.hostmask user) {
-              U.nickname = Just $ U.Nickname nickname
+              U.nickname = U.Nickname nickname
             }
         }
 
         user <- readTVar user
-        return $ when (isWelcome user) (welcome client server)
+        return $ when (isRegistered user) (welcome client server)
+      _ -> needMoreParams
+    return True
 
-    M.User -> do
-      let [username, mode, _, realname] = params
-
-      join $ atomically $ do
+  M.User -> do
+    case params of
+      (username:mode:_:realname:_) -> join $ atomically $ do
         modifyTVar user $ \user ->
           user {
             U.realname = realname,
             U.hostmask = (U.hostmask user) {
-              U.username = Just $ username
+              U.username = username
             }
         }
 
         user <- readTVar user
-        return $ when (isWelcome user) (welcome client server)
+        return $ when (isRegistered user) (welcome client server)
+      _ -> needMoreParams
+    return True
 
-  return True
+  M.UnknownCommand name ->
+    return True
+
+  where
+    needMoreParams = join $ atomically $ do
+      U.User{U.hostmask = U.Hostmask{U.nickname = U.Nickname nickname}} <- readTVar user
+      let commandName = fromJust $ B.lookup command M.commandNames
+      return $ T.hPutStrLn handle $ E.emitMessage $ newServerMessage server M.ErrNeedMoreParams [nickname, commandName, "Not enough parameters"]
 
 runClient :: S.Client -> S.Server -> IO ()
-runClient client server = do
+runClient client@S.Client{..} server = do
   hSetNewlineMode handle universalNewlineMode
   hSetBuffering handle LineBuffering
   race receive loop
   return ()
 
   where
-    handle = S.handle client
-    chan = S.chan client
-
     sendMessage message = writeTChan chan message
 
     receive = forever $ do
       line <- T.hGetLine handle
       case A.parseOnly P.message line of
-        Left _ -> return ()
+        Left error -> infoM "Merc.Server" $ "Error parsing message: " ++ error
         Right message -> do
           atomically $ sendMessage message
 
@@ -117,8 +123,8 @@ newClient handle host = do
 
   u <- newTVarIO $ U.User {
     U.hostmask = U.Hostmask {
-      U.nickname = Nothing,
-      U.username = Nothing,
+      U.nickname = U.Nickname "*",
+      U.username = "*",
       U.host = T.pack host
     },
     U.realname = "",
@@ -143,7 +149,7 @@ closeClient client server = do
     user <- readTVar $ S.user client
     let hostmask = U.hostmask user
 
-    when (isJust $ U.nickname hostmask) $ do
+    when (U.unwrapName (U.nickname hostmask) /= "*") $ do
       modifyTVar (S.clients server) $ \clients -> do
         clients
 
