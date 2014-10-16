@@ -10,6 +10,7 @@ import Control.Monad
 import qualified Data.Attoparsec.Text as A
 import qualified Data.Bimap as B
 import Data.Function
+import qualified Data.Map as Map
 import Data.Maybe
 import Data.Monoid
 import qualified Data.Text as T
@@ -31,11 +32,14 @@ willBeRegistered U.User{U.hostmask = U.Hostmask{..}, U.registered = registered} 
   U.unwrapName nickname /= "*" && username /= "*" && not registered
 
 welcome :: S.Client -> S.Server -> IO ()
-welcome S.Client{..} server@S.Server{..} = join $ atomically $ do
+welcome client@S.Client{..} server@S.Server{..} = join $ atomically $ do
   modifyTVar user $ \user -> user {
     U.registered = True
   }
   U.User{U.hostmask = U.Hostmask{U.nickname = U.Nickname nickname}} <- readTVar user
+
+  modifyTVar clients $ \clients ->
+    Map.insert (U.normalizeNickname (U.Nickname nickname)) client clients
 
   return $ do
     send M.RplWelcome [nickname, "Welcome to the " <> networkName <> " Internet Relay Chat Network " <> nickname]
@@ -151,9 +155,9 @@ closeClient client server = do
     user <- readTVar $ S.user client
     let hostmask = U.hostmask user
 
-    when (U.unwrapName (U.nickname hostmask) /= "*") $ do
+    when (U.registered user) $ do
       modifyTVar (S.clients server) $ \clients -> do
-        clients
+        Map.delete (U.normalizeNickname (U.nickname (U.hostmask user))) clients
 
   where
     handle = S.handle client
