@@ -1,0 +1,31 @@
+name:                merc
+version:             0.1.0.0
+synopsis:            Magnificent Ethereal Relay Chat daemon.
+homepage:            https://github.com/rfw/merc
+license:             MIT
+license-file:        LICENSE
+author:              Tony Young
+maintainer:          tony@rfw.name
+build-type:          Simple
+cabal-version:       >=1.8
+
+library
+  build-depends:       async, base ==4.6.*, attoparsec, bimap, containers,
+                       hslogger, mtl, network, old-locale, stm, text, time,
+                       transformers
+  hs-source-dirs:      src
+  extensions:          OverloadedStrings
+  exposed-modules:     Merc.Emitter
+                       Merc.Parser
+                       Merc.Server
+                       Merc.Types
+                       Merc.Types.Channel
+                       Merc.Types.Message
+                       Merc.Types.Server
+                       Merc.Types.User
+                       Merc.Util
+
+executable mercd
+  main-is:             Main.hs
+  extensions:          OverloadedStrings
+  build-depends:       base ==4.6.*, hslogger, merc
