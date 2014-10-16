@@ -42,16 +42,20 @@ welcome client@S.Client{..} server@S.Server{..} = join $ atomically $ do
     Map.insert (U.normalizeNickname (U.Nickname nickname)) client clients
 
   return $ do
-    send M.RplWelcome [nickname, "Welcome to the " <> networkName <> " Internet Relay Chat Network " <> nickname]
-    send M.RplYourHost [nickname, "Your host is " <> serverName <> ", running mercd-master"]
-    send M.RplCreated [nickname, "This server was created " <> T.pack (formatTime defaultTimeLocale "%c" creationTime)]
+    send M.RplWelcome [nickname, "Welcome to the " <> networkName <>
+                                 " Internet Relay Chat Network " <> nickname]
+    send M.RplYourHost [nickname, "Your host is " <> serverName <>
+                                  ", running mercd-master"]
+    send M.RplCreated [nickname, "This server was created " <>
+                                  T.pack (formatTime defaultTimeLocale "%c"
+                                          creationTime)]
 
   where
     send command params =
       T.hPutStrLn handle $ E.emitMessage $ newServerMessage server command params
 
 newServerMessage :: S.Server -> M.Command -> [T.Text] -> M.Message
-newServerMessage S.Server{S.serverName = serverName} command params = M.Message {
+newServerMessage S.Server{..} command params = M.Message {
   M.prefix = Just $ M.ServerPrefix serverName,
   M.command = command,
   M.params = params
@@ -97,7 +101,9 @@ handleMessage client@S.Client{..} server message@M.Message{..} = case command of
     needMoreParams = join $ atomically $ do
       U.User{U.hostmask = U.Hostmask{U.nickname = U.Nickname nickname}} <- readTVar user
       let commandName = fromJust $ B.lookup command M.commandNames
-      return $ T.hPutStrLn handle $ E.emitMessage $ newServerMessage server M.ErrNeedMoreParams [nickname, commandName, "Not enough parameters"]
+      return $ T.hPutStrLn handle $ E.emitMessage $ newServerMessage server
+               M.ErrNeedMoreParams [nickname, commandName,
+                                    "Not enough parameters"]
 
 runClient :: S.Client -> S.Server -> IO ()
 runClient client@S.Client{..} server = do

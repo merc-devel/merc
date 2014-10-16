@@ -66,7 +66,10 @@ message = do
   prefix <- A.option Nothing (Just <$> messagePrefix <* spaces)
   command <- messageCommand
 
-  params <- A.option [] (spaces *> A.takeWhile1 (\c -> not (A.isHorizontalSpace c) && c /= ':') `A.sepBy` spaces)
+  params <- A.option [] (spaces *>
+                         A.takeWhile1 (\c -> not (A.isHorizontalSpace c) &&
+                                             c /= ':')
+                         `A.sepBy` spaces)
 
   A.option () spaces
   trailing <- A.option [] ((:[]) <$> (A.char ':' *> A.takeText))
