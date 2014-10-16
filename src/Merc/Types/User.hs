@@ -30,7 +30,8 @@ data User = User {
   realname :: T.Text,
   realHost :: HostName,
   connectionTime :: UTCTime,
-  lastActiveTime :: UTCTime
+  lastActiveTime :: UTCTime,
+  registered :: Bool
 }
 
 normalizeNickname :: Nickname -> NormalizedNickname

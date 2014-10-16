@@ -26,12 +26,15 @@ import System.IO
 import System.Locale
 import System.Log.Logger
 
-isRegistered :: U.User -> Bool
-isRegistered U.User{U.hostmask = U.Hostmask{..}} =
-  U.unwrapName nickname /= "*" && username /= "*"
+willBeRegistered :: U.User -> Bool
+willBeRegistered U.User{U.hostmask = U.Hostmask{..}, U.registered = registered} =
+  U.unwrapName nickname /= "*" && username /= "*" && not registered
 
 welcome :: S.Client -> S.Server -> IO ()
 welcome S.Client{..} server@S.Server{..} = join $ atomically $ do
+  modifyTVar user $ \user -> user {
+    U.registered = True
+  }
   U.User{U.hostmask = U.Hostmask{U.nickname = U.Nickname nickname}} <- readTVar user
 
   return $ do
@@ -57,31 +60,29 @@ handleMessage client@S.Client{..} server message@M.Message{..} = case command of
   M.Nick -> do
     case params of
       (nickname:_) -> join $ atomically $ do
-        modifyTVar user $ \user ->
-          user {
-            U.hostmask = (U.hostmask user) {
-              U.nickname = U.Nickname nickname
-            }
+        modifyTVar user $ \user -> user {
+          U.hostmask = (U.hostmask user) {
+            U.nickname = U.Nickname nickname
+          }
         }
 
         user <- readTVar user
-        return $ when (isRegistered user) (welcome client server)
+        return $ when (willBeRegistered user) (welcome client server)
       _ -> needMoreParams
     return True
 
   M.User -> do
     case params of
       (username:mode:_:realname:_) -> join $ atomically $ do
-        modifyTVar user $ \user ->
-          user {
-            U.realname = realname,
-            U.hostmask = (U.hostmask user) {
-              U.username = username
-            }
+        modifyTVar user $ \user -> user {
+          U.realname = realname,
+          U.hostmask = (U.hostmask user) {
+            U.username = username
+          }
         }
 
         user <- readTVar user
-        return $ when (isRegistered user) (welcome client server)
+        return $ when (willBeRegistered user) (welcome client server)
       _ -> needMoreParams
     return True
 
@@ -130,7 +131,8 @@ newClient handle host = do
     U.realname = "",
     U.realHost = host,
     U.connectionTime = now,
-    U.lastActiveTime = now
+    U.lastActiveTime = now,
+    U.registered = False
   }
 
   c <- newTChanIO
