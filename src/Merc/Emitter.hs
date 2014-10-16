@@ -3,7 +3,7 @@ module Merc.Emitter (
   emitMessage
 ) where
 
-import qualified Data.Bimap as B
+import Control.Monad
 import Data.Maybe
 import Data.Monoid
 import qualified Data.Text as T
@@ -21,9 +21,13 @@ emitPrefix prefix = ":" <> case prefix of
 
 emitParams :: [T.Text] -> T.Text
 emitParams [] = ""
-emitParams params = T.intercalate " " initial <> " :" <> trailing
+emitParams params | T.any (== ' ') trailing = T.intercalate " " initial <> " :" <> trailing
+                  | otherwise = T.intercalate " " params
   where
-    initial = init params
+    initial = fromJust $ do
+      let leading = init params
+      guard (any (T.all (/= ' ')) leading)
+      return leading
     trailing = last params
 
 emitMessage :: M.Message -> T.Text
@@ -32,4 +36,4 @@ emitMessage M.Message{..} =
   where
     front = maybe "" ((<> " ") . emitPrefix) prefix
     back = if params == [] then "" else " " <> emitParams params
-    commandName = fromJust $ B.lookup command M.commandNames
+    commandName = fromJust $ M.getCommandName command

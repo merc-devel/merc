@@ -8,7 +8,6 @@ import Control.Concurrent.Async
 import Control.Concurrent.STM
 import Control.Monad
 import qualified Data.Attoparsec.Text as A
-import qualified Data.Bimap as B
 import Data.Function
 import qualified Data.Map as Map
 import Data.Maybe
@@ -16,94 +15,22 @@ import Data.Monoid
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Data.Time.Clock
-import Data.Time.Format
-import qualified Merc.Emitter as E
 import qualified Merc.Parser as P
 import qualified Merc.Types.Message as M
 import qualified Merc.Types.Server as S
 import qualified Merc.Types.User as U
+import Merc.User
 import Network
 import System.IO
-import System.Locale
 import System.Log.Logger
-
-willBeRegistered :: U.User -> Bool
-willBeRegistered U.User{U.hostmask = U.Hostmask{..}, U.registered = registered} =
-  U.unwrapName nickname /= "*" && username /= "*" && not registered
-
-welcome :: S.Client -> S.Server -> IO ()
-welcome client@S.Client{..} server@S.Server{..} = join $ atomically $ do
-  modifyTVar user $ \user -> user {
-    U.registered = True
-  }
-  U.User{U.hostmask = U.Hostmask{U.nickname = U.Nickname nickname}} <- readTVar user
-
-  modifyTVar clients $ \clients ->
-    Map.insert (U.normalizeNickname (U.Nickname nickname)) client clients
-
-  return $ do
-    send M.RplWelcome [nickname, "Welcome to the " <> networkName <>
-                                 " Internet Relay Chat Network " <> nickname]
-    send M.RplYourHost [nickname, "Your host is " <> serverName <>
-                                  ", running mercd-master"]
-    send M.RplCreated [nickname, "This server was created " <>
-                                  T.pack (formatTime defaultTimeLocale "%c"
-                                          creationTime)]
-
-  where
-    send command params =
-      T.hPutStrLn handle $ E.emitMessage $ newServerMessage server command params
-
-newServerMessage :: S.Server -> M.Command -> [T.Text] -> M.Message
-newServerMessage S.Server{..} command params = M.Message {
-  M.prefix = Just $ M.ServerPrefix serverName,
-  M.command = command,
-  M.params = params
-}
-  where
-    prefix = Just $ M.ServerPrefix serverName
 
 handleMessage :: S.Client -> S.Server -> M.Message -> IO Bool
 handleMessage client@S.Client{..} server message@M.Message{..} = case command of
-  M.Nick -> do
-    case params of
-      (nickname:_) -> join $ atomically $ do
-        modifyTVar user $ \user -> user {
-          U.hostmask = (U.hostmask user) {
-            U.nickname = U.Nickname nickname
-          }
-        }
-
-        user <- readTVar user
-        return $ when (willBeRegistered user) (welcome client server)
-      _ -> needMoreParams
-    return True
-
-  M.User -> do
-    case params of
-      (username:mode:_:realname:_) -> join $ atomically $ do
-        modifyTVar user $ \user -> user {
-          U.realname = realname,
-          U.hostmask = (U.hostmask user) {
-            U.username = username
-          }
-        }
-
-        user <- readTVar user
-        return $ when (willBeRegistered user) (welcome client server)
-      _ -> needMoreParams
-    return True
+  M.Nick -> handleNickMessage client server params
+  M.User -> handleUserMessage client server params
 
   M.UnknownCommand name ->
     return True
-
-  where
-    needMoreParams = join $ atomically $ do
-      U.User{U.hostmask = U.Hostmask{U.nickname = U.Nickname nickname}} <- readTVar user
-      let commandName = fromJust $ B.lookup command M.commandNames
-      return $ T.hPutStrLn handle $ E.emitMessage $ newServerMessage server
-               M.ErrNeedMoreParams [nickname, commandName,
-                                    "Not enough parameters"]
 
 runClient :: S.Client -> S.Server -> IO ()
 runClient client@S.Client{..} server = do
@@ -113,14 +40,11 @@ runClient client@S.Client{..} server = do
   return ()
 
   where
-    sendMessage message = writeTChan chan message
-
     receive = forever $ do
       line <- T.hGetLine handle
       case A.parseOnly P.message line of
         Left error -> infoM "Merc.Server" $ "Error parsing message: " ++ error
-        Right message -> do
-          atomically $ sendMessage message
+        Right message -> atomically $ writeTChan chan message
 
     loop = join $ atomically $ do
       message <- readTChan chan

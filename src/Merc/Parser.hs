@@ -9,7 +9,6 @@ module Merc.Parser (
 
 import Control.Applicative
 import qualified Data.Attoparsec.Text as A
-import qualified Data.Bimap as B
 import Data.Monoid
 import qualified Data.Text as T
 import qualified Merc.Types.Channel as C
@@ -57,7 +56,7 @@ messagePrefix = A.char ':' *> ((M.HostmaskPrefix <$> hostmask)
 messageCommand :: A.Parser M.Command
 messageCommand = do
   commandName <- T.toUpper <$> A.takeWhile1 (not . A.isHorizontalSpace)
-  return $ case B.lookupR commandName M.commandNames of
+  return $ case M.fromCommandName commandName of
     Just command -> command
     Nothing -> M.UnknownCommand commandName
 

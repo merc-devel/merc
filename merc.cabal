@@ -16,6 +16,7 @@ library
   hs-source-dirs:      src
   extensions:          OverloadedStrings, RecordWildCards
   exposed-modules:     Merc.Emitter
+                       Merc.Message
                        Merc.Parser
                        Merc.Server
                        Merc.Types
@@ -23,6 +24,7 @@ library
                        Merc.Types.Message
                        Merc.Types.Server
                        Merc.Types.User
+                       Merc.User
                        Merc.Util
 
 executable mercd

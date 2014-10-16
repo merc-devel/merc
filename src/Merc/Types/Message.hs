@@ -1,7 +1,8 @@
 module Merc.Types.Message (
   Prefix(..),
   Command(..),
-  commandNames,
+  getCommandName,
+  fromCommandName,
   Message(..)
 ) where
 
@@ -46,6 +47,12 @@ commandNames = B.fromList [
   (Names, "NAMES"),
   (Privmsg, "PRIVMSG"),
   (Quit, "QUIT")]
+
+getCommandName :: Command -> Maybe T.Text
+getCommandName command = B.lookup command commandNames
+
+fromCommandName :: T.Text -> Maybe Command
+fromCommandName commandName = B.lookupR commandName commandNames
 
 data Message = Message {
   prefix :: Maybe Prefix,
