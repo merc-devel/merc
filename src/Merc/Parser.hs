@@ -49,7 +49,7 @@ channelName :: A.Parser C.ChannelName
 channelName = A.char '#' *>
              (C.ChannelName <$> A.takeWhile1 permitted)
   where
-    permitted c = not (c `elem` ",") && not A.isHorizontalSpace c
+    permitted c = not (c `elem` ",") && not (A.isHorizontalSpace c)
 
 messagePrefix :: A.Parser M.Prefix
 messagePrefix = A.char ':' *> ((M.HostmaskPrefix <$> hostmask)

@@ -3,7 +3,8 @@ module Merc.Types.User (
   NormalizedNickname(unwrapNormalizedName),
   Hostmask(..),
   User(..),
-  normalizeNickname
+  normalizeNickname,
+  showNickname
 ) where
 
 import qualified Data.Text as T
@@ -11,7 +12,7 @@ import Data.Time.Clock
 import Merc.Util
 import Network
 
-newtype Nickname = Nickname {
+data Nickname = UnregisteredNickname | Nickname {
   unwrapName :: T.Text
 } deriving (Show)
 
@@ -37,3 +38,7 @@ data User = User {
 normalizeNickname :: Nickname -> NormalizedNickname
 normalizeNickname Nickname { unwrapName = unwrapped } =
   NormalizedNickname (toIRCLower unwrapped)
+
+showNickname :: Nickname -> T.Text
+showNickname UnregisteredNickname = "*"
+showNickname Nickname { unwrapName = nickname } = nickname

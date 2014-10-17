@@ -44,7 +44,9 @@ runClient client@S.Client{..} server = do
       line <- T.hGetLine handle
       case A.parseOnly P.message line of
         Left error -> infoM "Merc.Server" $ "Error parsing message: " ++ error
-        Right message -> atomically $ writeTChan chan message
+        Right message -> do
+          debugM "Merc.Message" $ "Received message: " ++ show message
+          atomically $ writeTChan chan message
 
     loop = join $ atomically $ do
       message <- readTChan chan
@@ -58,7 +60,7 @@ newClient handle host = do
 
   u <- newTVarIO $ U.User {
     U.hostmask = U.Hostmask {
-      U.nickname = U.Nickname "*",
+      U.nickname = U.UnregisteredNickname,
       U.username = "*",
       U.host = T.pack host
     },
@@ -102,10 +104,9 @@ runServer server = withSocketsDo $ do
     infoM "Merc.Server" $ "Accepted connection from " ++ host ++ " on port " ++
                           show port ++ "."
     client <- newClient handle host
-    forkFinally (runClient client server) $ \_ -> do
+    forkFinally (runClient client server) $ \e ->
       infoM "Merc.Server" $ "Lost connection from " ++ host ++ " on port " ++
-                            show port ++ "."
-      closeClient client server
+                            show port ++ ": " ++ show e
     loop
 
 newServer :: T.Text -> T.Text -> IO S.Server
