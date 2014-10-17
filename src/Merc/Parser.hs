@@ -16,14 +16,14 @@ import qualified Merc.Types.Message as M
 import qualified Merc.Types.User as U
 
 nameHeadChars :: [Char]
-nameHeadChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz[]{}\\|`~_-"
+nameHeadChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz[]{}\\|`_-"
 
 nameTailChars :: [Char]
 nameTailChars = nameHeadChars ++ "0123456789"
 
 name :: A.Parser T.Text
 name = mappend <$> (T.singleton <$> A.satisfy (`elem` nameHeadChars))
-               <*> A.takeWhile1 (`elem` nameTailChars)
+               <*> A.takeWhile (`elem` nameTailChars)
 
 word :: A.Parser T.Text
 word = A.takeWhile1 (not . A.isHorizontalSpace)
