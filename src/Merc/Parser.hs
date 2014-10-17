@@ -16,10 +16,10 @@ import qualified Merc.Types.Message as M
 import qualified Merc.Types.User as U
 
 nameHeadChars :: [Char]
-nameHeadChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz[]{}\\|`_-"
+nameHeadChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz[]{}\\|`_"
 
 nameTailChars :: [Char]
-nameTailChars = nameHeadChars ++ "0123456789"
+nameTailChars = nameHeadChars ++ "0123456789-"
 
 name :: A.Parser T.Text
 name = mappend <$> (T.singleton <$> A.satisfy (`elem` nameHeadChars))
@@ -47,7 +47,9 @@ hostmask = U.Hostmask <$> nickname <* A.char '!'
 
 channelName :: A.Parser C.ChannelName
 channelName = A.char '#' *>
-             (C.ChannelName <$> A.takeWhile1 (`elem` nameTailChars))
+             (C.ChannelName <$> A.takeWhile1 permitted)
+  where
+    permitted c = not (c `elem` ",") && not A.isHorizontalSpace c
 
 messagePrefix :: A.Parser M.Prefix
 messagePrefix = A.char ':' *> ((M.HostmaskPrefix <$> hostmask)
