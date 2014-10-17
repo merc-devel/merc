@@ -25,26 +25,25 @@ import System.Log.Logger
 
 newServerMessage :: S.Server -> M.Command -> [T.Text] -> M.Message
 newServerMessage S.Server{..} command params = M.Message {
-  M.prefix = prefix,
+  M.prefix = Just $ M.ServerPrefix serverName,
   M.command = command,
   M.params = params
 }
-  where
-    prefix = Just $ M.ServerPrefix serverName
-
-sendMessage :: S.Client -> M.Message -> IO ()
-sendMessage S.Client{..} message = do
-  debugM "Merc.Message" $ "Sending message: " ++ show message
-  T.hPutStrLn handle $ emitMessage message
 
 newReplyMessage :: S.Client -> S.Server -> M.Command -> [T.Text] -> STM M.Message
 newReplyMessage S.Client{..} server command params = do
   U.User{U.hostmask = U.Hostmask{U.nickname = nickname}} <- readTVar user
   return $ newServerMessage server command ((U.showNickname nickname):params)
 
+sendMessage :: S.Client -> M.Message -> IO ()
+sendMessage S.Client{..} message = do
+  debugM "Merc.Message" $ "Sending message: " ++ show message
+  T.hPutStrLn handle $ emitMessage message
+
 errNeedMoreParams :: S.Client -> S.Server -> M.Command -> STM M.Message
 errNeedMoreParams client server command =
-  newReplyMessage client server M.ErrNeedMoreParams [commandName, "Not enough parameters"]
+  newReplyMessage client server M.ErrNeedMoreParams [commandName,
+                                                     "Not enough parameters"]
 
   where
     commandName = fromJust $ M.getCommandName command
@@ -70,6 +69,6 @@ rplYourHost client server@S.Server{..} =
 
 rplCreated :: S.Client -> S.Server -> STM M.Message
 rplCreated client server@S.Server{..} =
-  newReplyMessage client server M.RplCreated ["This server was created " <>
-                                              T.pack (formatTime defaultTimeLocale "%c"
-                                                      creationTime)]
+  newReplyMessage client server M.RplCreated [
+    "This server was created " <> T.pack (formatTime defaultTimeLocale "%c"
+                                                     creationTime)]
