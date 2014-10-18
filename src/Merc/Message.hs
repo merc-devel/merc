@@ -103,16 +103,25 @@ rplCreated client server@S.Server{..} =
 
 rplMyInfo :: S.Client -> S.Server -> STM M.Message
 rplMyInfo client server@S.Server{..} =
-  newReplyMessage client server M.RplMyInfo [serverName, mercVersion,
-                                             T.pack $ map U.unwrapUserMode $ S.toList U.userModes,
-                                             T.pack $ map C.unwrapChannelMode $ S.toList C.channelModes,
-                                             T.pack $ map C.unwrapChannelMode $ S.toList C.channelModesWithParams]
+  newReplyMessage client server M.RplMyInfo [
+      serverName, mercVersion,
+      T.pack $ map U.unwrapUserMode $ S.toList U.userModes,
+      T.pack $ map C.unwrapChannelMode $ S.toList C.channelModes,
+      T.pack $ map C.unwrapChannelMode $ S.toList C.channelModesWithParams]
 
-rplISupport :: S.Client -> S.Server -> Map.Map S.ISupportToken (Maybe T.Text) -> STM M.Message
-rplISupport client server parameters =
-  newReplyMessage client server M.RplISupport [T.intercalate " " textParameters, "are supported by this server"]
+rplISupport :: S.Client -> S.Server -> STM M.Message
+rplISupport client server =
+  newReplyMessage client server M.RplISupport [
+      T.intercalate " " textParameters, "are supported by this server"]
   where
-    textParameters = map (uncurry toTextParameter) (Map.toList parameters)
+    iSupportParameters = Map.fromList [
+      (S.Prefix, Just ("(" <> T.pack roleModeChars <> ")" <> T.pack rolePrefixChars)),
+      (S.Charset, Just "UTF-8")]
+      where
+        roleModeChars = map C.unwrapChannelMode C.roleModes
+        rolePrefixChars = map C.unwrapUserPrefix C.rolePrefixes
+
+    textParameters = map (uncurry toTextParameter) (Map.toList iSupportParameters)
     toTextParameter k maybeV = case maybeV of
       Just v -> textParameterName <> "=" <> v
       Nothing -> textParameterName

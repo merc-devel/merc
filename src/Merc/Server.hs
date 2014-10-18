@@ -52,23 +52,16 @@ handleRegisteredMessage client server@S.Server{..} message@M.Message{..} = case 
 
   M.Ping -> do
     case params of
-      (value:serverName:_) -> do
-        e <- atomically $ pong client server serverName value
-        sendMessage client e
-      (value:_) -> do
-        e <- atomically $ pong client server serverName value
-        sendMessage client e
-      _ -> do
-        e <- atomically $ errNeedMoreParams client server M.Ping
-        sendMessage client e
+      (value:serverName:_) -> atomically (pong client server serverName value) >>= sendMessage client
+      (value:_) -> atomically (pong client server serverName value) >>= sendMessage client
+      _ -> atomically (errNeedMoreParams client server M.Ping) >>= sendMessage client
 
     return True
 
   M.LUsers -> handleLUsersMessage client server
 
   M.UnknownCommand command -> do
-    e <- atomically $ errUnknownCommand client server command
-    sendMessage client e
+    atomically (errUnknownCommand client server command) >>= sendMessage client
     return True
 
   _ -> return True

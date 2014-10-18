@@ -20,14 +20,6 @@ import qualified Merc.Types.Server as S
 import qualified Merc.Types.User as U
 import System.Log.Logger
 
-iSupportParameters :: Map.Map S.ISupportToken (Maybe T.Text)
-iSupportParameters = Map.fromList [
-  (S.Prefix, Just ("(" <> T.pack roleModeChars <> ")" <> T.pack rolePrefixChars)),
-  (S.Charset, Just "UTF-8")]
-  where
-    roleModeChars = map C.unwrapChannelMode C.roleModes
-    rolePrefixChars = map C.unwrapUserPrefix C.rolePrefixes
-
 willBeRegistered :: U.User -> Bool
 willBeRegistered U.User{U.hostmask = U.Hostmask{..}, U.registered = registered} =
   case nickname of
@@ -48,7 +40,7 @@ register client@S.Client{..} server@S.Server{..} = join $ atomically $ do
   yourHost <- rplYourHost client server
   created <- rplCreated client server
   myInfo <- rplMyInfo client server
-  iSupport <- rplISupport client server iSupportParameters
+  iSupport <- rplISupport client server
 
   return $ do
     sendMessage client welcome
