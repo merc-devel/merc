@@ -51,16 +51,33 @@ handleNickMessage client@S.Client{..} server params = do
           e <- atomically (errErroneousNickname client server)
           sendMessage client e
         Right nickname -> join $ atomically $ do
-          modifyTVar user $ \user -> user {
-            U.hostmask = (U.hostmask user) {
-              U.nickname = nickname
-            }
-          }
+          clients <- readTVar $ S.clients server
+          U.User{U.hostmask = U.Hostmask{U.nickname = oldNickname}, U.registered = registered} <- readTVar user
 
-          user <- readTVar user
-          return $ when (willBeRegistered user) (register client server)
+          let normalizedNickname = U.normalizeNickname nickname
+          let normalizedOldNickname = U.normalizeNickname oldNickname
+
+          case Map.lookup normalizedNickname clients of
+            Just _ -> do
+              e <- errNicknameInUse client server (U.unwrapName nickname)
+              return $ case oldNickname of
+                U.Nickname{..} | normalizedNickname == U.normalizeNickname oldNickname -> return ()
+                _ -> sendMessage client e
+
+            Nothing -> do
+              modifyTVar user $ \user -> user {
+                U.hostmask = (U.hostmask user) {
+                  U.nickname = nickname
+                }
+              }
+
+              when registered $ modifyTVar (S.clients server) $ \clients -> do
+                Map.insert normalizedNickname client $ Map.delete normalizedOldNickname clients
+
+              user <- readTVar user
+              return $ when (willBeRegistered user) (register client server)
     _ -> do
-      e <- atomically (errNeedMoreParams client server M.Nick)
+      e <- atomically $ errNeedMoreParams client server M.Nick
       sendMessage client e
   return True
 
@@ -79,6 +96,6 @@ handleUserMessage client@S.Client{..} server params = do
 
       return $ when (willBeRegistered user) (register client server)
     _ -> do
-      e <- atomically (errNeedMoreParams client server M.User)
+      e <- atomically $ errNeedMoreParams client server M.User
       sendMessage client e
   return True

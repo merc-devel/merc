@@ -18,8 +18,11 @@ data Command = RplWelcome
              | RplYourHost
              | RplCreated
              | RplMyInfo
-             | ErrNeedMoreParams
+             | ErrUnknownCommand
              | ErrErroneousNickname
+             | ErrNicknameInUse
+             | ErrNeedMoreParams
+             | ErrAlreadyRegistered
              | Nick
              | User
              | Join
@@ -38,8 +41,11 @@ commandNames = B.fromList [
   (RplYourHost, "002"),
   (RplCreated, "003"),
   (RplMyInfo, "004"),
+  (ErrUnknownCommand, "421"),
   (ErrErroneousNickname, "432"),
+  (ErrNicknameInUse, "432"),
   (ErrNeedMoreParams, "461"),
+  (ErrAlreadyRegistered, "462"),
   (Nick, "NICK"),
   (User, "USER"),
   (Join, "JOIN"),

@@ -1,6 +1,6 @@
 module Merc.Types.Channel (
   ChannelName(..),
-  NormalizedChannelName(unwrapNormalizedName),
+  NormalizedChannelName(..),
   ChannelUserFlags(..),
   Channel(..)
 ) where

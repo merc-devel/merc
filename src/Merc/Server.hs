@@ -3,6 +3,7 @@ module Merc.Server (
   runServer
 ) where
 
+import Control.Applicative
 import Control.Concurrent
 import Control.Concurrent.Async
 import Control.Concurrent.STM
@@ -10,6 +11,7 @@ import Control.Monad
 import qualified Data.Attoparsec.Text as A
 import Data.Function
 import qualified Data.Map as Map
+import qualified Data.Set as S
 import Data.Maybe
 import Data.Monoid
 import qualified Data.Text as T
@@ -19,17 +21,34 @@ import qualified Merc.Parser as P
 import qualified Merc.Types.Message as M
 import qualified Merc.Types.Server as S
 import qualified Merc.Types.User as U
+import Merc.Message
 import Merc.User
 import Network
 import System.IO
 import System.Log.Logger
 
 handleMessage :: S.Client -> S.Server -> M.Message -> IO Bool
-handleMessage client@S.Client{..} server message@M.Message{..} = case command of
+handleMessage client@S.Client{..} server message@M.Message{..} = join $ atomically $ do
+  u <- readTVar user
+  let handler = if U.registered u then handleRegisteredMessage
+                                  else handleUnregisteredMessage
+
+  return $ handler client server message
+
+handleUnregisteredMessage client server message@M.Message{..} = case command of
   M.Nick -> handleNickMessage client server params
   M.User -> handleUserMessage client server params
+  _ -> return True
 
-  M.UnknownCommand name ->
+handleRegisteredMessage client server message@M.Message{..} = case command of
+  M.Nick -> handleNickMessage client server params
+  M.User -> do
+    e <- atomically $ errAlreadyRegistered client server
+    sendMessage client e
+    return True
+  M.UnknownCommand command -> do
+    e <- atomically $ errUnknownCommand client server command
+    sendMessage client e
     return True
 
 runClient :: S.Client -> S.Server -> IO ()
@@ -43,9 +62,10 @@ runClient client@S.Client{..} server = do
     receive = forever $ do
       line <- T.hGetLine handle
       case A.parseOnly P.message line of
-        Left error -> infoM "Merc.Server" $ "Error parsing message: " ++ error
+        Left error ->
+          infoM "Merc.Server" $ "Error parsing message: " ++ error
         Right message -> do
-          debugM "Merc.Message" $ "Received message: " ++ show message
+          debugM "Merc.Server" $ "Received message: " ++ show message
           atomically $ writeTChan chan message
 
     loop = join $ atomically $ do
@@ -54,11 +74,11 @@ runClient client@S.Client{..} server = do
         continue <- handleMessage client server message
         when continue $ loop
 
-newClient :: Handle -> HostName -> IO S.Client
-newClient handle host = do
+newUser :: HostName -> IO U.User
+newUser host = do
   now <- getCurrentTime
 
-  u <- newTVarIO $ U.User {
+  return $ U.User {
     U.hostmask = U.Hostmask {
       U.nickname = U.UnregisteredNickname,
       U.username = "*",
@@ -68,9 +88,13 @@ newClient handle host = do
     U.realHost = host,
     U.connectionTime = now,
     U.lastActiveTime = now,
-    U.registered = False
+    U.registered = False,
+    U.channels = S.empty
   }
 
+newClient :: Handle -> HostName -> IO S.Client
+newClient handle host = do
+  u <- newUser host >>= newTVarIO
   c <- newTChanIO
 
   return S.Client {
@@ -80,16 +104,18 @@ newClient handle host = do
   }
 
 closeClient :: S.Client -> S.Server -> IO ()
-closeClient client server = do
+closeClient client@S.Client{..} server@S.Server{..} = do
   hClose handle
 
-  atomically $ do
-    user <- readTVar $ S.user client
-    let hostmask = U.hostmask user
+  join $ atomically $ do
+    U.User {U.hostmask = U.Hostmask{U.nickname = nickname}, U.registered = registered} <- readTVar user
 
-    when (U.registered user) $ do
-      modifyTVar (S.clients server) $ \clients -> do
-        Map.delete (U.normalizeNickname (U.nickname (U.hostmask user))) clients
+    when registered $ do
+      modifyTVar clients $ \clients -> do
+        Map.delete (U.normalizeNickname nickname) clients
+
+    return $ do
+      debugM "Merc.Server" $ "Deleted user " ++ show nickname
 
   where
     handle = S.handle client
@@ -104,9 +130,10 @@ runServer server = withSocketsDo $ do
     infoM "Merc.Server" $ "Accepted connection from " ++ host ++ " on port " ++
                           show port ++ "."
     client <- newClient handle host
-    forkFinally (runClient client server) $ \e ->
+    forkFinally (runClient client server) $ \e -> do
       infoM "Merc.Server" $ "Lost connection from " ++ host ++ " on port " ++
                             show port ++ ": " ++ show e
+      closeClient client server
     loop
 
 newServer :: T.Text -> T.Text -> IO S.Server

@@ -7,8 +7,10 @@ module Merc.Types.User (
   showNickname
 ) where
 
+import qualified Data.Set as S
 import qualified Data.Text as T
 import Data.Time.Clock
+import {-# SOURCE #-} qualified Merc.Types.Channel as C
 import Merc.Util
 import Network
 
@@ -32,7 +34,8 @@ data User = User {
   realHost :: HostName,
   connectionTime :: UTCTime,
   lastActiveTime :: UTCTime,
-  registered :: Bool
+  registered :: Bool,
+  channels :: S.Set C.NormalizedChannelName
 }
 
 normalizeNickname :: Nickname -> NormalizedNickname

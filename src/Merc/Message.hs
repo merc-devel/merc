@@ -2,6 +2,9 @@ module Merc.Message (
   sendMessage,
   errNeedMoreParams,
   errErroneousNickname,
+  errNicknameInUse,
+  errUnknownCommand,
+  errAlreadyRegistered,
   rplWelcome,
   rplYourHost,
   rplCreated
@@ -51,6 +54,18 @@ errNeedMoreParams client server command =
 errErroneousNickname :: S.Client -> S.Server -> STM M.Message
 errErroneousNickname client server = do
   newReplyMessage client server M.ErrErroneousNickname ["Erroneous nickname"]
+
+errNicknameInUse :: S.Client -> S.Server -> T.Text -> STM M.Message
+errNicknameInUse client server nickname =
+  newReplyMessage client server M.ErrNicknameInUse [nickname, "Nickname is already in use"]
+
+errAlreadyRegistered :: S.Client -> S.Server -> STM M.Message
+errAlreadyRegistered client server = do
+  newReplyMessage client server M.ErrAlreadyRegistered ["You may not reregister"]
+
+errUnknownCommand :: S.Client -> S.Server -> T.Text -> STM M.Message
+errUnknownCommand client server command =
+  newReplyMessage client server M.ErrUnknownCommand [command, "Unknown command"]
 
 rplWelcome :: S.Client -> S.Server -> STM M.Message
 rplWelcome client@S.Client{..} server@S.Server{..} = do
