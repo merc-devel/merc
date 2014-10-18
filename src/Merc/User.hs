@@ -37,11 +37,13 @@ register client@S.Client{..} server@S.Server{..} = join $ atomically $ do
   welcome <- rplWelcome client server
   yourHost <- rplYourHost client server
   created <- rplCreated client server
+  myInfo <- rplMyInfo client server
 
   return $ do
     sendMessage client welcome
     sendMessage client yourHost
     sendMessage client created
+    sendMessage client myInfo
 
 handleNickMessage :: S.Client -> S.Server -> [T.Text] -> IO Bool
 handleNickMessage client@S.Client{..} server params = do

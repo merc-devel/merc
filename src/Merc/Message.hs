@@ -8,7 +8,8 @@ module Merc.Message (
   errAlreadyRegistered,
   rplWelcome,
   rplYourHost,
-  rplCreated
+  rplCreated,
+  rplMyInfo
 ) where
 
 import Control.Concurrent.STM
@@ -17,13 +18,12 @@ import Data.Monoid
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Data.Time.Format
-import Data.Version
 import Merc.Emitter
 import qualified Merc.Types.Message as M
 import qualified Merc.Types.Server as S
 import qualified Merc.Types.User as U
+import Merc.Util
 import Network
-import Paths_merc (version)
 import System.Locale
 import System.Log.Logger
 
@@ -84,11 +84,14 @@ rplWelcome client@S.Client{..} server@S.Server{..} = do
 rplYourHost :: S.Client -> S.Server -> STM M.Message
 rplYourHost client server@S.Server{..} =
   newReplyMessage client server M.RplYourHost ["Your host is " <> serverName <>
-                                               ", running mercd-" <>
-                                               T.pack (showVersion version)]
+                                               ", running " <> mercVersion]
 
 rplCreated :: S.Client -> S.Server -> STM M.Message
 rplCreated client server@S.Server{..} =
   newReplyMessage client server M.RplCreated [
     "This server was created " <> T.pack (formatTime defaultTimeLocale "%c"
                                                      creationTime)]
+
+rplMyInfo :: S.Client -> S.Server -> STM M.Message
+rplMyInfo client server@S.Server{..} =
+  newReplyMessage client server M.RplMyInfo [serverName, mercVersion]
