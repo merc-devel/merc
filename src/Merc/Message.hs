@@ -1,5 +1,6 @@
 module Merc.Message (
   sendMessage,
+  pong,
   errNeedMoreParams,
   errErroneousNickname,
   errNicknameInUse,
@@ -42,6 +43,10 @@ sendMessage :: S.Client -> M.Message -> IO ()
 sendMessage S.Client{..} message = do
   debugM "Merc.Message" $ "Sending message: " ++ show message
   T.hPutStrLn handle $ emitMessage message
+
+pong :: S.Client -> S.Server -> T.Text -> T.Text -> STM M.Message
+pong client server serverName value = do
+  newReplyMessage client server M.Pong [serverName, value]
 
 errNeedMoreParams :: S.Client -> S.Server -> M.Command -> STM M.Message
 errNeedMoreParams client server command =

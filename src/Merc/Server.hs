@@ -40,12 +40,28 @@ handleUnregisteredMessage client server message@M.Message{..} = case command of
   M.User -> handleUserMessage client server params
   _ -> return True
 
-handleRegisteredMessage client server message@M.Message{..} = case command of
+handleRegisteredMessage client server@S.Server{..} message@M.Message{..} = case command of
   M.Nick -> handleNickMessage client server params
+
   M.User -> do
     e <- atomically $ errAlreadyRegistered client server
     sendMessage client e
     return True
+
+  M.Ping -> do
+    case params of
+      (value:serverName:_) -> do
+        e <- atomically $ pong client server serverName value
+        sendMessage client e
+      (value:_) -> do
+        e <- atomically $ pong client server serverName value
+        sendMessage client e
+      _ -> do
+        e <- atomically $ errNeedMoreParams client server M.Ping
+        sendMessage client e
+
+    return True
+
   M.UnknownCommand command -> do
     e <- atomically $ errUnknownCommand client server command
     sendMessage client e
