@@ -60,6 +60,8 @@ handleRegisteredMessage client server@S.Server{..} message@M.Message{..} = case 
 
   M.LUsers -> handleLUsersMessage client server
 
+  M.Motd -> handleMotdMessage client server
+
   M.UnknownCommand command -> do
     atomically (errUnknownCommand client server command) >>= sendMessage client
     return True
@@ -135,9 +137,9 @@ closeClient client@S.Client{..} server@S.Server{..} = do
   where
     handle = S.handle client
 
-runServer :: S.Server -> IO ()
-runServer server = withSocketsDo $ do
-  sock <- listenOn (PortNumber 9999)
+runServer :: S.Server -> PortID -> IO ()
+runServer server port = withSocketsDo $ do
+  sock <- listenOn port
   infoM "Merc.Server" "Listening on port 9999."
 
   fix $ \loop -> do
@@ -151,8 +153,8 @@ runServer server = withSocketsDo $ do
       closeClient client server
     loop
 
-newServer :: T.Text -> T.Text -> IO S.Server
-newServer serverName networkName = do
+newServer :: T.Text -> T.Text -> T.Text -> IO S.Server
+newServer serverName networkName motd = do
   clients <- newTVarIO Map.empty
   channels <- newTVarIO Map.empty
 
@@ -161,6 +163,7 @@ newServer serverName networkName = do
   return S.Server {
     S.serverName = serverName,
     S.networkName = networkName,
+    S.motd = motd,
     S.clients = clients,
     S.channels = channels,
     S.creationTime = now

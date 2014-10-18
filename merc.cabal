@@ -31,4 +31,4 @@ library
 executable mercd
   main-is:             Main.hs
   extensions:          OverloadedStrings
-  build-depends:       base ==4.6.*, hslogger, merc
+  build-depends:       base ==4.6.*, configurator, hslogger, merc, network

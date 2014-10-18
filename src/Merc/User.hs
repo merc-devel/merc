@@ -1,7 +1,8 @@
 module Merc.User (
   handleNickMessage,
   handleUserMessage,
-  handleLUsersMessage
+  handleLUsersMessage,
+  handleMotdMessage
 ) where
 
 import Control.Applicative
@@ -48,7 +49,8 @@ register client@S.Client{..} server@S.Server{..} = join $ atomically $ do
     sendMessage client created
     sendMessage client myInfo
     sendMessage client iSupport
-    _ <- handleLUsersMessage client server
+    handleLUsersMessage client server
+    handleMotdMessage client server
     return ()
 
 handleLUsersMessage :: S.Client -> S.Server -> IO Bool
@@ -67,6 +69,18 @@ handleLUsersMessage client server = join $ atomically $ do
     sendMessage client lUserMe
     return True
 
+handleMotdMessage :: S.Client -> S.Server -> IO Bool
+handleMotdMessage client server@S.Server{..} = join $ atomically $ do
+  motdStart <- rplMotdStart client server
+  motd <- mapM (rplMotd client server) (T.lines motd)
+  endOfMotd <- rplEndOfMotd client server
+
+  return $ do
+    sendMessage client motdStart
+    mapM_ (sendMessage client) motd
+    sendMessage client endOfMotd
+    return True
+
 handleNickMessage :: S.Client -> S.Server -> [T.Text] -> IO Bool
 handleNickMessage client@S.Client{..} server params = do
   case params of
@@ -83,8 +97,7 @@ handleNickMessage client@S.Client{..} server params = do
             Just _ -> do
               e <- errNicknameInUse client server (U.unwrapName nickname)
               return $ case oldNickname of
-                U.Nickname{..} | nickname' == oldNickname' ->
-                  return ()
+                U.Nickname{..} | nickname' == oldNickname' -> return ()
                 _ -> sendMessage client e
 
             Nothing -> do

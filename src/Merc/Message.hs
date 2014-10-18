@@ -15,7 +15,10 @@ module Merc.Message (
   rplLUserOp,
   rplLUserUnknown,
   rplLUserChannels,
-  rplLUserMe
+  rplLUserMe,
+  rplMotd,
+  rplMotdStart,
+  rplEndOfMotd
 ) where
 
 import Control.Concurrent.STM
@@ -156,3 +159,16 @@ rplLUserMe client server@S.Server{..} = do
 
   newReplyMessage client server M.RplLUserMe [
     "I have " <> T.pack (show (Map.size clients)) <> " clients and 1 servers"]
+
+rplMotd :: S.Client -> S.Server -> T.Text -> STM M.Message
+rplMotd client server line =
+  newReplyMessage client server M.RplMotd ["- " <> line]
+
+rplMotdStart :: S.Client -> S.Server -> STM M.Message
+rplMotdStart client server@S.Server{..} =
+  newReplyMessage client server M.RplMotdStart [
+    "- " <> serverName <> " Message of the Day"]
+
+rplEndOfMotd :: S.Client -> S.Server -> STM M.Message
+rplEndOfMotd client server@S.Server{..} =
+  newReplyMessage client server M.RplEndOfMotd ["End of /MOTD command"]

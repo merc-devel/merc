@@ -24,6 +24,7 @@ data Client = Client {
 data Server = Server {
   serverName :: T.Text,
   networkName :: T.Text,
+  motd :: T.Text,
   clients :: TVar (M.Map U.NormalizedNickname Client),
   channels :: TVar (M.Map C.NormalizedChannelName C.Channel),
   creationTime :: UTCTime

@@ -25,12 +25,16 @@ data Command = RplWelcome
              | RplLUserUnknown
              | RplLUserChannels
              | RplLUserMe
+             | RplMotd
+             | RplMotdStart
+             | RplEndOfMotd
              | ErrUnknownCommand
              | ErrErroneousNickname
              | ErrNicknameInUse
              | ErrNeedMoreParams
              | ErrAlreadyRegistered
              | LUsers
+             | Motd
              | Nick
              | User
              | Join
@@ -55,12 +59,16 @@ commandNames = B.fromList [
   (RplLUserUnknown, "253"),
   (RplLUserChannels, "254"),
   (RplLUserMe, "255"),
+  (RplMotd, "372"),
+  (RplMotdStart, "375"),
+  (RplEndOfMotd, "376"),
   (ErrUnknownCommand, "421"),
   (ErrErroneousNickname, "432"),
   (ErrNicknameInUse, "432"),
   (ErrNeedMoreParams, "461"),
   (ErrAlreadyRegistered, "462"),
   (LUsers, "LUSERS"),
+  (Motd, "MOTD"),
   (Nick, "NICK"),
   (User, "USER"),
   (Join, "JOIN"),
