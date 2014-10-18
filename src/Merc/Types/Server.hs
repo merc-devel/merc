@@ -1,7 +1,8 @@
 module Merc.Types.Server (
   Server(..),
   Client(..),
-  newServer
+  ISupportToken(..),
+  getISupportTokenName
 ) where
 
 import Control.Concurrent.STM
@@ -28,17 +29,14 @@ data Server = Server {
   creationTime :: UTCTime
 }
 
-newServer :: T.Text -> T.Text -> IO Server
-newServer serverName networkName = do
-  clients <- newTVarIO M.empty
-  channels <- newTVarIO M.empty
+data ISupportToken = Prefix
+                   | Charset
+                   deriving (Eq, Ord, Show)
 
-  now <- getCurrentTime
+iSupportTokens :: M.Map ISupportToken T.Text
+iSupportTokens = M.fromList [
+  (Prefix, "PREFIX"),
+  (Charset, "CHARSET")]
 
-  return Server {
-    serverName = serverName,
-    networkName = networkName,
-    clients = clients,
-    channels = channels,
-    creationTime = now
-  }
+getISupportTokenName :: ISupportToken -> Maybe T.Text
+getISupportTokenName parameter = M.lookup parameter iSupportTokens

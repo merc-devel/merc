@@ -38,7 +38,10 @@ handleMessage client@S.Client{..} server message@M.Message{..} = join $ atomical
 handleUnregisteredMessage client server message@M.Message{..} = case command of
   M.Nick -> handleNickMessage client server params
   M.User -> handleUserMessage client server params
-  _ -> return True
+  M.UnknownCommand command -> return True
+  _ ->
+    -- TODO: tell the user they have to register
+    return True
 
 handleRegisteredMessage client server@S.Server{..} message@M.Message{..} = case command of
   M.Nick -> handleNickMessage client server params
@@ -62,10 +65,14 @@ handleRegisteredMessage client server@S.Server{..} message@M.Message{..} = case 
 
     return True
 
+  M.LUsers -> handleLUsersMessage client server
+
   M.UnknownCommand command -> do
     e <- atomically $ errUnknownCommand client server command
     sendMessage client e
     return True
+
+  _ -> return True
 
 runClient :: S.Client -> S.Server -> IO ()
 runClient client@S.Client{..} server = do
@@ -77,7 +84,7 @@ runClient client@S.Client{..} server = do
   where
     receive = forever $ do
       line <- T.hGetLine handle
-      case A.parseOnly P.message line of
+      case A.parseOnly P.message $ T.take M.maxMessageLength line of
         Left error ->
           infoM "Merc.Server" $ "Error parsing message: " ++ error
         Right message -> do
@@ -153,4 +160,17 @@ runServer server = withSocketsDo $ do
     loop
 
 newServer :: T.Text -> T.Text -> IO S.Server
-newServer = S.newServer
+newServer serverName networkName = do
+  clients <- newTVarIO Map.empty
+  channels <- newTVarIO Map.empty
+
+  now <- getCurrentTime
+
+  return S.Server {
+    S.serverName = serverName,
+    S.networkName = networkName,
+    S.clients = clients,
+    S.channels = channels,
+    S.creationTime = now
+  }
+

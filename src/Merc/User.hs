@@ -1,6 +1,7 @@
 module Merc.User (
   handleNickMessage,
-  handleUserMessage
+  handleUserMessage,
+  handleLUsersMessage
 ) where
 
 import Control.Applicative
@@ -13,10 +14,19 @@ import qualified Data.Text as T
 import Data.Time.Clock
 import Merc.Message
 import qualified Merc.Parser as P
+import qualified Merc.Types.Channel as C
 import qualified Merc.Types.Message as M
 import qualified Merc.Types.Server as S
 import qualified Merc.Types.User as U
 import System.Log.Logger
+
+iSupportParameters :: Map.Map S.ISupportToken (Maybe T.Text)
+iSupportParameters = Map.fromList [
+  (S.Prefix, Just ("(" <> T.pack roleModeChars <> ")" <> T.pack rolePrefixChars)),
+  (S.Charset, Just "UTF-8")]
+  where
+    roleModeChars = map C.unwrapChannelMode C.roleModes
+    rolePrefixChars = map C.unwrapUserPrefix C.rolePrefixes
 
 willBeRegistered :: U.User -> Bool
 willBeRegistered U.User{U.hostmask = U.Hostmask{..}, U.registered = registered} =
@@ -38,12 +48,32 @@ register client@S.Client{..} server@S.Server{..} = join $ atomically $ do
   yourHost <- rplYourHost client server
   created <- rplCreated client server
   myInfo <- rplMyInfo client server
+  iSupport <- rplISupport client server iSupportParameters
 
   return $ do
     sendMessage client welcome
     sendMessage client yourHost
     sendMessage client created
     sendMessage client myInfo
+    sendMessage client iSupport
+    _ <- handleLUsersMessage client server
+    return ()
+
+handleLUsersMessage :: S.Client -> S.Server -> IO Bool
+handleLUsersMessage client server = join $ atomically $ do
+  lUserClient <- rplLUserClient client server
+  lUserOp <- rplLUserOp client server
+  lUserUnknown <- rplLUserUnknown client server
+  lUserChannels <- rplLUserChannels client server
+  lUserMe <- rplLUserMe client server
+
+  return $ do
+    sendMessage client lUserClient
+    sendMessage client lUserOp
+    sendMessage client lUserUnknown
+    sendMessage client lUserChannels
+    sendMessage client lUserMe
+    return True
 
 handleNickMessage :: S.Client -> S.Server -> [T.Text] -> IO Bool
 handleNickMessage client@S.Client{..} server params = do
@@ -54,16 +84,17 @@ handleNickMessage client@S.Client{..} server params = do
           sendMessage client e
         Right nickname -> join $ atomically $ do
           clients <- readTVar $ S.clients server
-          U.User{U.hostmask = U.Hostmask{U.nickname = oldNickname}, U.registered = registered} <- readTVar user
+          U.User{U.hostmask = hostmask@U.Hostmask{U.nickname = oldNickname}, U.registered = registered} <- readTVar user
 
-          let normalizedNickname = U.normalizeNickname nickname
-          let normalizedOldNickname = U.normalizeNickname oldNickname
+          let nickname' = U.normalizeNickname nickname
+          let oldNickname' = U.normalizeNickname oldNickname
 
-          case Map.lookup normalizedNickname clients of
+          case Map.lookup nickname' clients of
             Just _ -> do
               e <- errNicknameInUse client server (U.unwrapName nickname)
               return $ case oldNickname of
-                U.Nickname{..} | normalizedNickname == U.normalizeNickname oldNickname -> return ()
+                U.Nickname{..} | nickname' == oldNickname' ->
+                  return ()
                 _ -> sendMessage client e
 
             Nothing -> do
@@ -74,10 +105,17 @@ handleNickMessage client@S.Client{..} server params = do
               }
 
               when registered $ modifyTVar (S.clients server) $ \clients -> do
-                Map.insert normalizedNickname client $ Map.delete normalizedOldNickname clients
+                Map.insert nickname' client $ Map.delete oldNickname' clients
 
               user <- readTVar user
-              return $ when (willBeRegistered user) (register client server)
+              return $ do
+                when (willBeRegistered user) $ register client server
+                when registered $ do
+                  sendMessage client M.Message {
+                    M.prefix = Just (M.HostmaskPrefix hostmask),
+                    M.command = M.Nick,
+                    M.params = [U.unwrapName nickname]
+                  }
     _ -> do
       e <- atomically $ errNeedMoreParams client server M.Nick
       sendMessage client e

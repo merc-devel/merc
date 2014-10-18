@@ -3,13 +3,18 @@ module Merc.Types.Channel (
   NormalizedChannelName(..),
   ChannelUser(..),
   Channel(..),
+  UserPrefix(..),
+  ChannelMode(..),
   channelModesWithParams,
-  channelModes
+  channelModes,
+  rolePrefixes,
+  roleModes
 ) where
 
 import qualified Data.Bimap as B
 import qualified Data.Map as M
 import Data.List
+import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Merc.Types.User as U
 import Merc.Util
@@ -22,7 +27,10 @@ newtype NormalizedChannelName = NormalizedChannelName {
   unwrapNormalizedName :: T.Text
 } deriving (Eq, Ord, Show)
 
-data Role = Operator
+data Role = Owner
+          | Administrator
+          | Operator
+          | HalfOperator
           | Voiced
           deriving (Eq, Ord, Show)
 
@@ -34,21 +42,33 @@ newtype ChannelMode = ChannelMode {
   unwrapChannelMode :: Char
 } deriving (Eq, Ord, Show)
 
-roleChars :: B.Bimap Role UserPrefix
-roleChars = B.fromList [
+rolePrefixesMap :: B.Bimap Role UserPrefix
+rolePrefixesMap = B.fromList [
+  (Owner, UserPrefix '~'),
+  (Administrator, UserPrefix '&'),
   (Operator, UserPrefix '@'),
+  (HalfOperator, UserPrefix '%'),
   (Voiced, UserPrefix '+')]
 
-roleModes :: B.Bimap Role ChannelMode
-roleModes = B.fromList [
+roleModesMap :: B.Bimap Role ChannelMode
+roleModesMap = B.fromList [
+  (Owner, ChannelMode 'q'),
+  (Administrator, ChannelMode 'a'),
   (Operator, ChannelMode 'o'),
+  (HalfOperator, ChannelMode 'h'),
   (Voiced, ChannelMode 'v')]
 
-channelModes :: [Char]
-channelModes = "p"
+rolePrefixes :: [UserPrefix]
+rolePrefixes = map snd $ B.assocs rolePrefixesMap
 
-channelModesWithParams :: [Char]
-channelModesWithParams = map unwrapChannelMode $ sort $ B.keysR roleModes
+roleModes :: [ChannelMode]
+roleModes = map snd $ B.assocs roleModesMap
+
+channelModes :: S.Set ChannelMode
+channelModes = S.fromList $ [ChannelMode 'p']
+
+channelModesWithParams :: S.Set ChannelMode
+channelModesWithParams = S.fromList roleModes
 
 data ChannelUser = ChannelUser {
   role :: Role

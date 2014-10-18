@@ -3,6 +3,7 @@ module Merc.Types.User (
   NormalizedNickname(unwrapNormalizedName),
   Hostmask(..),
   User(..),
+  UserMode(..),
   normalizeNickname,
   showNickname,
   userModes
@@ -47,5 +48,9 @@ showNickname :: Nickname -> T.Text
 showNickname UnregisteredNickname = "*"
 showNickname Nickname { unwrapName = nickname } = nickname
 
-userModes :: [Char]
-userModes = "i"
+newtype UserMode = UserMode {
+  unwrapUserMode :: Char
+} deriving (Eq, Ord, Show)
+
+userModes :: S.Set UserMode
+userModes = S.fromList $ [UserMode 'i']

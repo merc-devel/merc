@@ -3,7 +3,8 @@ module Merc.Types.Message (
   Command(..),
   getCommandName,
   fromCommandName,
-  Message(..)
+  Message(..),
+  maxMessageLength
 ) where
 
 import qualified Data.Bimap as B
@@ -18,11 +19,18 @@ data Command = RplWelcome
              | RplYourHost
              | RplCreated
              | RplMyInfo
+             | RplISupport
+             | RplLUserClient
+             | RplLUserOp
+             | RplLUserUnknown
+             | RplLUserChannels
+             | RplLUserMe
              | ErrUnknownCommand
              | ErrErroneousNickname
              | ErrNicknameInUse
              | ErrNeedMoreParams
              | ErrAlreadyRegistered
+             | LUsers
              | Nick
              | User
              | Join
@@ -41,11 +49,18 @@ commandNames = B.fromList [
   (RplYourHost, "002"),
   (RplCreated, "003"),
   (RplMyInfo, "004"),
+  (RplISupport, "005"),
+  (RplLUserClient, "251"),
+  (RplLUserOp, "252"),
+  (RplLUserUnknown, "253"),
+  (RplLUserChannels, "254"),
+  (RplLUserMe, "255"),
   (ErrUnknownCommand, "421"),
   (ErrErroneousNickname, "432"),
   (ErrNicknameInUse, "432"),
   (ErrNeedMoreParams, "461"),
   (ErrAlreadyRegistered, "462"),
+  (LUsers, "LUSERS"),
   (Nick, "NICK"),
   (User, "USER"),
   (Join, "JOIN"),
@@ -67,3 +82,6 @@ data Message = Message {
   command :: Command,
   params :: [T.Text]
 } deriving (Show)
+
+maxMessageLength :: Int
+maxMessageLength = 510
