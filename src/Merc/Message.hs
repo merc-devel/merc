@@ -19,6 +19,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Data.Time.Format
 import Merc.Emitter
+import qualified Merc.Types.Channel as C
 import qualified Merc.Types.Message as M
 import qualified Merc.Types.Server as S
 import qualified Merc.Types.User as U
@@ -94,4 +95,7 @@ rplCreated client server@S.Server{..} =
 
 rplMyInfo :: S.Client -> S.Server -> STM M.Message
 rplMyInfo client server@S.Server{..} =
-  newReplyMessage client server M.RplMyInfo [serverName, mercVersion]
+  newReplyMessage client server M.RplMyInfo [serverName, mercVersion,
+                                             T.pack U.userModes,
+                                             T.pack C.channelModes,
+                                             T.pack C.channelModesWithParams]

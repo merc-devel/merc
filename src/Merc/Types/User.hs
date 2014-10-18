@@ -4,7 +4,8 @@ module Merc.Types.User (
   Hostmask(..),
   User(..),
   normalizeNickname,
-  showNickname
+  showNickname,
+  userModes
 ) where
 
 import qualified Data.Set as S
@@ -45,3 +46,6 @@ normalizeNickname Nickname { unwrapName = unwrapped } =
 showNickname :: Nickname -> T.Text
 showNickname UnregisteredNickname = "*"
 showNickname Nickname { unwrapName = nickname } = nickname
+
+userModes :: [Char]
+userModes = "i"

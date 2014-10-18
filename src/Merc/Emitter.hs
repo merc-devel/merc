@@ -26,7 +26,10 @@ emitParams params | T.any (== ' ') trailing = T.intercalate " " initial <> " :" 
   where
     initial = fromJust $ do
       let leading = init params
-      guard (any (T.all (/= ' ')) leading)
+
+      guard $ any (T.all (/= ' ')) leading
+      guard $ all (/="") leading
+
       return leading
     trailing = last params
 
