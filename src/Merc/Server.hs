@@ -47,8 +47,7 @@ handleRegisteredMessage client server@S.Server{..} message@M.Message{..} = case 
   M.Nick -> handleNickMessage client server params
 
   M.User -> do
-    e <- atomically $ errAlreadyRegistered client server
-    sendMessage client e
+    atomically (errAlreadyRegistered client server) >>= sendMessage client
     return True
 
   M.Ping -> do

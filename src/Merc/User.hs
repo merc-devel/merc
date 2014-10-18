@@ -79,9 +79,7 @@ handleNickMessage :: S.Client -> S.Server -> [T.Text] -> IO Bool
 handleNickMessage client@S.Client{..} server params = do
   case params of
     (nickname:_) -> case A.parseOnly P.nickname nickname of
-        Left _ -> do
-          e <- atomically (errErroneousNickname client server)
-          sendMessage client e
+        Left _ -> atomically (errErroneousNickname client server) >>= sendMessage client
         Right nickname -> join $ atomically $ do
           clients <- readTVar $ S.clients server
           U.User{U.hostmask = hostmask@U.Hostmask{U.nickname = oldNickname}, U.registered = registered} <- readTVar user
@@ -116,9 +114,7 @@ handleNickMessage client@S.Client{..} server params = do
                     M.command = M.Nick,
                     M.params = [U.unwrapName nickname]
                   }
-    _ -> do
-      e <- atomically $ errNeedMoreParams client server M.Nick
-      sendMessage client e
+    _ -> atomically (errNeedMoreParams client server M.Nick) >>= sendMessage client
   return True
 
 handleUserMessage :: S.Client -> S.Server -> [T.Text] -> IO Bool
@@ -135,7 +131,5 @@ handleUserMessage client@S.Client{..} server params = do
       user <- readTVar user
 
       return $ when (willBeRegistered user) (register client server)
-    _ -> do
-      e <- atomically $ errNeedMoreParams client server M.User
-      sendMessage client e
+    _ -> atomically (errNeedMoreParams client server M.User) >>= sendMessage client
   return True
