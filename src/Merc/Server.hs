@@ -21,7 +21,8 @@ import qualified Merc.Parser as P
 import qualified Merc.Types.Message as M
 import qualified Merc.Types.Server as S
 import qualified Merc.Types.User as U
-import Merc.Message
+import Merc.Channel
+import Merc.Message hiding (join)
 import Merc.User
 import Network
 import System.IO
@@ -59,8 +60,8 @@ handleRegisteredMessage client server@S.Server{..} message@M.Message{..} = case 
     return True
 
   M.LUsers -> handleLUsersMessage client server
-
   M.Motd -> handleMotdMessage client server
+  M.Join -> handleJoinMessage client server params
 
   M.UnknownCommand command -> do
     atomically (errUnknownCommand client server command) >>= sendMessage client
@@ -90,24 +91,6 @@ runClient client@S.Client{..} server = do
       return $ do
         continue <- handleMessage client server message
         when continue $ loop
-
-newUser :: HostName -> IO U.User
-newUser host = do
-  now <- getCurrentTime
-
-  return $ U.User {
-    U.hostmask = U.Hostmask {
-      U.nickname = U.UnregisteredNickname,
-      U.username = "*",
-      U.host = T.pack host
-    },
-    U.realname = "",
-    U.realHost = host,
-    U.connectionTime = now,
-    U.lastActiveTime = now,
-    U.registered = False,
-    U.channels = S.empty
-  }
 
 newClient :: Handle -> HostName -> IO S.Client
 newClient handle host = do

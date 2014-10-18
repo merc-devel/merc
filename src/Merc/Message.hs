@@ -1,6 +1,8 @@
 module Merc.Message (
   sendMessage,
   pong,
+  join,
+  nick,
   errNeedMoreParams,
   errErroneousNickname,
   errNicknameInUse,
@@ -51,6 +53,15 @@ newReplyMessage S.Client{..} server command params = do
   U.User{U.hostmask = U.Hostmask{U.nickname = nickname}} <- readTVar user
   return $ newServerMessage server command ((U.showNickname nickname):params)
 
+newRelayMessage :: S.Client -> S.Server -> M.Command -> [T.Text] -> STM M.Message
+newRelayMessage S.Client{..} server command params = do
+  U.User{U.hostmask = hostmask@U.Hostmask{U.nickname = nickname}} <- readTVar user
+  return M.Message {
+    M.prefix = Just $ M.HostmaskPrefix hostmask,
+    M.command = command,
+    M.params = params
+  }
+
 sendMessage :: S.Client -> M.Message -> IO ()
 sendMessage S.Client{..} message = do
   debugM "Merc.Message" $ "Sending message: " ++ show message
@@ -59,6 +70,14 @@ sendMessage S.Client{..} message = do
 pong :: S.Client -> S.Server -> T.Text -> T.Text -> STM M.Message
 pong client server serverName value = do
   newReplyMessage client server M.Pong [serverName, value]
+
+join :: S.Client -> S.Server -> C.ChannelName -> STM M.Message
+join client server channelName = do
+  newRelayMessage client server M.Join [C.showChannelName channelName]
+
+nick :: S.Client -> S.Server -> U.Nickname -> STM M.Message
+nick client server nickname = do
+  newRelayMessage client server M.Nick [U.unwrapName nickname]
 
 errNeedMoreParams :: S.Client -> S.Server -> M.Command -> STM M.Message
 errNeedMoreParams client server command =

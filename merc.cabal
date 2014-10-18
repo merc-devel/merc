@@ -15,7 +15,8 @@ library
                        transformers
   hs-source-dirs:      src
   extensions:          OverloadedStrings, RecordWildCards
-  exposed-modules:     Merc.Emitter
+  exposed-modules:     Merc.Channel
+                       Merc.Emitter
                        Merc.Message
                        Merc.Parser
                        Merc.Server

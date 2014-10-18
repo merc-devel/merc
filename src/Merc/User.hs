@@ -2,7 +2,8 @@ module Merc.User (
   handleNickMessage,
   handleUserMessage,
   handleLUsersMessage,
-  handleMotdMessage
+  handleMotdMessage,
+  newUser
 ) where
 
 import Control.Applicative
@@ -11,14 +12,16 @@ import Control.Monad
 import qualified Data.Attoparsec.Text as A
 import qualified Data.Map as Map
 import Data.Monoid
+import qualified Data.Set as S
 import qualified Data.Text as T
 import Data.Time.Clock
-import Merc.Message
+import Merc.Message hiding (join)
 import qualified Merc.Parser as P
 import qualified Merc.Types.Channel as C
 import qualified Merc.Types.Message as M
 import qualified Merc.Types.Server as S
 import qualified Merc.Types.User as U
+import Network
 import System.Log.Logger
 
 willBeRegistered :: U.User -> Bool
@@ -101,6 +104,8 @@ handleNickMessage client@S.Client{..} server params = do
                 _ -> sendMessage client e
 
             Nothing -> do
+              message <- nick client server nickname
+
               modifyTVar user $ \user -> user {
                 U.hostmask = (U.hostmask user) {
                   U.nickname = nickname
@@ -113,12 +118,7 @@ handleNickMessage client@S.Client{..} server params = do
               user <- readTVar user
               return $ do
                 when (willBeRegistered user) $ register client server
-                when registered $ do
-                  sendMessage client M.Message {
-                    M.prefix = Just (M.HostmaskPrefix hostmask),
-                    M.command = M.Nick,
-                    M.params = [U.unwrapName nickname]
-                  }
+                when registered $ sendMessage client message
     _ -> atomically (errNeedMoreParams client server M.Nick) >>= sendMessage client
   return True
 
@@ -138,3 +138,22 @@ handleUserMessage client@S.Client{..} server params = do
       return $ when (willBeRegistered user) (register client server)
     _ -> atomically (errNeedMoreParams client server M.User) >>= sendMessage client
   return True
+
+newUser :: HostName -> IO U.User
+newUser host = do
+  now <- getCurrentTime
+
+  return $ U.User {
+    U.hostmask = U.Hostmask {
+      U.nickname = U.UnregisteredNickname,
+      U.username = "*",
+      U.host = T.pack host
+    },
+    U.realname = "",
+    U.realHost = host,
+    U.connectionTime = now,
+    U.lastActiveTime = now,
+    U.registered = False,
+    U.channels = S.empty
+  }
+

@@ -47,7 +47,7 @@ hostmask = U.Hostmask <$> nickname <* A.char '!'
 
 channelName :: A.Parser C.ChannelName
 channelName = A.char '#' *>
-             (C.ChannelName <$> A.takeWhile1 permitted)
+             (C.ChannelName <$> A.takeWhile permitted)
   where
     permitted c = not (c `elem` ",") && not (A.isHorizontalSpace c)
 

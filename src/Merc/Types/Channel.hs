@@ -1,19 +1,23 @@
 module Merc.Types.Channel (
+  Role(..),
   ChannelName(..),
   NormalizedChannelName(..),
   ChannelUser(..),
   Channel(..),
   UserPrefix(..),
   ChannelMode(..),
+  normalizeChannelName,
   channelModesWithParams,
   channelModes,
   rolePrefixes,
-  roleModes
+  roleModes,
+  showChannelName
 ) where
 
 import qualified Data.Bimap as B
 import qualified Data.Map as M
 import Data.List
+import Data.Monoid
 import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Merc.Types.User as U
@@ -32,6 +36,7 @@ data Role = Owner
           | Operator
           | HalfOperator
           | Voiced
+          | NoRole
           deriving (Eq, Ord, Show)
 
 newtype UserPrefix = UserPrefix {
@@ -76,10 +81,13 @@ data ChannelUser = ChannelUser {
 
 data Channel = Channel {
   name :: ChannelName,
-  users :: M.Map U.NormalizedNickname ChannelName,
+  users :: M.Map U.NormalizedNickname ChannelUser,
   topic :: T.Text
 }
 
 normalizeChannelName :: ChannelName -> NormalizedChannelName
 normalizeChannelName ChannelName { unwrapName = unwrapped } =
   NormalizedChannelName (toIRCLower unwrapped)
+
+showChannelName :: ChannelName -> T.Text
+showChannelName ChannelName { unwrapName = name } = "#" <> name
