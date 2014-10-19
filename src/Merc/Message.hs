@@ -4,11 +4,13 @@ module Merc.Message (
 
   cmdPong,
   cmdJoin,
+  cmdPart,
   cmdNick,
   errNoSuchChannel,
   errNeedMoreParams,
   errErroneousNickname,
   errNicknameInUse,
+  errNotOnChannel,
   errUnknownCommand,
   errAlreadyRegistered,
   rplWelcome,
@@ -57,8 +59,8 @@ newReplyMessage S.Client{..} server command params = do
   U.User{U.hostmask = U.Hostmask{U.nickname = nickname}} <- readTVar user
   return $ newServerMessage server command ((U.showNickname nickname):params)
 
-newRelayMessage :: S.Client -> S.Server -> M.Command -> [T.Text] -> STM M.Message
-newRelayMessage S.Client{..} server command params = do
+newRelayedMessage :: S.Client -> S.Server -> M.Command -> [T.Text] -> STM M.Message
+newRelayedMessage S.Client{..} server command params = do
   U.User{U.hostmask = hostmask@U.Hostmask{U.nickname = nickname}} <- readTVar user
   return M.Message {
     M.prefix = Just $ M.HostmaskPrefix hostmask,
@@ -93,11 +95,15 @@ cmdPong client server serverName value = do
 
 cmdJoin :: S.Client -> S.Server -> C.ChannelName -> STM M.Message
 cmdJoin client server channelName = do
-  newRelayMessage client server M.Join [C.showChannelName channelName]
+  newRelayedMessage client server M.Join [C.showChannelName channelName]
+
+cmdPart :: S.Client -> S.Server -> C.ChannelName -> T.Text -> STM M.Message
+cmdPart client server channelName reason = do
+  newRelayedMessage client server M.Part [C.showChannelName channelName, reason]
 
 cmdNick :: S.Client -> S.Server -> U.Nickname -> STM M.Message
 cmdNick client server nickname = do
-  newRelayMessage client server M.Nick [U.unwrapName nickname]
+  newRelayedMessage client server M.Nick [U.unwrapName nickname]
 
 errNoSuchChannel :: S.Client -> S.Server -> T.Text -> STM M.Message
 errNoSuchChannel client server channel =
@@ -118,6 +124,10 @@ errErroneousNickname client server = do
 errNicknameInUse :: S.Client -> S.Server -> T.Text -> STM M.Message
 errNicknameInUse client server nickname =
   newReplyMessage client server M.ErrNicknameInUse [nickname, "Nickname is already in use"]
+
+errNotOnChannel :: S.Client -> S.Server -> T.Text -> STM M.Message
+errNotOnChannel client server channel =
+  newReplyMessage client server M.ErrNotOnChannel [channel, "You're not on that channel"]
 
 errAlreadyRegistered :: S.Client -> S.Server -> STM M.Message
 errAlreadyRegistered client server = do

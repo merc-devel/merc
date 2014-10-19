@@ -32,6 +32,7 @@ data Command = RplWelcome
              | ErrUnknownCommand
              | ErrErroneousNickname
              | ErrNicknameInUse
+             | ErrNotOnChannel
              | ErrNeedMoreParams
              | ErrAlreadyRegistered
              | LUsers
@@ -67,6 +68,7 @@ commandNames = B.fromList [
   (ErrUnknownCommand, "421"),
   (ErrErroneousNickname, "432"),
   (ErrNicknameInUse, "432"),
+  (ErrNotOnChannel, "442"),
   (ErrNeedMoreParams, "461"),
   (ErrAlreadyRegistered, "462"),
   (LUsers, "LUSERS"),

@@ -11,13 +11,14 @@ import Control.Monad
 import qualified Data.Attoparsec.Text as A
 import Data.Function
 import qualified Data.Map as Map
-import qualified Data.Set as S
+import qualified Data.Set as Set
 import Data.Maybe
 import Data.Monoid
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Data.Time.Clock
 import qualified Merc.Parser as P
+import qualified Merc.Types.Channel as C
 import qualified Merc.Types.Message as M
 import qualified Merc.Types.Server as S
 import qualified Merc.Types.User as U
@@ -62,6 +63,7 @@ handleRegisteredMessage client server@S.Server{..} message@M.Message{..} = case 
   M.LUsers -> handleLUsersMessage client server
   M.Motd -> handleMotdMessage client server
   M.Join -> handleJoinMessage client server params
+  M.Part -> handlePartMessage client server params
 
   M.UnknownCommand command -> do
     atomically (errUnknownCommand client server command) >>= sendMessage client
@@ -108,11 +110,13 @@ closeClient client@S.Client{..} server@S.Server{..} = do
   hClose handle
 
   join $ atomically $ do
-    U.User {U.hostmask = U.Hostmask{U.nickname = nickname}, U.registered = registered} <- readTVar user
+    U.User {U.hostmask = U.Hostmask{U.nickname = nickname}, U.registered = registered, U.channels = channels} <- readTVar user
 
     when registered $ do
       modifyTVar clients $ \clients -> do
         Map.delete (U.normalizeNickname nickname) clients
+
+    mapM_ (partChannel' client server) (Set.toList channels)
 
     return $ do
       debugM "Merc.Server" $ "Deleted user " ++ show nickname

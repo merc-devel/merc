@@ -1,7 +1,9 @@
 module Merc.Channel (
   joinChannel,
   partChannel,
-  handleJoinMessage
+  partChannel',
+  handleJoinMessage,
+  handlePartMessage
 ) where
 
 import Control.Applicative
@@ -53,29 +55,32 @@ joinChannel client@S.Client{..} server@S.Server{..} channelName key = do
     channelName' = C.normalizeChannelName channelName
 
 partChannel :: S.Client -> S.Server -> C.ChannelName -> STM Bool
-partChannel client@S.Client{..} server@S.Server{..} channelName = do
+partChannel client server channelName =
+  partChannel' client server (C.normalizeChannelName channelName)
+
+partChannel' :: S.Client -> S.Server -> C.NormalizedChannelName -> STM Bool
+partChannel' client@S.Client{..} server@S.Server{..} channelName' = do
   U.User{U.hostmask = hostmask@U.Hostmask{U.nickname = nickname}, U.channels = userChannels} <- readTVar user
 
   if | channelName' `Set.member` userChannels -> do
       modifyTVar (S.channels server) $ \channels -> do
         let nickname' = U.normalizeNickname nickname
-        let channel = Map.findWithDefault (newChannel channelName) channelName' channels
-        let channel' = channel{
-          C.users = Map.delete nickname' (C.users channel)
-        }
+        case Map.lookup channelName' channels of
+          Nothing -> channels
+          Just channel -> do
+            let channel' = channel{
+              C.users = Map.delete nickname' (C.users channel)
+            }
 
-        let channels' = Map.insert channelName' channel' channels
+            let channels' = Map.insert channelName' channel' channels
 
-        if Map.null (C.users channel') then Map.delete channelName' channels' else channels'
+            if Map.null (C.users channel') then Map.delete channelName' channels' else channels'
 
       modifyTVar user $ \user@U.User{..} -> user{
         U.channels=Set.delete channelName' channels
       }
       return True
      | otherwise -> return False
-
-  where
-    channelName' = C.normalizeChannelName channelName
 
 handleJoinMessage :: S.Client -> S.Server -> [T.Text] -> IO Bool
 handleJoinMessage client server params = do
@@ -87,7 +92,7 @@ handleJoinMessage client server params = do
       joinRawChannels (T.split (==',') rawChannels) []
 
     _ ->
-      atomically (errNeedMoreParams client server M.Nick) >>= sendMessage client
+      atomically (errNeedMoreParams client server M.Join) >>= sendMessage client
   return True
   where
     joinRawChannel rawChannelName key = case A.parseOnly P.channelName rawChannelName of
@@ -100,3 +105,35 @@ handleJoinMessage client server params = do
 
     joinRawChannels rawChannels keys =
       mapM_ (uncurry joinRawChannel) $ zip rawChannels (map Just keys ++ repeat Nothing)
+
+handlePartMessage :: S.Client -> S.Server -> [T.Text] -> IO Bool
+handlePartMessage client server params = do
+  case params of
+    (rawChannels:reason:_) ->
+      partRawChannels reason (T.split (==',') rawChannels)
+
+    (rawChannels:_) ->
+      partRawChannels "" (T.split (==',') rawChannels)
+
+    _ ->
+      atomically (errNeedMoreParams client server M.Part) >>= sendMessage client
+  return True
+  where
+    partRawChannel reason rawChannelName = case A.parseOnly P.channelName rawChannelName of
+      Left _ ->
+        atomically (errNoSuchChannel client server rawChannelName) >>= sendMessage client
+      Right channelName -> join $ atomically $ do
+        didPart <- partChannel client server channelName
+
+        partMessage <- cmdPart client server channelName reason
+        notOnChannelMessage <- errNotOnChannel client server rawChannelName
+
+        return $ case didPart of
+          True -> do
+            sendMessage client partMessage
+            broadcastMessageToChannel server channelName partMessage
+          False ->
+            sendMessage client notOnChannelMessage
+
+    partRawChannels reason rawChannels =
+      mapM_ (partRawChannel reason) rawChannels
