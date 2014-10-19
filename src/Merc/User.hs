@@ -15,7 +15,7 @@ import Data.Monoid
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Data.Time.Clock
-import Merc.Message hiding (join)
+import Merc.Message
 import qualified Merc.Parser as P
 import qualified Merc.Types.Channel as C
 import qualified Merc.Types.Message as M
@@ -104,7 +104,7 @@ handleNickMessage client@S.Client{..} server params = do
                 _ -> sendMessage client e
 
             Nothing -> do
-              message <- nick client server nickname
+              message <- cmdNick client server nickname
 
               modifyTVar user $ \user -> user {
                 U.hostmask = (U.hostmask user) {

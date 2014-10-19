@@ -1,5 +1,6 @@
 module Merc.Channel (
   joinChannel,
+  partChannel,
   handleJoinMessage
 ) where
 
@@ -10,7 +11,7 @@ import qualified Data.Attoparsec.Text as A
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Data.Text as T
-import Merc.Message hiding (join)
+import Merc.Message
 import qualified Merc.Message as M
 import qualified Merc.Parser as P
 import qualified Merc.Types.Channel as C
@@ -94,8 +95,8 @@ handleJoinMessage client server params = do
         atomically (errNoSuchChannel client server rawChannelName) >>= sendMessage client
       Right channelName -> join $ atomically $ do
         didJoin <- joinChannel client server channelName key
-        joinMessage <- M.join client server channelName
-        return $ when didJoin (sendMessage client joinMessage)
+        joinMessage <- cmdJoin client server channelName
+        return $ when didJoin (broadcastMessageToChannel server channelName joinMessage)
 
     joinRawChannels rawChannels keys =
       mapM_ (uncurry joinRawChannel) $ zip rawChannels (map Just keys ++ repeat Nothing)

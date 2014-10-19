@@ -1,8 +1,10 @@
 module Merc.Message (
   sendMessage,
-  pong,
-  join,
-  nick,
+  broadcastMessageToChannel,
+
+  cmdPong,
+  cmdJoin,
+  cmdNick,
   errNoSuchChannel,
   errNeedMoreParams,
   errErroneousNickname,
@@ -25,6 +27,7 @@ module Merc.Message (
 ) where
 
 import Control.Concurrent.STM
+import Control.Monad
 import qualified Data.Map as Map
 import Data.Maybe
 import Data.Monoid
@@ -68,20 +71,32 @@ sendMessage S.Client{..} message = do
   debugM "Merc.Message" $ "Sending message: " ++ show message
   T.hPutStrLn handle $ T.take M.maxMessageLength $ emitMessage message
 
-broadcastMessageToChannel :: S.Server -> C.NormalizedChannelName -> M.Message -> IO ()
-broadcastMessageToChannel S.Server{..} channel message = do
-  return ()
+broadcastMessageToChannel :: S.Server -> C.ChannelName -> M.Message -> IO ()
+broadcastMessageToChannel S.Server{..} channelName message = join $ atomically $ do
+  channels <- readTVar channels
+  clients <- readTVar clients
 
-pong :: S.Client -> S.Server -> T.Text -> T.Text -> STM M.Message
-pong client server serverName value = do
+  return $ case Map.lookup channelName' channels of
+    Nothing -> return ()
+    Just C.Channel{C.users = users} -> sequence_ $ do
+      nickname <- Map.keys users
+
+      return $ case Map.lookup nickname clients of
+        Nothing -> return ()
+        Just client -> sendMessage client message
+  where
+    channelName' = C.normalizeChannelName channelName
+
+cmdPong :: S.Client -> S.Server -> T.Text -> T.Text -> STM M.Message
+cmdPong client server serverName value = do
   newReplyMessage client server M.Pong [serverName, value]
 
-join :: S.Client -> S.Server -> C.ChannelName -> STM M.Message
-join client server channelName = do
+cmdJoin :: S.Client -> S.Server -> C.ChannelName -> STM M.Message
+cmdJoin client server channelName = do
   newRelayMessage client server M.Join [C.showChannelName channelName]
 
-nick :: S.Client -> S.Server -> U.Nickname -> STM M.Message
-nick client server nickname = do
+cmdNick :: S.Client -> S.Server -> U.Nickname -> STM M.Message
+cmdNick client server nickname = do
   newRelayMessage client server M.Nick [U.unwrapName nickname]
 
 errNoSuchChannel :: S.Client -> S.Server -> T.Text -> STM M.Message

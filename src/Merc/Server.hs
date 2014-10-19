@@ -53,8 +53,8 @@ handleRegisteredMessage client server@S.Server{..} message@M.Message{..} = case 
 
   M.Ping -> do
     case params of
-      (value:serverName:_) -> atomically (pong client server serverName value) >>= sendMessage client
-      (value:_) -> atomically (pong client server serverName value) >>= sendMessage client
+      (value:serverName:_) -> atomically (cmdPong client server serverName value) >>= sendMessage client
+      (value:_) -> atomically (cmdPong client server serverName value) >>= sendMessage client
       _ -> atomically (errNeedMoreParams client server M.Ping) >>= sendMessage client
 
     return True
