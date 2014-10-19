@@ -64,12 +64,15 @@ handleRegisteredMessage client server@S.Server{..} message@M.Message{..} = case 
   M.Motd -> handleMotdMessage client server
   M.Join -> handleJoinMessage client server params
   M.Part -> handlePartMessage client server params
+  M.Names -> handleNamesMessage client server params
 
   M.UnknownCommand command -> do
     atomically (errUnknownCommand client server command) >>= sendMessage client
     return True
 
-  _ -> return True
+  c -> do
+    atomically (errUnknownCommand client server (fromJust $ M.getCommandName c)) >>= sendMessage client
+    return True
 
 runClient :: S.Client -> S.Server -> IO ()
 runClient client@S.Client{..} server = do

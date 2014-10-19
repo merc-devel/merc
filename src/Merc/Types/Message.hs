@@ -25,6 +25,8 @@ data Command = RplWelcome
              | RplLUserUnknown
              | RplLUserChannels
              | RplLUserMe
+             | RplNameReply
+             | RplEndOfNames
              | RplMotd
              | RplMotdStart
              | RplEndOfMotd
@@ -61,6 +63,8 @@ commandNames = B.fromList [
   (RplLUserUnknown, "253"),
   (RplLUserChannels, "254"),
   (RplLUserMe, "255"),
+  (RplNameReply, "353"),
+  (RplEndOfNames, "366"),
   (RplMotd, "372"),
   (RplMotdStart, "375"),
   (RplEndOfMotd, "376"),

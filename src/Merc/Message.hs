@@ -25,7 +25,9 @@ module Merc.Message (
   rplLUserMe,
   rplMotd,
   rplMotdStart,
-  rplEndOfMotd
+  rplEndOfMotd,
+  rplNameReply,
+  rplEndOfNames
 ) where
 
 import Control.Concurrent.STM
@@ -223,5 +225,14 @@ rplMotdStart client server@S.Server{..} =
     "- " <> serverName <> " Message of the Day"]
 
 rplEndOfMotd :: S.Client -> S.Server -> STM M.Message
-rplEndOfMotd client server@S.Server{..} =
+rplEndOfMotd client server =
   newReplyMessage client server M.RplEndOfMotd ["End of /MOTD command"]
+
+rplNameReply :: S.Client -> S.Server -> [(U.Nickname, C.Role)] -> STM M.Message
+rplNameReply client server userRoles =
+  newReplyMessage client server M.RplNameReply [
+    T.intercalate " " (map (\(n, _) -> U.showNickname n) userRoles)]
+
+rplEndOfNames :: S.Client -> S.Server -> C.ChannelName -> STM M.Message
+rplEndOfNames client server channelName =
+  newReplyMessage client server M.RplEndOfNames [C.showChannelName channelName, "End of /NAMES command"]
