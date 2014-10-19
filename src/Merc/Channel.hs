@@ -79,22 +79,23 @@ partChannel client@S.Client{..} server@S.Server{..} channelName = do
 handleJoinMessage :: S.Client -> S.Server -> [T.Text] -> IO Bool
 handleJoinMessage client server params = do
   case params of
-    (rawChannels:rawKeys:_) -> do
-      let Right channels = A.parseOnly channelList rawChannels
-      let keys = T.split (==',') rawKeys
-      joinChannels channels keys
+    (rawChannels:rawKeys:_) ->
+      joinRawChannels (T.split (==',') rawChannels) (T.split (==',') rawKeys)
 
-    (rawChannels:_) -> do
-      let Right channels = A.parseOnly channelList rawChannels
-      joinChannels channels []
+    (rawChannels:_) ->
+      joinRawChannels (T.split (==',') rawChannels) []
 
-    _ -> atomically (errNeedMoreParams client server M.Nick) >>= sendMessage client
+    _ ->
+      atomically (errNeedMoreParams client server M.Nick) >>= sendMessage client
   return True
   where
-    joinChannel' channelName key = join $ atomically $ do
-      didJoin <- joinChannel client server channelName key
-      joinMessage <- M.join client server channelName
-      return $ when didJoin (sendMessage client joinMessage)
+    joinRawChannel rawChannelName key = case A.parseOnly P.channelName rawChannelName of
+      Left _ ->
+        atomically (errNoSuchChannel client server rawChannelName) >>= sendMessage client
+      Right channelName -> join $ atomically $ do
+        didJoin <- joinChannel client server channelName key
+        joinMessage <- M.join client server channelName
+        return $ when didJoin (sendMessage client joinMessage)
 
-    joinChannels channels keys =
-      mapM_ (uncurry joinChannel') $ zip channels (map Just keys ++ repeat Nothing)
+    joinRawChannels rawChannels keys =
+      mapM_ (uncurry joinRawChannel) $ zip rawChannels (map Just keys ++ repeat Nothing)

@@ -28,6 +28,7 @@ data Command = RplWelcome
              | RplMotd
              | RplMotdStart
              | RplEndOfMotd
+             | ErrNoSuchChannel
              | ErrUnknownCommand
              | ErrErroneousNickname
              | ErrNicknameInUse
@@ -62,6 +63,7 @@ commandNames = B.fromList [
   (RplMotd, "372"),
   (RplMotdStart, "375"),
   (RplEndOfMotd, "376"),
+  (ErrNoSuchChannel, "403"),
   (ErrUnknownCommand, "421"),
   (ErrErroneousNickname, "432"),
   (ErrNicknameInUse, "432"),

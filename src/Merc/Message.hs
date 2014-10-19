@@ -3,6 +3,7 @@ module Merc.Message (
   pong,
   join,
   nick,
+  errNoSuchChannel,
   errNeedMoreParams,
   errErroneousNickname,
   errNicknameInUse,
@@ -82,6 +83,10 @@ join client server channelName = do
 nick :: S.Client -> S.Server -> U.Nickname -> STM M.Message
 nick client server nickname = do
   newRelayMessage client server M.Nick [U.unwrapName nickname]
+
+errNoSuchChannel :: S.Client -> S.Server -> T.Text -> STM M.Message
+errNoSuchChannel client server channel =
+  newReplyMessage client server M.ErrNoSuchChannel [channel, "No such channel"]
 
 errNeedMoreParams :: S.Client -> S.Server -> M.Command -> STM M.Message
 errNeedMoreParams client server command =
