@@ -1,4 +1,5 @@
 module Merc.Channel (
+  joinChannel,
   handleJoinMessage
 ) where
 
@@ -27,21 +28,50 @@ newChannel channelName = C.Channel {
   C.topic = ""
 }
 
-joinChannel :: S.Client -> S.Server -> C.ChannelName -> Maybe T.Text -> IO ()
-joinChannel client@S.Client{..} server@S.Server{..} channelName key = join $ atomically $ do
+joinChannel :: S.Client -> S.Server -> C.ChannelName -> Maybe T.Text -> STM Bool
+joinChannel client@S.Client{..} server@S.Server{..} channelName key = do
   U.User{U.hostmask = hostmask@U.Hostmask{U.nickname = nickname}, U.channels = userChannels} <- readTVar user
-  let nickname' = U.normalizeNickname nickname
 
-  -- TODO: support keys
-  modifyTVar (S.channels server) $ \channels -> do
-    let channel = Map.findWithDefault (newChannel channelName) channelName' channels
-    Map.insert channelName' channel{
-      C.users = Map.insert nickname' C.ChannelUser{C.role = C.NoRole} (C.users channel)
-    } channels
+  if | not (channelName' `Set.member` userChannels) -> do
+      -- TODO: support keys
+      modifyTVar (S.channels server) $ \channels -> do
+        let nickname' = U.normalizeNickname nickname
+        let channel = Map.findWithDefault (newChannel channelName) channelName' channels
 
-  modifyTVar user $ \user@U.User{..} -> user{U.channels=Set.insert channelName' channels}
+        Map.insert channelName' channel{
+          C.users = Map.insert nickname' C.ChannelUser{C.role = C.NoRole} (C.users channel)
+        } channels
 
-  return $ atomically (M.join client server channelName) >>= sendMessage client
+      modifyTVar user $ \user@U.User{..} -> user{
+        U.channels=Set.insert channelName' channels
+      }
+      return True
+     | otherwise -> return False
+
+  where
+    channelName' = C.normalizeChannelName channelName
+
+partChannel :: S.Client -> S.Server -> C.ChannelName -> STM Bool
+partChannel client@S.Client{..} server@S.Server{..} channelName = do
+  U.User{U.hostmask = hostmask@U.Hostmask{U.nickname = nickname}, U.channels = userChannels} <- readTVar user
+
+  if | channelName' `Set.member` userChannels -> do
+      modifyTVar (S.channels server) $ \channels -> do
+        let nickname' = U.normalizeNickname nickname
+        let channel = Map.findWithDefault (newChannel channelName) channelName' channels
+        let channel' = channel{
+          C.users = Map.delete nickname' (C.users channel)
+        }
+
+        let channels' = Map.insert channelName' channel' channels
+
+        if Map.null (C.users channel') then Map.delete channelName' channels' else channels'
+
+      modifyTVar user $ \user@U.User{..} -> user{
+        U.channels=Set.delete channelName' channels
+      }
+      return True
+     | otherwise -> return False
 
   where
     channelName' = C.normalizeChannelName channelName
@@ -61,5 +91,10 @@ handleJoinMessage client server params = do
     _ -> atomically (errNeedMoreParams client server M.Nick) >>= sendMessage client
   return True
   where
+    joinChannel' channelName key = join $ atomically $ do
+      didJoin <- joinChannel client server channelName key
+      joinMessage <- M.join client server channelName
+      return $ when didJoin (sendMessage client joinMessage)
+
     joinChannels channels keys =
-      mapM_ (uncurry (joinChannel client server)) $ zip channels (map Just keys ++ repeat Nothing)
+      mapM_ (uncurry joinChannel') $ zip channels (map Just keys ++ repeat Nothing)

@@ -67,6 +67,10 @@ sendMessage S.Client{..} message = do
   debugM "Merc.Message" $ "Sending message: " ++ show message
   T.hPutStrLn handle $ T.take M.maxMessageLength $ emitMessage message
 
+broadcastMessageToChannel :: S.Server -> C.NormalizedChannelName -> M.Message -> IO ()
+broadcastMessageToChannel S.Server{..} channel message = do
+  return ()
+
 pong :: S.Client -> S.Server -> T.Text -> T.Text -> STM M.Message
 pong client server serverName value = do
   newReplyMessage client server M.Pong [serverName, value]
