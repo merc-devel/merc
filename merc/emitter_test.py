@@ -19,11 +19,6 @@ class EmitMessageTest(unittest.TestCase):
         None, "PRIVMSG", ["#butts", "hello world"]) == \
         "PRIVMSG #butts :hello world"
 
-  def test_emit_no_trailing(self):
-    assert emitter.emit_message(
-        "irc.foo.org", "PRIVMSG", ["#butts", "hello"]) == \
-        ":irc.foo.org PRIVMSG #butts hello"
-
   def test_emit_bad_params(self):
     with self.assertRaises(emitter.EmitterError):
       emitter.emit_message(

@@ -21,10 +21,7 @@ def emit_message(prefix, command, params):
       if " " in param:
         raise EmitterError("malformed message")
 
-    if " " in last or last[0] == ":":
-      buf.extend(init)
-      buf.append(":" + last)
-    else:
-      buf.extend(params)
+    buf.extend(init)
+    buf.append(":" + last)
 
   return " ".join(buf)

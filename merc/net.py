@@ -13,6 +13,7 @@ class Protocol(asyncio.Protocol):
 
   def connection_made(self, transport):
     self.client = self.server.new_client(transport)
+    self.client.on_connect()
 
   def data_received(self, data):
     self.buffer += data

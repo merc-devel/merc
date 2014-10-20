@@ -1,4 +1,7 @@
+import aiodns
+import asyncio
 import collections
+import ipaddress
 import re
 
 from merc import emitter
@@ -73,6 +76,37 @@ class Client(object):
   def relay_to_all(self, message, prefix=None):
     for channel in self.channels.values():
       self.relay_to_channel(channel, message, prefix)
+
+  def on_connect(self):
+    self.send_reply(commands.Notice("*", "*** Looking up your hostname..."))
+    ip = ipaddress.ip_address(self.host)
+
+    is_ipv4 = False
+
+    if isinstance(ip, ipaddress.IPv4Address):
+      rip = ".".join(reversed(ip.exploded.split("."))) + ".in-addr.arpa."
+      is_ipv4 = False
+    elif isinstance(ip, ipaddress.IPv6Address):
+      rip = ".".join(reversed("".join(ip.exploded.split(":")))) + ".ip6.arpa."
+
+    @asyncio.coroutine
+    def lookup_coro():
+      try:
+        forward, *_ = yield from self.server.resolver.query(rip, "PTR")
+        backward, *_ = yield from self.server.resolver.query(
+            forward, "AAAA" if not is_ipv4 else "A")
+
+        if ip == ipaddress.ip_address(backward):
+          self.send_reply(commands.Notice("*", "*** Found your hostname"))
+          self.host = forward
+        else:
+          self.send_reply(commands.Notice(
+              "*", "*** Hostname does not resolve correctly"))
+      except aiodns.error.DNSError:
+        self.send_reply(commands.Notice("*",
+                                        "*** Couldn't look up your hostname"))
+
+    asyncio.async(lookup_coro(), loop=self.server.loop)
 
   def on_raw_message(self, prefix, command, params):
     try:

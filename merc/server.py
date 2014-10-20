@@ -1,3 +1,4 @@
+import aiodns
 import argparse
 import asyncio
 import datetime
@@ -51,10 +52,14 @@ class Server(object):
       "NICKLEN": client.Client.MAX_NICKNAME_LENGTH
     }
 
-  def __init__(self, name, network_name, motd):
+  def __init__(self, name, network_name, motd, loop):
+    self.loop = loop
+
     self.name = name
     self.network_name = network_name
     self.motd = motd
+
+    self.resolver = aiodns.DNSResolver(loop=loop)
 
     self.creation_time = datetime.datetime.utcnow()
 
@@ -135,7 +140,7 @@ def start(config, loop=None):
   with open(config.motd_file, "r") as f:
     motd = f.read()
 
-  server = Server(config.server_name, config.network_name, motd)
+  server = Server(config.server_name, config.network_name, motd, loop)
   coro = loop.create_server(
       lambda: net.Protocol(server), config.bind_host, config.bind_port)
   proto_server = loop.run_until_complete(coro)
