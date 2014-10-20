@@ -6,7 +6,7 @@ def emit_hostmask(nickname, username, host):
   return "{}!{}@{}".format(nickname, username, host)
 
 
-def emit_message(prefix, command, params, force_trailig=False):
+def emit_message(prefix, command, params, force_trailing=False):
   buf = []
 
   if prefix is not None:

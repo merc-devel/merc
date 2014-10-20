@@ -35,7 +35,7 @@ class YourHost(ReplyMessage):
 
 class Created(ReplyMessage):
   NAME = "003"
-    FORCE_TRAILING = True
+  FORCE_TRAILING = True
 
   def as_reply_params(self, client):
     return ["This server was created {}".format(
