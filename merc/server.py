@@ -110,6 +110,9 @@ class Server(object):
       del self.clients[client.normalized_nickname]
     client.on_close()
 
+  def get_channel(self, name):
+    return self.channels[util.to_irc_lower(name)]
+
   def get_or_new_channel(self, name):
     normalized_channel_name = util.to_irc_lower(name)
 

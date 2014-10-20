@@ -149,7 +149,7 @@ class Privmsg(Command):
   def handle_for(self, client, prefix):
     for channel_name in self.channel_names:
       if channel_name[0] == "#":
-        channel = client.server.channels[channel_name]
+        channel = client.server.get_channel(channel_name)
         client.relay_to_channel(channel, Privmsg(channel_name, self.text))
       else:
         user = client.server.clients[util.to_irc_lower(channel_name)]
@@ -171,7 +171,7 @@ class Notice(Command):
   def handle_for(self, client, prefix):
     for channel_name in self.channel_names:
       if channel_name[0] == "#":
-        channel = client.server.channels[channel_name]
+        channel = client.server.get_channel(channel_name)
         client.relay_to_channel(channel, Notice(channel_name, self.text))
       else:
         user = client.server.clients[util.to_irc_lower(channel_name)]
@@ -245,7 +245,7 @@ class Names(Command):
       client.send_reply(replies.EndOfNames(None))
     else:
       for channel_name in self.channel_names:
-        channel = client.server.channels[channel_name]
+        channel = client.server.get_channel(channel_name)
         client.send_reply(replies.NameReply("@", channel.name, channel.users))
         client.send_reply(replies.EndOfNames(channel.name))
 
@@ -263,7 +263,7 @@ class Topic(Command):
 
   @requires_registration
   def handle_for(self, client, prefix):
-    channel = client.server.channels[self.channel_name]
+    channel = client.server.get_channel(self.channel_name)
 
     if self.text is None:
       if channel.topic:
