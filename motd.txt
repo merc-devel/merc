@@ -1,0 +1,9 @@
+
+  _ __ ___   ___ _ __ ___
+ | '_ ` _ \ / _ \ '__/ __|
+ | | | | | |  __/ | | (__ _
+ |_| |_| |_|\___|_|  \___(_)
+
+The Magnificent Ethereal Relay Chat daemon.
+
+Join us on #merc-devel @ irc.freenode.net (ironic, I know)!

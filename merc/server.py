@@ -25,6 +25,8 @@ def make_config_parser():
                       default="localhost")
   parser.add_argument("--bind-port", help="Port to bind to.",
                       default=6667)
+  parser.add_argument("--motd-file", help="MOTD file to read the MOTD from.",
+                      default="motd.txt")
   return parser
 
 
@@ -49,17 +51,15 @@ class Server(object):
       "NICKLEN": client.Client.MAX_NICKNAME_LENGTH
     }
 
-  def __init__(self, name, network_name):
+  def __init__(self, name, network_name, motd):
     self.name = name
     self.network_name = network_name
+    self.motd = motd
+
     self.creation_time = datetime.datetime.utcnow()
 
     self.clients = {}
     self.channels = {}
-
-    self.motd = """blah blah blah
-
-here's an MOTD"""
 
   def new_client(self, transport):
     c = client.Client(self, transport)
@@ -132,7 +132,10 @@ def start(config, loop=None):
   if loop is None:
     loop = asyncio.get_event_loop()
 
-  server = Server(config.server_name, config.network_name)
+  with open(config.motd_file, "r") as f:
+    motd = f.read()
+
+  server = Server(config.server_name, config.network_name, motd)
   coro = loop.create_server(
       lambda: net.Protocol(server), config.bind_host, config.bind_port)
   proto_server = loop.run_until_complete(coro)
