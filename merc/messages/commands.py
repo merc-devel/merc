@@ -4,7 +4,7 @@ from merc.messages import message
 
 class Nick(message.Message):
   NAME = "NICK"
-  ARITY = 1
+  MIN_ARITY = 1
 
   def __init__(self, nickname, *args):
     self.nickname = nickname
@@ -21,7 +21,7 @@ class Nick(message.Message):
 
 class User(message.Message):
   NAME = "USER"
-  ARITY = 4
+  MIN_ARITY = 4
 
   def __init__(self, user, hostname, servername, realname, *args):
     self.user = user
@@ -42,7 +42,7 @@ class User(message.Message):
 
 class Privmsg(message.Message):
   NAME = "PRIVMSG"
-  ARITY = 2
+  MIN_ARITY = 2
 
   def __init__(self, channel, text, *args):
     self.channel = channel
@@ -54,7 +54,7 @@ class Privmsg(message.Message):
 
 class Notice(message.Message):
   NAME = "NOTICE"
-  ARITY = 2
+  MIN_ARITY = 2
 
   def __init__(self, channel, text, *args):
     self.channel = channel

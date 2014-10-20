@@ -6,7 +6,7 @@ class Message(object):
   def with_params(cls, params):
     from merc.messages import errors
 
-    if len(params) < cls.ARITY:
+    if len(params) < cls.MIN_ARITY:
       raise errors.NeedMoreParams(cls.NAME)
 
     return cls(*params)
