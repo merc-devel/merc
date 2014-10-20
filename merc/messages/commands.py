@@ -265,7 +265,7 @@ class Topic(Command):
   NAME = "TOPIC"
   MIN_ARITY = 1
 
-  def __init__(self, channel_name, text=None):
+  def __init__(self, channel_name, text=None, *args):
     self.channel_name = channel_name
     self.text = text
 
@@ -297,7 +297,7 @@ class Quit(Command):
   NAME = "QUIT"
   MIN_ARITY = 0
 
-  def __init__(self, reason=None):
+  def __init__(self, reason=None, *args):
     self.reason = reason
 
   @requires_registration
@@ -310,3 +310,24 @@ class Quit(Command):
     if self.reason is not None:
       params.append(self.reason)
     return params
+
+
+class IsOn(Command):
+  NAME = "ISON"
+  MIN_ARITY = 0
+
+  def __init__(self, *nicknames):
+    self.nicknames = nicknames
+
+  @requires_registration
+  def handle_for(self, client, prefix):
+    is_on = []
+    for nickname in self.nicknames:
+      try:
+        client.server.get_client(nickname)
+      except KeyError:
+        pass
+      else:
+        is_on.append(nickname)
+
+    client.send_reply(replies.IsOn(is_on))

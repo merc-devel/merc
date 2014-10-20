@@ -101,6 +101,16 @@ class LUserMe(ReplyMessage):
         1)]
 
 
+class IsOn(ReplyMessage):
+  NAME = "303"
+
+  def __init__(self, nicknames):
+    self.nicknames = nicknames
+
+  def as_reply_params(self, client):
+    return [" ".join(self.nicknames)]
+
+
 class NoTopic(ReplyMessage):
   NAME = "331"
 

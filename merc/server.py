@@ -110,6 +110,9 @@ class Server(object):
       del self.clients[client.normalized_nickname]
     client.on_close()
 
+  def get_client(self, name):
+    return self.clients[util.to_irc_lower(name)]
+
   def get_channel(self, name):
     return self.channels[util.to_irc_lower(name)]
 
