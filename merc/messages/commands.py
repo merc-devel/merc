@@ -1,10 +1,33 @@
+import functools
 import itertools
 
 from merc.messages import errors
 from merc.messages import message
 
 
-class Nick(message.Message):
+def requires_registration(f):
+  @functools.wraps(f)
+  def _wrapper(self, client, prefix):
+    if client.is_registered:
+      f(self, client, prefix)
+  return _wrapper
+
+
+class Command(message.Message):
+  @classmethod
+  def with_params(cls, params):
+    from merc.messages import errors
+
+    if len(params) < cls.MIN_ARITY:
+      raise errors.NeedMoreParams(cls.NAME)
+
+    return cls(*params)
+
+  def handle_for(self, client, prefix):
+    pass
+
+
+class Nick(Command):
   NAME = "NICK"
   MIN_ARITY = 1
 
@@ -21,7 +44,7 @@ class Nick(message.Message):
       client.register()
 
 
-class User(message.Message):
+class User(Command):
   NAME = "USER"
   MIN_ARITY = 4
 
@@ -42,7 +65,7 @@ class User(message.Message):
       client.register()
 
 
-class Privmsg(message.Message):
+class Privmsg(Command):
   NAME = "PRIVMSG"
   MIN_ARITY = 2
 
@@ -54,7 +77,7 @@ class Privmsg(message.Message):
     return [self.channel, self.text]
 
 
-class Notice(message.Message):
+class Notice(Command):
   NAME = "NOTICE"
   MIN_ARITY = 2
 
@@ -66,7 +89,7 @@ class Notice(message.Message):
     return [self.channel, self.text]
 
 
-class Join(message.Message):
+class Join(Command):
   NAME = "JOIN"
   MIN_ARITY = 1
 
@@ -74,6 +97,7 @@ class Join(message.Message):
     self.channel_names = channel_names.split(",")
     self.keys = keys.split(",") if keys is not None else []
 
+  @requires_registration
   def handle_for(self, client, prefix):
     for channel_name, key in itertools.zip_longest(self.channel_names,
                                                    self.keys,
