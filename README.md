@@ -17,4 +17,16 @@ performance, ease-of-use, and extensibility.
  * Unicode case-mapping, e.g. the channel name `#straße` is mapped to
    `#STRASSE`.
 
- * ... and hopefully more to come.
+ * Unicode nickname support.
+
+ * ... and hopefully more things to come!
+
+# Running
+
+ 1. Install all the required dependencies:
+
+        pip3 install -r requirements.txt
+
+ 2. Run the server.
+
+        python3 -m merc
