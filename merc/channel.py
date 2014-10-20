@@ -44,6 +44,8 @@ class Channel(object):
   MODES_WITHOUT_PARAMS = set("s")
   MODES_WITH_PARAMS = set(ChannelUser.ROLE_MODES.values())
 
+  MAX_TOPIC_LENGTH = 390
+
   def __init__(self, name):
     if self.CHANNEL_REGEX.match(name) is None:
       raise errors.NoSuchChannel(name)
@@ -74,4 +76,5 @@ class Channel(object):
     if not text:
       self.topic = None
     else:
-      self.topic = Topic(text, client.hostmask, datetime.datetime.utcnow())
+      self.topic = Topic(text[:self.MAX_TOPIC_LENGTH],
+                         client.hostmask, datetime.datetime.utcnow())

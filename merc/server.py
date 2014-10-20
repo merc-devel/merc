@@ -32,6 +32,20 @@ def make_config_parser():
 
 
 class Server(object):
+  def __init__(self, name, network_name, motd, loop):
+    self.loop = loop
+
+    self.name = name
+    self.network_name = network_name
+    self.motd = motd
+
+    self.resolver = aiodns.DNSResolver(loop=loop)
+
+    self.creation_time = datetime.datetime.utcnow()
+
+    self.clients = {}
+    self.channels = {}
+
   @property
   def isupport(self):
     user_channel_modes = []
@@ -49,22 +63,9 @@ class Server(object):
       "PREFIX": "({}){}".format("".join(user_channel_modes),
                                 "".join(user_channel_chars)),
       "CHARSET": "utf-8",
-      "NICKLEN": client.Client.MAX_NICKNAME_LENGTH
+      "NICKLEN": client.Client.MAX_NICKNAME_LENGTH,
+      "TOPICLEN": channel.Channel.MAX_TOPIC_LENGTH
     }
-
-  def __init__(self, name, network_name, motd, loop):
-    self.loop = loop
-
-    self.name = name
-    self.network_name = network_name
-    self.motd = motd
-
-    self.resolver = aiodns.DNSResolver(loop=loop)
-
-    self.creation_time = datetime.datetime.utcnow()
-
-    self.clients = {}
-    self.channels = {}
 
   def new_client(self, transport):
     c = client.Client(self, transport)

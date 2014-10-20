@@ -29,6 +29,8 @@ class Client(object):
     self.host = None
     self.realname = None
 
+    self.away_message = None
+
     self.is_registered = False
     self.disconnect_reason = None
 
@@ -41,6 +43,10 @@ class Client(object):
   @property
   def displayed_nickname(self):
     return self.nickname if self.is_registered else "*"
+
+  @property
+  def is_away(self):
+    return self.away_message is not None
 
   @property
   def normalized_nickname(self):

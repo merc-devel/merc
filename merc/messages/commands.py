@@ -331,3 +331,25 @@ class IsOn(Command):
         is_on.append(nickname)
 
     client.send_reply(replies.IsOn(is_on))
+
+
+class UserHost(Command):
+  NAME = "USERHOST"
+  MIN_ARITY = 1
+
+  def __init__(self, *nicknames):
+    self.nicknames = nicknames[:5]
+
+  @requires_registration
+  def handle_for(self, client, prefix):
+    user_hosts = []
+    for nickname in self.nicknames:
+      try:
+        user = client.server.get_client(nickname)
+      except KeyError:
+        pass
+      else:
+        user_hosts.append("{}={}{}".format(
+            nickname, "-" if user.is_away else "+", user.hostmask))
+
+    client.send_reply(replies.UserHost(user_hosts))

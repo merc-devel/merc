@@ -101,6 +101,16 @@ class LUserMe(ReplyMessage):
         1)]
 
 
+class UserHost(ReplyMessage):
+  NAME = "302"
+
+  def __init__(self, user_hosts):
+    self.user_hosts = user_hosts
+
+  def as_reply_params(self, client):
+    return [" ".join(self.user_hosts)]
+
+
 class IsOn(ReplyMessage):
   NAME = "303"
 
