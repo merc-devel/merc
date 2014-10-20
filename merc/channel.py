@@ -102,6 +102,14 @@ class Channel(object):
   def has_client(self, client):
     return client.id in self.users
 
+  def get_visible_users_for(self, client):
+    if client.is_in_channel(self):
+      yield from self.users.values()
+
+    for user in self.users.values():
+      if not user.client.is_invisible:
+        yield user
+
   def mutate_disallowing_external_messages(self, flag):
     if self.is_disallowing_external_messages == flag:
       return False
