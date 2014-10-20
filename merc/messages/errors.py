@@ -63,6 +63,11 @@ class UnknownCommand(ParametrizedErrorMessage):
   REASON = "Unknown command"
 
 
+class UnknownMode(ParametrizedErrorMessage):
+  NAME = "472"
+  REASON = "is an unknown mode char to me"
+
+
 class UmodeUnknownFlag(SimpleErrorMessage):
   NAME = "501"
   REASON = "Unknown MODE flag"

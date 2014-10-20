@@ -1,4 +1,6 @@
 import merc
+
+from merc import util
 from merc.messages import message
 
 
@@ -69,7 +71,8 @@ class UmodeIs(ReplyMessage):
     self.modes = modes
 
   def as_reply_params(self, client):
-    return ["+" + "".join(sorted(self.modes))]
+    flags, args = util.show_modes(self.modes)
+    return [flags] + args
 
 
 class LUserClient(ReplyMessage):
@@ -139,6 +142,18 @@ class EndOfWho(ReplyMessage):
 
   def as_reply_params(self, client):
     return ["End of /MOTD command"]
+
+
+class ChannelModeIs(ReplyMessage):
+  NAME = "324"
+
+  def __init__(self, channel_name, modes):
+    self.channel_name = channel_name
+    self.modes = modes
+
+  def as_reply_params(self, client):
+    flags, args = util.show_modes(self.modes)
+    return [self.channel_name, flags] + args
 
 
 class NoTopic(ReplyMessage):

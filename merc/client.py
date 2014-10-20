@@ -180,9 +180,11 @@ class Client(object):
 
   @property
   def modes(self):
-    modes = set()
+    modes = {}
+
     if self.is_invisible:
-      modes.add("i")
+      modes["i"] = True
+
     return modes
 
   MODES = {

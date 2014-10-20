@@ -379,7 +379,8 @@ class Mode(Command):
         except errors.NoSuchNick:
           raise errors.NoSuchChannel(self.target)
 
-        # TODO: handle this!
+        client.send_reply(replies.ChannelModeIs(channel.name, channel.modes))
+        # TODO: send creation time
       else:
         user = client.server.get_client(self.target)
         if user is not client:

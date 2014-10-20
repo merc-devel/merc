@@ -59,11 +59,19 @@ class Channel(object):
     self.users = {}
 
   def set_mode(self, mode, param=None):
-    set, _ = self.MODES[mode]
+    try:
+      set, _ = self.MODES[mode]
+    except KeyError:
+      raise errors.UnknownMode(mode)
+
     set(self, param)
 
   def unset_mode(self, mode, param=None):
-    unset, _ = self.MODES[mode]
+    try:
+      _, unset = self.MODES[mode]
+    except KeyError:
+      raise errors.UnknownMode(mode)
+
     unset(self, param)
 
   @property
@@ -95,6 +103,18 @@ class Channel(object):
 
   def mutate_secret(self, flag):
     self.is_secret = flag
+
+  @property
+  def modes(self):
+    modes = {}
+
+    if self.is_secret:
+      modes["s"] = True
+
+    if self.is_disallowing_external_messages:
+      modes["n"] = True
+
+    return modes
 
   MODES = {
     "n": util.make_flag_pair(mutate_disallowing_external_messages),
