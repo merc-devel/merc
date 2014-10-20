@@ -65,7 +65,7 @@ class Channel(object):
     except KeyError:
       raise errors.UnknownMode(mode)
 
-    set(self, param)
+    return set(self, param)
 
   def unset_mode(self, mode, param=None):
     try:
@@ -73,7 +73,7 @@ class Channel(object):
     except KeyError:
       raise errors.UnknownMode(mode)
 
-    unset(self, param)
+    return unset(self, param)
 
   @property
   def normalized_name(self):
@@ -104,9 +104,11 @@ class Channel(object):
 
   def mutate_disallowing_external_messages(self, flag):
     self.is_disallowing_external_messages = flag
+    return True
 
   def mutate_secret(self, flag):
     self.is_secret = flag
+    return True
 
   @property
   def modes(self):

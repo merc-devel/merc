@@ -75,7 +75,7 @@ class Client(object):
     except KeyError:
       raise errors.UmodeUnknownFlag
 
-    set(self, param)
+    return set(self, param)
 
   def unset_mode(self, mode, param=None):
     try:
@@ -83,7 +83,7 @@ class Client(object):
     except KeyError:
       raise errors.UmodeUnknownFlag
 
-    unset(self, param)
+    return unset(self, param)
 
   def register(self):
     self.server.register_client(self)
@@ -180,6 +180,7 @@ class Client(object):
 
   def mutate_invisible(self, flag):
     self.is_invisible = flag
+    return True
 
   @property
   def modes(self):
