@@ -219,10 +219,14 @@ class Part(Command):
   @requires_registration
   def handle_for(self, client, prefix):
     for channel_name in self.channel_names:
-      channel = client.server.part_channel(client, channel_name)
-
-      client.relay_to_channel(channel, Part(channel.name, self.reason))
-      client.relay_to_self(Part(channel.name, self.reason))
+      try:
+        channel = client.server.get_channel(channel_name)
+      except KeyError:
+        client.send_reply(errors.NoSuchChannel(channel_name))
+      else:
+        client.server.part_channel(client, channel_name)
+        client.relay_to_channel(channel, Part(channel.name, self.reason))
+        client.relay_to_self(Part(channel.name, self.reason))
 
   def as_params(self, client):
     params = [",".join(self.channel_names)]
@@ -245,9 +249,13 @@ class Names(Command):
       client.send_reply(replies.EndOfNames(None))
     else:
       for channel_name in self.channel_names:
-        channel = client.server.get_channel(channel_name)
-        client.send_reply(replies.NameReply("@", channel.name, channel.users))
-        client.send_reply(replies.EndOfNames(channel.name))
+        try:
+          channel = client.server.get_channel(channel_name)
+        except KeyError:
+          client.send_reply(errors.NoSuchChannel(channel_name))
+        else:
+          client.send_reply(replies.NameReply("@", channel.name, channel.users))
+          client.send_reply(replies.EndOfNames(channel.name))
 
   def as_params(self, client):
     return [",".join(self.channel_names)]

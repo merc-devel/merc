@@ -127,7 +127,7 @@ class Server(object):
     return channel
 
   def part_channel(self, client, name):
-    channel = self.get_or_new_channel(name)
+    channel = self.get_channel(name)
     channel.part(client)
 
     if not channel.users:
