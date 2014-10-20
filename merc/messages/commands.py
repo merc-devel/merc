@@ -418,7 +418,9 @@ class Mode(Command):
         continue
       flags.append(state + c)
 
-    flags_with_args = itertools.zip_longest(flags, self.args, fillvalue=None)
+    args_iter = iter(self.args)
+
+    applied_flags = []
 
     if util.is_channel_name(self.target):
       try:
@@ -426,28 +428,68 @@ class Mode(Command):
       except errors.NoSuchNick:
         raise errors.NoSuchChannel(self.target)
 
-      for flag, arg in flags_with_args:
+      expanded_args = []
+
+      for flag in flags:
+        state, c = flags
+        arg = None
+
+        if c in channel.Channel.MODES_WITH_PARAMS:
+          try:
+            arg = next(args_iter)
+          except StopIteration:
+            pass
+        expanded_args.append(None)
+
+      for flag, arg in zip(flags, expanded_args):
         state, c = flag
         if state == "+":
-          channel.set_mode(c, arg)
+          if channel.set_mode(c, arg):
+            applied_flags.append((flag, arg))
         elif state == "-":
-          channel.unset_mode(c, arg)
-      client.relay_to_channel(channel, Mode(channel.name, self.flags, *self.args))
-      client.relay_to_self(Mode(channel.name, self.flags, *self.args))
+          if channel.unset_mode(c, arg):
+            applied_flags.append((flag, arg))
+
+      if applied_flags:
+        flags, args = self._coalesce_flags(applied_flags)
+        client.relay_to_channel(channel, Mode(channel.name, flags, *args))
+        client.relay_to_self(Mode(channel.name, flags, *args))
     else:
       user = client.server.get_client(self.target)
 
       if user is not client:
         raise errors.UsersDontMatch
 
-      for flag, arg in flags_with_args:
+      for flag in flags:
+        # TODO: do users have parametrized flags?
         state, c = flag
         if state == "+":
-          user.set_mode(c, arg)
+          if user.set_mode(c, None):
+            applied_flags.append((flag, None))
         elif state == "-":
-          user.unset_mode(c, arg)
-      client.relay_to_self(Mode(user.nickname, self.flags, *self.args))
+          if user.unset_mode(c, None):
+            applied_flags.append((flag, None))
 
+      if applied_flags:
+        flags, args = self._coalesce_flags(applied_flags)
+        client.relay_to_self(Mode(user.nickname, flags, *args))
+
+  def _coalesce_flags(self, applied_flags):
+    flags = ""
+    args = []
+
+    last_state = None
+    for flag, arg in applied_flags:
+      state, c = flag
+      if state != last_state:
+        flags += state
+        last_state = state
+      flags += c
+
+      if arg is not None:
+        args.append(arg)
+
+    return flags, args
 
 class Who(Command):
   NAME = "WHO"

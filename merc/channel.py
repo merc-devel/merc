@@ -103,10 +103,16 @@ class Channel(object):
     return client.id in self.users
 
   def mutate_disallowing_external_messages(self, flag):
+    if self.is_disallowing_external_messages == flag:
+      return False
+
     self.is_disallowing_external_messages = flag
     return True
 
   def mutate_secret(self, flag):
+    if self.is_secret == flag:
+      return False
+
     self.is_secret = flag
     return True
 

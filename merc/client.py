@@ -179,6 +179,9 @@ class Client(object):
     self.transport.close()
 
   def mutate_invisible(self, flag):
+    if self.is_invisible == flag:
+      return False
+
     self.is_invisible = flag
     return True
 
