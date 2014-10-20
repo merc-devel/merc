@@ -2,6 +2,7 @@ import datetime
 import functools
 import itertools
 
+from merc import channel
 from merc import util
 from merc.messages import errors
 from merc.messages import replies
@@ -396,11 +397,11 @@ class Mode(Command):
     if self.flags is None:
       if util.is_channel_name(self.target):
         try:
-          channel = client.server.get_channel(self.target)
+          chan = client.server.get_channel(self.target)
         except errors.NoSuchNick:
           raise errors.NoSuchChannel(self.target)
 
-        client.send_reply(replies.ChannelModeIs(channel.name, channel.modes))
+        client.send_reply(replies.ChannelModeIs(chan.name, chan.modes))
         # TODO: send creation time
       else:
         user = client.server.get_client(self.target)
@@ -424,14 +425,14 @@ class Mode(Command):
 
     if util.is_channel_name(self.target):
       try:
-        channel = client.server.get_channel(self.target)
+        chan = client.server.get_channel(self.target)
       except errors.NoSuchNick:
         raise errors.NoSuchChannel(self.target)
 
       expanded_args = []
 
       for flag in flags:
-        state, c = flags
+        state, c = flag
         arg = None
 
         if c in channel.Channel.MODES_WITH_PARAMS:
@@ -444,16 +445,16 @@ class Mode(Command):
       for flag, arg in zip(flags, expanded_args):
         state, c = flag
         if state == "+":
-          if channel.set_mode(c, arg):
+          if chan.set_mode(c, arg):
             applied_flags.append((flag, arg))
         elif state == "-":
-          if channel.unset_mode(c, arg):
+          if chan.unset_mode(c, arg):
             applied_flags.append((flag, arg))
 
       if applied_flags:
         flags, args = self._coalesce_flags(applied_flags)
-        client.relay_to_channel(channel, Mode(channel.name, flags, *args))
-        client.relay_to_self(Mode(channel.name, flags, *args))
+        client.relay_to_channel(chan, Mode(chan.name, flags, *args))
+        client.relay_to_self(Mode(chan.name, flags, *args))
     else:
       user = client.server.get_client(self.target)
 
