@@ -1,12 +1,16 @@
 import argparse
 import asyncio
+import datetime
 import logging
+import operator
 
 from merc import channel
 from merc import client
 from merc import net
 from merc import util
+from merc.messages import commands
 from merc.messages import errors
+from merc.messages import replies
 
 logger = logging.getLogger(__name__)
 
@@ -25,12 +29,37 @@ def make_config_parser():
 
 
 class Server(object):
+  @property
+  def isupport(self):
+    user_channel_modes = []
+    user_channel_chars = []
+
+    for i, m in sorted(channel.ChannelUser.ROLE_MODES.items(),
+                       key=operator.itemgetter(0), reverse=True):
+      user_channel_modes.append(m)
+      user_channel_chars.append(channel.ChannelUser.ROLE_CHARS[i])
+
+    return {
+      "CHANTYPES": "#",
+      "NETWORK": self.network_name,
+      "CASEMAPPING": "utf-8",
+      "PREFIX": "({}){}".format("".join(user_channel_modes),
+                                "".join(user_channel_chars)),
+      "CHARSET": "utf-8",
+      "NICKLEN": client.Client.MAX_NICKNAME_LENGTH
+    }
+
   def __init__(self, name, network_name):
     self.name = name
     self.network_name = network_name
+    self.creation_time = datetime.datetime.utcnow()
 
     self.clients = {}
     self.channels = {}
+
+    self.motd = """blah blah blah
+
+here's an MOTD"""
 
   def new_client(self, transport):
     c = client.Client(self, transport)
@@ -48,7 +77,13 @@ class Server(object):
     self.clients[client.normalized_nickname] = client
     client.is_registered = True
 
-    # then some registration stuff
+    client.send_reply(replies.Welcome())
+    client.send_reply(replies.YourHost())
+    client.send_reply(replies.Created())
+    client.send_reply(replies.MyInfo())
+    client.send_reply(replies.ISupport(self.isupport))
+    client.on_message(client.hostmask, commands.LUsers())
+    client.on_message(client.hostmask, commands.Motd())
 
   def rename_client(self, client, new_nickname):
     normalized_new_nickname = util.to_irc_lower(new_nickname)
@@ -59,9 +94,11 @@ class Server(object):
 
     if client.is_registered:
       del self.clients[client.normalized_nickname]
-      self.clients[client.normalized_nickname] = client
 
     client.nickname = new_nickname
+
+    if client.is_registered:
+      self.clients[client.normalized_nickname] = client
 
   def remove_client(self, client):
     if client.is_registered:
@@ -85,7 +122,7 @@ class Server(object):
     channel = self.get_or_new_channel(name)
     channel.part(client)
 
-    if not channel.clients:
+    if not channel.users:
       del self.channels[util.to_irc_lower(name)]
 
     return channel

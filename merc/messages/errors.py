@@ -46,3 +46,8 @@ class NicknameInUse(ParametrizedErrorMessage):
 class NeedMoreParams(ParametrizedErrorMessage):
   NAME = "461"
   REASON = "Not enough parameters"
+
+
+class UnknownCommand(ParametrizedErrorMessage):
+  NAME = "421"
+  REASON = "Unknown command"

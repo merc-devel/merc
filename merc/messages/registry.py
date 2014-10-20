@@ -9,6 +9,11 @@ def register(type):
 
 register(commands.Nick)
 register(commands.User)
+register(commands.LUsers)
+register(commands.Motd)
+register(commands.Ping)
 register(commands.Privmsg)
 register(commands.Notice)
 register(commands.Join)
+register(commands.Part)
+register(commands.Names)

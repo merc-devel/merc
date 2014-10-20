@@ -9,9 +9,14 @@ from merc.messages import registry
 
 
 class Client(object):
-  NICKNAME_REGEX = re.compile(r"^[a-z_\-\[\]\\^{}|`][a-z0-9_\-\[\]\\^{}|`]*$")
+  NICKNAME_REGEX = re.compile(r"^[a-z_\-\[\]\\^{}|`][a-z0-9_\-\[\]\\^{}|`]*$",
+                              re.I)
+  MAX_NICKNAME_LENGTH = 16
+  MODES = set("i")
 
   def __init__(self, server, transport):
+    self.id = id(self)
+
     self.server = server
     self.transport = transport
 
@@ -22,7 +27,7 @@ class Client(object):
 
     self.is_registered = False
 
-    self.channels = set()
+    self.channels = {}
 
   @property
   def hostmask(self):
@@ -38,7 +43,8 @@ class Client(object):
                                             else None
 
   def rename(self, new_nickname):
-    if self.NICKNAME_REGEX.match(new_nickname) is None:
+    if self.NICKNAME_REGEX.match(new_nickname) is None or \
+        len(new_nickname) > self.MAX_NICKNAME_LENGTH:
       raise errors.ErroneousNickname
 
     self.server.rename_client(self, new_nickname)
@@ -52,26 +58,41 @@ class Client(object):
   def send_reply(self, message):
     self.send(self.server.name, message)
 
-  def relay_to_channel(self, channel, message):
-    channel.broadcast(self.hostmask, message)
+  def relay_to_client(self, client, message, prefix=None):
+    client.send(self.hostmask if prefix is None else prefix, message)
+
+  def relay_to_self(self, message, prefix=None):
+    self.send(self.hostmask if prefix is None else prefix, message)
+
+  def relay_to_channel(self, channel, message, prefix=None):
+    channel.broadcast(self, self.hostmask if prefix is None else prefix,
+                      message)
+
+  def relay_to_all(self, message, prefix=None):
+    for channel in self.channels.values():
+      self.relay_to_channel(channel, message, prefix)
 
   def on_raw_message(self, prefix, command, params):
     try:
-      self.on_message(prefix, registry.REGISTRY[command].with_params(params))
-    except errors.Error as e:
-      self.send(None, e)
-      self.transport.close()
-    except errors.ErrorMessage as e:
-      self.send_reply(e)
+      command_type = registry.REGISTRY[command]
+    except KeyError:
+      if self.is_registered:
+        self.send_reply(errors.UnknownCommand(command))
+    else:
+      try:
+        self.on_message(prefix, command_type.with_params(params))
+      except errors.Error as e:
+        self.send(None, e)
+        self.transport.close()
+      except errors.ErrorMessage as e:
+        self.send_reply(e)
 
   def on_message(self, prefix, message):
     message.handle_for(self, prefix)
 
   def on_close(self):
-    for channel in list(self.channels):
-      self.server.part_channel(self, channel.name)
+    for channel_name in list(self.channels):
+      self.server.part_channel(self, channel_name)
 
   def join(self, channel_name):
     self.server.join_channel(self, channel_name)
-
-  __hash__ = lambda self: id(self)

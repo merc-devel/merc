@@ -1,7 +1,9 @@
 import functools
 import itertools
 
+from merc import util
 from merc.messages import errors
+from merc.messages import replies
 from merc.messages import message
 
 
@@ -14,6 +16,9 @@ def requires_registration(f):
 
 
 class Command(message.Message):
+  def __init__(self, *args):
+    pass
+
   @classmethod
   def with_params(cls, params):
     from merc.messages import errors
@@ -27,6 +32,36 @@ class Command(message.Message):
     pass
 
 
+class Ping(Command):
+  NAME = "PING"
+  MIN_ARITY = 1
+
+  def __init__(self, value, server_name=None, *args):
+    self.value = value
+    self.server_name = server_name
+
+  def as_params(self, client):
+    return [self.value, self.server_name]
+
+  @requires_registration
+  def handle_for(self, client, prefix):
+    client.send_reply(Pong(
+        self.server_name if self.server_name is not None
+                         else client.server.name,
+        self.value))
+
+class Pong(Command):
+  NAME = "PONG"
+  MIN_ARITY = 2
+
+  def __init__(self, server_name, value, *args):
+    self.server_name = server_name
+    self.value = value
+
+  def as_params(self, client):
+    return [self.server_name, self.value]
+
+
 class Nick(Command):
   NAME = "NICK"
   MIN_ARITY = 1
@@ -38,10 +73,16 @@ class Nick(Command):
     return [self.nickname]
 
   def handle_for(self, client, prefix):
+    old_hostmask = client.hostmask
+
     client.rename(self.nickname)
 
-    if client.username is not None:
-      client.register()
+    if client.is_registered:
+      client.relay_to_all(Nick(self.nickname), old_hostmask)
+      client.relay_to_self(Nick(self.nickname), old_hostmask)
+    else:
+      if client.username is not None:
+        client.register()
 
 
 class User(Command):
@@ -65,28 +106,75 @@ class User(Command):
       client.register()
 
 
+class LUsers(Command):
+  NAME = "LUSERS"
+  MIN_ARITY = 0
+
+  @requires_registration
+  def handle_for(self, client, prefix):
+    client.send_reply(replies.LUserClient())
+    client.send_reply(replies.LUserOp())
+    client.send_reply(replies.LUserUnknown())
+    client.send_reply(replies.LUserChannels())
+    client.send_reply(replies.LUserMe())
+
+
+class Motd(Command):
+  NAME = "MOTD"
+  MIN_ARITY = 0
+
+  @requires_registration
+  def handle_for(self, client, prefix):
+    client.send_reply(replies.MotdStart())
+
+    for line in client.server.motd.split("\n"):
+      client.send_reply(replies.Motd(line))
+
+    client.send_reply(replies.EndOfMotd())
+
+
 class Privmsg(Command):
   NAME = "PRIVMSG"
   MIN_ARITY = 2
 
-  def __init__(self, channel, text, *args):
-    self.channel = channel
+  def __init__(self, channel_names, text, *args):
+    self.channel_names = channel_names.split(",")
     self.text = text
 
   def as_params(self, client):
-    return [self.channel, self.text]
+    return [",".join(self.channel_names), self.text]
+
+  @requires_registration
+  def handle_for(self, client, prefix):
+    for channel_name in self.channel_names:
+      if channel_name[0] == "#":
+        channel = client.server.channels[channel_name]
+        client.relay_to_channel(channel, Privmsg(channel_name, self.text))
+      else:
+        user = client.server.clients[util.to_irc_lower(channel_name)]
+        client.relay_to_client(user, Privmsg(channel_name, self.text))
 
 
 class Notice(Command):
   NAME = "NOTICE"
   MIN_ARITY = 2
 
-  def __init__(self, channel, text, *args):
-    self.channel = channel
+  def __init__(self, channel_names, text, *args):
+    self.channel_names = channel_names.split(",")
     self.text = text
 
   def as_params(self, client):
-    return [self.channel, self.text]
+    return [",".join(self.channel_names), self.text]
+
+  @requires_registration
+  def handle_for(self, client, prefix):
+    for channel_name in self.channel_names:
+      if channel_name[0] == "#":
+        channel = client.server.channels[channel_name]
+        client.relay_to_channel(channel, Notice(channel_name, self.text))
+      else:
+        user = client.server.clients[util.to_irc_lower(channel_name)]
+        client.relay_to_client(user, Notice(channel_name, self.text))
 
 
 class Join(Command):
@@ -103,10 +191,55 @@ class Join(Command):
                                                    self.keys,
                                                    fillvalue=None):
       channel = client.server.join_channel(client, channel_name, key)
+
       client.relay_to_channel(channel, Join(channel.name))
+      client.relay_to_self(Join(channel.name))
+
+      client.on_message(client.hostmask, Names(channel.name))
 
   def as_params(self, client):
     params = [",".join(self.channel_names)]
     if self.keys:
       params.append(",".join(self.keys))
     return params
+
+
+class Part(Command):
+  NAME = "PART"
+  MIN_ARITY = 1
+
+  def __init__(self, channel_names, reason=None, *args):
+    self.channel_names = channel_names.split(",")
+    self.reason = reason
+
+  @requires_registration
+  def handle_for(self, client, prefix):
+    for channel_name in self.channel_names:
+      channel = client.server.part_channel(client, channel_name)
+
+      client.relay_to_channel(channel, Part(channel.name, self.reason))
+      client.relay_to_self(Part(channel.name, self.reason))
+
+  def as_params(self, client):
+    params = [",".join(self.channel_names)]
+    if self.reason:
+      params.append(self.reason)
+    return params
+
+
+class Names(Command):
+  NAME = "NAMES"
+  MIN_ARITY = 1
+
+  def __init__(self, channel_names, *args):
+    self.channel_names = channel_names.split(",")
+
+  @requires_registration
+  def handle_for(self, client, prefix):
+    for channel_name in self.channel_names:
+      channel = client.server.channels[channel_name]
+      client.send_reply(replies.NameReply("@", channel.name, channel.users))
+      client.send_reply(replies.EndOfNames(channel.name))
+
+  def as_params(self, client):
+    return [",".join(self.channel_names)]
