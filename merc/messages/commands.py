@@ -266,7 +266,8 @@ class Names(Command):
 
       for chan in client.server.channels.values():
         if client.is_in_channel(chan):
-          client.send_reply(replies.NameReply("@", chan.name, chan.users.values()))
+          client.send_reply(replies.NameReply("@", chan.name,
+                                              chan.users.values()))
           continue
 
         if chan.is_secret:
@@ -301,9 +302,14 @@ class Names(Command):
         except errors.NoSuchNick:
           pass
         else:
-          channel_name = chan.name
-          client.send_reply(replies.NameReply("@", chan.name,
-                                              chan.users.values()))
+          if client.can_see_channel(chan):
+            channel_name = chan.name
+
+            # TODO: show only invisible users if client is not in channel
+            client.send_reply(replies.NameReply(
+                "@" if client.is_in_channel(chan) else "*",
+                chan.name,
+                chan.users.values()))
         client.send_reply(replies.EndOfNames(channel_name))
 
   def as_params(self, client):
