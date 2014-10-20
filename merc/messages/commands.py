@@ -411,7 +411,8 @@ class Mode(Command):
           channel.set_mode(c, arg)
         elif state == "-":
           channel.unset_mode(c, arg)
-      client.send_reply(Mode(channel.name, self.flags, *self.args))
+      client.relay_to_channel(channel, Mode(channel.name, self.flags, *self.args))
+      client.relay_to_self(Mode(channel.name, self.flags, *self.args))
     else:
       user = client.server.get_client(self.target)
 
@@ -424,7 +425,7 @@ class Mode(Command):
           user.set_mode(c, arg)
         elif state == "-":
           user.unset_mode(c, arg)
-      client.send_reply(Mode(user.nickname, self.flags, *self.args))
+      client.relay_to_self(Mode(user.nickname, self.flags, *self.args))
 
 
 class Who(Command):
@@ -442,7 +443,7 @@ class Who(Command):
     try:
       if util.is_channel_name(self.target):
         channel = client.server.get_channel(self.target)
-        who = [(channel, user.client) for user in channel.users.values()]
+        who = [(channel.name, user.client) for user in channel.users.values()]
       else:
         who = [(None, client.server.get_client(self.target))]
     except errors.NoSuchNick:
