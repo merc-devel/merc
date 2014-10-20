@@ -21,8 +21,6 @@ class SimpleErrorMessage(ErrorMessage):
 
 
 class ParametrizedErrorMessage(ErrorMessage):
-  ARITY = 2
-
   def __init__(self, param):
     self.param = param
 
