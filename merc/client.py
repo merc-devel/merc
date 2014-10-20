@@ -26,7 +26,7 @@ class Client(object):
 
     self.nickname = None
     self.username = None
-    self.host, *_ = transport.get_extra_info("peername")
+    self.host = None
     self.realname = None
 
     self.is_registered = False
@@ -54,6 +54,11 @@ class Client(object):
 
     self.server.rename_client(self, new_nickname)
 
+  @property
+  def is_ready_for_registration(self):
+    return self.nickname is not None and self.username is not None and \
+           self.host is not None
+
   def register(self):
     self.server.register_client(self)
 
@@ -78,8 +83,10 @@ class Client(object):
       self.relay_to_channel(channel, message, prefix)
 
   def on_connect(self):
+    host, *_ = self.transport.get_extra_info("peername")
+
     self.send_reply(commands.Notice("*", "*** Looking up your hostname..."))
-    ip = ipaddress.ip_address(self.host)
+    ip = ipaddress.ip_address(host)
 
     is_ipv4 = False
 
@@ -105,6 +112,10 @@ class Client(object):
       except aiodns.error.DNSError:
         self.send_reply(commands.Notice("*",
                                         "*** Couldn't look up your hostname"))
+        self.host = host
+
+      if self.is_ready_for_registration:
+        self.register()
 
     asyncio.async(lookup_coro(), loop=self.server.loop)
 

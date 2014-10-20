@@ -82,7 +82,7 @@ class Nick(Command):
       client.relay_to_all(Nick(self.nickname), old_hostmask)
       client.relay_to_self(Nick(self.nickname), old_hostmask)
     else:
-      if client.username is not None:
+      if client.is_ready_for_registration:
         client.register()
 
 
@@ -103,7 +103,7 @@ class User(Command):
     client.username = self.user
     client.realname = self.realname
 
-    if client.nickname is not None:
+    if client.is_ready_for_registration:
       client.register()
 
 
