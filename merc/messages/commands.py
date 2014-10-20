@@ -150,7 +150,7 @@ class Privmsg(Command):
   @requires_registration
   def handle_for(self, client, prefix):
     for target in self.targets:
-      if target[0] == "#":
+      if util.is_channel_name(target):
         channel = client.server.get_channel(target)
         client.relay_to_channel(channel, Privmsg(target, self.text))
       else:
@@ -172,7 +172,7 @@ class Notice(Command):
   @requires_registration
   def handle_for(self, client, prefix):
     for target in self.targets:
-      if target[0] == "#":
+      if util.is_channel_name(target):
         channel = client.server.get_channel(target)
         client.relay_to_channel(channel, Notice(target, self.text))
       else:
@@ -373,7 +373,7 @@ class Mode(Command):
   @requires_registration
   def handle_for(self, client, prefix):
     if self.flags is None:
-      if self.target[0] == "#":
+      if util.is_channel_name(self.target):
         try:
           channel = client.server.get_channel(self.target)
         except errors.NoSuchNick:
@@ -398,7 +398,7 @@ class Mode(Command):
 
     flags_with_args = itertools.zip_longest(flags, self.args, fillvalue=None)
 
-    if self.target[0] == "#":
+    if util.is_channel_name(self.target):
       try:
         channel = client.server.get_channel(self.target)
       except errors.NoSuchNick:
@@ -424,3 +424,31 @@ class Mode(Command):
         elif state == "-":
           user.unset_mode(c, arg)
       client.send_reply(Mode(user.nickname, self.flags, *self.args))
+
+
+class Who(Command):
+  NAME = "WHO"
+  MIN_ARITY = 0
+
+  def __init__(self, target=None, only_opers=None, *args):
+    self.target = target
+    self.only_opers = only_opers
+
+  @requires_registration
+  def handle_for(self, client, prefix):
+    who = []
+
+    try:
+      if util.is_channel_name(self.target):
+        channel = client.server.get_channel(self.target)
+        who = [(channel, user.client) for user in channel.users.values()]
+      else:
+        who = [(None, client.server.get_client(self.target))]
+    except errors.NoSuchNick:
+      pass
+
+    for channel_name, user in who:
+        client.send_reply(replies.WhoReply(channel_name, user, 0,
+                                           client.server.name))
+
+    client.send_reply(replies.EndOfWho())

@@ -134,6 +134,13 @@ class IsOn(ReplyMessage):
     return [" ".join(self.nicknames)]
 
 
+class EndOfWho(ReplyMessage):
+  NAME = "315"
+
+  def as_reply_params(self, client):
+    return ["End of /MOTD command"]
+
+
 class NoTopic(ReplyMessage):
   NAME = "331"
 
@@ -189,6 +196,22 @@ class EndOfMotd(ReplyMessage):
 
   def as_reply_params(self, client):
     return ["End of /MOTD command"]
+
+
+class WhoReply(ReplyMessage):
+  NAME = "352"
+
+  def __init__(self, channel_name, user, hopcount, server):
+    self.channel_name = channel_name
+    self.user = user
+    self.hopcount = hopcount
+    self.server = server
+
+  def as_reply_params(self, client):
+    return [self.channel_name if self.channel_name is not None else "*",
+            self.user.username, self.user.host, self.server, self.user.nickname,
+            "H" if not self.user.is_away else "G",
+            str(self.hopcount) + " " + self.user.realname]
 
 
 class NameReply(ReplyMessage):
