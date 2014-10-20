@@ -39,6 +39,11 @@ class NoSuchChannel(ParametrizedErrorMessage):
   REASON = "No such channel"
 
 
+class CannotSendToChan(ParametrizedErrorMessage):
+  NAME = "404"
+  REASON = "Cannot send to channel"
+
+
 class ErroneousNickname(SimpleErrorMessage):
   NAME = "432"
   REASON = "Erroneous nickname"

@@ -153,7 +153,15 @@ class Privmsg(Command):
   def handle_for(self, client, prefix):
     for target in self.targets:
       if util.is_channel_name(target):
-        channel = client.server.get_channel(target)
+        try:
+          channel = client.server.get_channel(target)
+        except errors.NoSuchNick:
+          continue
+
+        if not client.is_in_channel(channel) and \
+            channel.is_disallowing_external_messages:
+          raise errors.CannotSendToChan(target)
+
         client.relay_to_channel(channel, Privmsg(channel.name, self.text))
       else:
         user = client.server.get_client(target)
@@ -176,7 +184,15 @@ class Notice(Command):
   def handle_for(self, client, prefix):
     for target in self.targets:
       if util.is_channel_name(target):
-        channel = client.server.get_channel(target)
+        try:
+          channel = client.server.get_channel(target)
+        except errors.NoSuchNick:
+          continue
+
+        if not client.is_in_channel(channel) and \
+            channel.is_disallowing_external_messages:
+          raise errors.CannotSendToChan(target)
+
         client.relay_to_channel(channel, Notice(channel.name, self.text))
       else:
         user = client.server.get_client(target)
