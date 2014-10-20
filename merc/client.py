@@ -2,7 +2,7 @@ import aiodns
 import asyncio
 import collections
 import ipaddress
-import re
+import regex
 
 from merc import emitter
 from merc import util
@@ -13,8 +13,7 @@ from merc.messages import registry
 
 
 class Client(object):
-  NICKNAME_REGEX = re.compile(r"^[a-z_\-\[\]\\^{}|`][a-z0-9_\-\[\]\\^{}|`]*$",
-                              re.I)
+  NICKNAME_REGEX = regex.compile(r"^[\p{L}_\[\]\\^{}|`][\p{L}0-9_\[\]\\^{}|`-]*$")
   MAX_NICKNAME_LENGTH = 16
 
   def __init__(self, server, transport):

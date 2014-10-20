@@ -1,6 +1,6 @@
 import collections
 import datetime
-import re
+import regex
 
 from merc import util
 from merc.messages import errors
@@ -39,7 +39,7 @@ class ChannelUser(object):
 
 
 class Channel(object):
-  CHANNEL_REGEX = re.compile("^#[^, ]*$")
+  CHANNEL_REGEX = regex.compile(r"^#[^\x00\x07\r\n,: ]*$")
 
   MODES_WITHOUT_PARAMS = set("ns")
   MODES_WITH_PARAMS = set(ChannelUser.ROLE_MODES.values())
