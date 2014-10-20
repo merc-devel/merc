@@ -104,14 +104,15 @@ class Client(object):
             forward, "AAAA" if not is_ipv4 else "A")
 
         if ip == ipaddress.ip_address(backward):
-          self.send_reply(commands.Notice("*", "*** Found your hostname"))
+          self.send_reply(commands.Notice(
+              "*", "*** Found your hostname ({})".format(forward)))
           self.host = forward
         else:
           self.send_reply(commands.Notice(
               "*", "*** Hostname does not resolve correctly"))
       except aiodns.error.DNSError:
-        self.send_reply(commands.Notice("*",
-                                        "*** Couldn't look up your hostname"))
+        self.send_reply(commands.Notice(
+            "*", "*** Couldn't look up your hostname"))
         self.host = host
 
       if self.is_ready_for_registration:

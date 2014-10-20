@@ -45,7 +45,7 @@ class Server(object):
     return {
       "CHANTYPES": "#",
       "NETWORK": self.network_name,
-      "CASEMAPPING": "utf-8",
+      "CASEMAPPING": "unicode",
       "PREFIX": "({}){}".format("".join(user_channel_modes),
                                 "".join(user_channel_chars)),
       "CHARSET": "utf-8",
