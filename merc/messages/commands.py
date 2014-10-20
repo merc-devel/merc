@@ -375,7 +375,11 @@ class Mode(Command):
         # TODO: handle this!
       else:
         user = client.server.get_client(self.target)
-        client.send_reply(replies.UmodeIs(user.nickname, user.modes))
+        if user is not client:
+          # TODO: handle this!
+          return
+
+        client.send_reply(replies.UmodeIs(user.modes))
       return
 
     flags = []
