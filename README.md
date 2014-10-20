@@ -19,6 +19,8 @@ performance, ease-of-use, and extensibility.
 
  * Unicode nickname support.
 
+ * No `identd` support.
+
  * ... and hopefully more things to come!
 
 # Running
