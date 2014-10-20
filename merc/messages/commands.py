@@ -283,6 +283,10 @@ class Topic(Command):
     self.channel_name = channel_name
     self.text = text
 
+  @property
+  def FORCE_TRAILING(self):
+    return self.text is not None
+
   @requires_registration
   def handle_for(self, client, prefix):
     channel = client.server.get_channel(self.channel_name)
