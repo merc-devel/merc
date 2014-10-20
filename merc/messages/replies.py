@@ -14,6 +14,7 @@ class ReplyMessage(message.Message):
 
 class Welcome(ReplyMessage):
   NAME = "001"
+  FORCE_TRAILING = True
 
   def as_reply_params(self, client):
     return ["Welcome to the {} Internet Relay Chat Network, {}".format(
@@ -23,6 +24,7 @@ class Welcome(ReplyMessage):
 
 class YourHost(ReplyMessage):
   NAME = "002"
+  FORCE_TRAILING = True
 
   def as_reply_params(self, client):
     return ["Your host is {}, running {}-{}".format(
@@ -33,6 +35,7 @@ class YourHost(ReplyMessage):
 
 class Created(ReplyMessage):
   NAME = "003"
+    FORCE_TRAILING = True
 
   def as_reply_params(self, client):
     return ["This server was created {}".format(
@@ -55,6 +58,7 @@ class MyInfo(ReplyMessage):
 
 class ISupport(ReplyMessage):
   NAME = "005"
+  FORCE_TRAILING = True
 
   def __init__(self, support_params):
     self.support_params = support_params
@@ -77,6 +81,7 @@ class UmodeIs(ReplyMessage):
 
 class LUserClient(ReplyMessage):
   NAME = "251"
+  FORCE_TRAILING = True
 
   def as_reply_params(self, client):
     num_invisible = sum(
@@ -90,12 +95,14 @@ class LUserClient(ReplyMessage):
 
 class LUserOp(ReplyMessage):
   NAME = "252"
+  FORCE_TRAILING = True
 
   def as_reply_params(self, client):
     return ["0", "IRC operators online"]
 
 class LUserUnknown(ReplyMessage):
   NAME = "253"
+  FORCE_TRAILING = True
 
   def as_reply_params(self, client):
     return ["0", "unknown connections"]
@@ -103,6 +110,7 @@ class LUserUnknown(ReplyMessage):
 
 class LUserChannels(ReplyMessage):
   NAME = "254"
+  FORCE_TRAILING = True
 
   def as_reply_params(self, client):
     return [str(len(client.server.channels)), "channels formed"]
@@ -110,6 +118,7 @@ class LUserChannels(ReplyMessage):
 
 class LUserMe(ReplyMessage):
   NAME = "255"
+  FORCE_TRAILING = True
 
   def as_reply_params(self, client):
     return ["I have {} clients and {} servers".format(
@@ -119,6 +128,7 @@ class LUserMe(ReplyMessage):
 
 class UserHost(ReplyMessage):
   NAME = "302"
+  FORCE_TRAILING = True
 
   def __init__(self, user_hosts):
     self.user_hosts = user_hosts
@@ -129,6 +139,7 @@ class UserHost(ReplyMessage):
 
 class IsOn(ReplyMessage):
   NAME = "303"
+  FORCE_TRAILING = True
 
   def __init__(self, nicknames):
     self.nicknames = nicknames
@@ -139,9 +150,10 @@ class IsOn(ReplyMessage):
 
 class EndOfWho(ReplyMessage):
   NAME = "315"
+  FORCE_TRAILING = True
 
   def as_reply_params(self, client):
-    return ["End of /MOTD command"]
+    return ["End of /WHO command"]
 
 
 class ChannelModeIs(ReplyMessage):
@@ -158,6 +170,7 @@ class ChannelModeIs(ReplyMessage):
 
 class NoTopic(ReplyMessage):
   NAME = "331"
+  FORCE_TRAILING = True
 
   def __init__(self, channel_name):
     self.channel_name = channel_name
@@ -168,6 +181,7 @@ class NoTopic(ReplyMessage):
 
 class Topic(ReplyMessage):
   NAME = "332"
+  FORCE_TRAILING = True
 
   def __init__(self, channel_name, text):
     self.channel_name = channel_name
@@ -191,6 +205,7 @@ class TopicWhoTime(ReplyMessage):
 
 class Motd(ReplyMessage):
   NAME = "372"
+  FORCE_TRAILING = True
 
   def __init__(self, line):
     self.line = line
@@ -201,6 +216,7 @@ class Motd(ReplyMessage):
 
 class MotdStart(ReplyMessage):
   NAME = "375"
+  FORCE_TRAILING = True
 
   def as_reply_params(self, client):
     return ["- {} Message of the Day".format(client.server.name)]
@@ -208,6 +224,7 @@ class MotdStart(ReplyMessage):
 
 class EndOfMotd(ReplyMessage):
   NAME = "376"
+  FORCE_TRAILING = True
 
   def as_reply_params(self, client):
     return ["End of /MOTD command"]
@@ -215,6 +232,7 @@ class EndOfMotd(ReplyMessage):
 
 class WhoReply(ReplyMessage):
   NAME = "352"
+  FORCE_TRAILING = True
 
   def __init__(self, channel_name, user, hopcount, server):
     self.channel_name = channel_name
@@ -231,6 +249,7 @@ class WhoReply(ReplyMessage):
 
 class NameReply(ReplyMessage):
   NAME = "353"
+  FORCE_TRAILING = True
 
   def __init__(self, type, channel_name, users):
     self.type = type
@@ -245,6 +264,7 @@ class NameReply(ReplyMessage):
 
 class EndOfNames(ReplyMessage):
   NAME = "366"
+  FORCE_TRAILING = True
 
   def __init__(self, channel_name=None):
     self.channel_name = channel_name

@@ -7,6 +7,7 @@ class ErrorMessage(Exception, message.Message):
 
 class Error(ErrorMessage):
   NAME = "ERROR"
+  FORCE_TRAILING = True
 
   def __init__(self, reason):
     self.reason = reason

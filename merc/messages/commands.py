@@ -139,6 +139,7 @@ class Motd(Command):
 class Privmsg(Command):
   NAME = "PRIVMSG"
   MIN_ARITY = 2
+  FORCE_TRAILING = True
 
   def __init__(self, targets, text, *args):
     self.targets = targets.split(",")
@@ -161,6 +162,7 @@ class Privmsg(Command):
 class Notice(Command):
   NAME = "NOTICE"
   MIN_ARITY = 2
+  FORCE_TRAILING = True
 
   def __init__(self, targets, text, *args):
     self.targets = targets.split(",")
@@ -222,6 +224,10 @@ class Part(Command):
   def __init__(self, channel_names, reason=None, *args):
     self.channel_names = channel_names.split(",")
     self.reason = reason
+
+  @property
+  def FORCE_TRAILING(self):
+    return self.reason is not None
 
   @requires_registration
   def handle_for(self, client, prefix):
@@ -307,6 +313,10 @@ class Quit(Command):
 
   def __init__(self, reason=None, *args):
     self.reason = reason
+
+  @property
+  def FORCE_TRAILING(self):
+    return self.reason is not None
 
   @requires_registration
   def handle_for(self, client, prefix):

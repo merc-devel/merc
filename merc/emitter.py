@@ -6,7 +6,7 @@ def emit_hostmask(nickname, username, host):
   return "{}!{}@{}".format(nickname, username, host)
 
 
-def emit_message(prefix, command, params):
+def emit_message(prefix, command, params, force_trailig=False):
   buf = []
 
   if prefix is not None:
@@ -21,7 +21,7 @@ def emit_message(prefix, command, params):
       if " " in param:
         raise EmitterError("malformed message")
 
-    if not last or " " in last or last[0] == ":":
+    if force_trailing or not last or " " in last or last[0] == ":":
       buf.extend(init)
       buf.append(":" + last)
     else:
