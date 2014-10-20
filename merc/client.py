@@ -13,7 +13,7 @@ from merc.messages import registry
 
 
 class Client(object):
-  NICKNAME_REGEX = regex.compile(r"^[\p{L}_\[\]\\^{}|`][\p{L}0-9_\[\]\\^{}|`-]*$")
+  NICKNAME_REGEX = regex.compile(r"^[\p{L}\p{So}_\[\]\\^{}|`][\p{L}\p{So}0-9_\[\]\\^{}|`-]*$")
   MAX_NICKNAME_LENGTH = 16
 
   def __init__(self, server, transport):
