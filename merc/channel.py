@@ -98,6 +98,9 @@ class Channel(object):
       self.topic = Topic(text[:self.MAX_TOPIC_LENGTH],
                          client.hostmask, datetime.datetime.utcnow())
 
+  def has_client(self, client):
+    return client.id in self.users
+
   def mutate_disallowing_external_messages(self, flag):
     self.is_disallowing_external_messages = flag
 

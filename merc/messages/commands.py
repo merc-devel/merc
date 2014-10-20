@@ -193,7 +193,12 @@ class Join(Command):
     for channel_name, key in itertools.zip_longest(self.channel_names,
                                                    self.keys,
                                                    fillvalue=None):
-      channel = client.server.join_channel(client, channel_name, key)
+      channel = client.server.get_or_new_channel(channel_name)
+
+      if channel.has_client(client):
+        continue
+
+      channel.join(client)
 
       client.relay_to_channel(channel, Join(channel.name))
       client.relay_to_self(Join(channel.name))

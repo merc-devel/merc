@@ -129,19 +129,17 @@ class Server(object):
     if normalized_channel_name not in self.channels:
       self.channels[normalized_channel_name] = channel.Channel(name)
 
-    return self.channels[normalized_channel_name]
+    return self.get_channel(name)
 
-  def join_channel(self, client, name, key):
-    channel = self.get_or_new_channel(name)
-    channel.join(client, key)
-    return channel
+  def remove_channel(self, channel):
+    del self.channels[channel.normalized_name]
 
   def part_channel(self, client, name):
     channel = self.get_channel(name)
     channel.part(client)
 
     if not channel.users:
-      del self.channels[util.to_irc_lower(name)]
+      self.remove_channel(channel)
 
     return channel
 
