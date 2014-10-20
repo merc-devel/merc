@@ -49,6 +49,10 @@ class Client(object):
     return self.away_message is not None
 
   @property
+  def is_securely_connected(self):
+    return self.transport.get_extra_info("sslcontext") is not None
+
+  @property
   def normalized_nickname(self):
     return util.to_irc_lower(self.nickname) if self.nickname is not None \
                                             else None

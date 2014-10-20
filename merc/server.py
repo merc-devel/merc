@@ -4,6 +4,7 @@ import asyncio
 import datetime
 import logging
 import operator
+import ssl
 
 from merc import channel
 from merc import client
@@ -22,6 +23,10 @@ def make_config_parser():
                       default="irc.example.org")
   parser.add_argument("--network-name", help="The name of the network.",
                       default="ExampleNet")
+  parser.add_argument("--ssl-cert", help="The SSL certificate to use.",
+                      default=None)
+  parser.add_argument("--ssl-key", help="The SSL certificate key to use.",
+                      default=None)
   parser.add_argument("--bind-host", help="Host to bind to.",
                       default="localhost")
   parser.add_argument("--bind-port", help="Port to bind to.",
@@ -152,8 +157,16 @@ def start(config, loop=None):
     motd = f.read()
 
   server = Server(config.server_name, config.network_name, motd, loop)
+
+  if config.ssl_cert:
+    ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+    ssl_ctx.load_cert_chain(config.ssl_cert, config.ssl_key)
+  else:
+    ssl_ctx = None
+
   coro = loop.create_server(
-      lambda: net.Protocol(server), config.bind_host, config.bind_port)
+      lambda: net.Protocol(server), config.bind_host, config.bind_port,
+      ssl=ssl_ctx)
   proto_server = loop.run_until_complete(coro)
 
   logger.info("Serving on {}".format(proto_server.sockets[0].getsockname()))
