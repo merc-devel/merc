@@ -545,9 +545,23 @@ class Who(Command):
     try:
       if util.is_channel_name(self.target):
         channel = client.server.get_channel(self.target)
-        who = [(channel.name, user.client) for user in channel.users.values()]
+
+        if client.can_see_channel(channel):
+          who = [(channel.name, user.client)
+                 for user in channel.get_visible_users_for(client)]
       else:
-        who = [(None, client.server.get_client(self.target))]
+        user = client.server.get_client(self.target)
+
+        visible_it = iter(client.get_channels_visible_for(user))
+
+        try:
+          visible_channel = next(visible_it)
+        except StopIteration:
+          visible_channel_name = None
+        else:
+          visible_channel_name = visible_channel.name
+
+        who = [(visible_channel_name, user)]
     except errors.NoSuchNick:
       pass
 

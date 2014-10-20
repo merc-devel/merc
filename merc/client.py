@@ -185,7 +185,7 @@ class Client(object):
     return not channel.is_secret or self.is_in_channel(channel)
 
   def get_channels_visible_for(self, other):
-    return (channel for channel in self.channels.values()
+    return (channel for channel in other.channels.values()
                     if self.can_see_channel(channel))
 
   def mutate_invisible(self, flag):
