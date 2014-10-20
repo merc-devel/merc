@@ -274,15 +274,17 @@ class Topic(Command):
     channel = client.server.get_channel(self.channel_name)
 
     if self.text is None:
-      if channel.topic:
-        client.send_reply(replies.Topic(channel.name, channel.topic))
+      if channel.topic is not None:
+        client.send_reply(replies.Topic(channel.name, channel.topic.text))
+        client.send_reply(replies.TopicWhoTime(channel.name, channel.topic.who,
+                                               channel.topic.time))
       else:
         client.send_reply(replies.NoTopic(channel.name))
     else:
-      channel.topic = self.text
+      channel.set_topic(client, self.text)
 
-      client.relay_to_channel(channel, Topic(channel.name, channel.topic))
-      client.relay_to_self(Topic(channel.name, channel.topic))
+      client.relay_to_channel(channel, Topic(channel.name, channel.topic.text))
+      client.relay_to_self(Topic(channel.name, channel.topic.text))
 
   def as_params(self, client):
     params = [self.channel_name]

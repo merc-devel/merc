@@ -125,7 +125,7 @@ class Topic(ReplyMessage):
 class TopicWhoTime(ReplyMessage):
   NAME = "333"
 
-  def __init__(self, channel_name, who):
+  def __init__(self, channel_name, who, time):
     self.channel_name = channel_name
     self.who = who
     self.time = time

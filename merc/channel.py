@@ -1,7 +1,12 @@
+import collections
+import datetime
 import re
 
 from merc import util
 from merc.messages import errors
+
+
+Topic = collections.namedtuple("Topic", ["text", "who", "time"])
 
 
 class ChannelUser(object):
@@ -44,7 +49,7 @@ class Channel(object):
       raise errors.NoSuchChannel(name)
 
     self.name = name
-    self.topic = ""
+    self.topic = None
 
     self.users = {}
 
@@ -64,3 +69,9 @@ class Channel(object):
   def part(self, client):
     del self.users[client.id]
     del client.channels[self.normalized_name]
+
+  def set_topic(self, client, text):
+    if not text:
+      self.topic = None
+    else:
+      self.topic = Topic(text, client.hostmask, datetime.datetime.utcnow())
