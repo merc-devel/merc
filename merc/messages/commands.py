@@ -376,6 +376,7 @@ class Mode(Command):
       else:
         user = client.server.get_client(self.target)
         client.send_reply(replies.UmodeIs(user.nickname, user.modes))
+      return
 
     flags = []
     state = "+"
