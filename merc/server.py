@@ -112,10 +112,16 @@ class Server(object):
     client.on_close()
 
   def get_client(self, name):
-    return self.clients[util.to_irc_lower(name)]
+    try:
+      return self.clients[util.to_irc_lower(name)]
+    except KeyError:
+      raise errors.NoSuchNick(name)
 
   def get_channel(self, name):
-    return self.channels[util.to_irc_lower(name)]
+    try:
+      return self.channels[util.to_irc_lower(name)]
+    except KeyError:
+      raise errors.NoSuchNick(name)
 
   def get_or_new_channel(self, name):
     normalized_channel_name = util.to_irc_lower(name)

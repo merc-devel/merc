@@ -11,8 +11,10 @@ from merc.messages import message
 def requires_registration(f):
   @functools.wraps(f)
   def _wrapper(self, client, prefix):
-    if client.is_registered:
-      f(self, client, prefix)
+    if not client.is_registered:
+      raise errors.NotRegistered
+
+    f(self, client, prefix)
   return _wrapper
 
 
@@ -221,8 +223,8 @@ class Part(Command):
     for channel_name in self.channel_names:
       try:
         channel = client.server.get_channel(channel_name)
-      except KeyError:
-        client.send_reply(errors.NoSuchChannel(channel_name))
+      except errors.NoSuchNick:
+        raise errors.NoSuchChannel(channel_name)
       else:
         client.server.part_channel(client, channel_name)
         client.relay_to_channel(channel, Part(channel.name, self.reason))
@@ -251,11 +253,12 @@ class Names(Command):
       for channel_name in self.channel_names:
         try:
           channel = client.server.get_channel(channel_name)
-        except KeyError:
-          client.send_reply(errors.NoSuchChannel(channel_name))
+        except errors.NoSuchNick:
+          pass
         else:
+          channel_name = channel.name
           client.send_reply(replies.NameReply("@", channel.name, channel.users))
-          client.send_reply(replies.EndOfNames(channel.name))
+        client.send_reply(replies.EndOfNames(channel_name))
 
   def as_params(self, client):
     return [",".join(self.channel_names)]
@@ -325,7 +328,7 @@ class IsOn(Command):
     for nickname in self.nicknames:
       try:
         client.server.get_client(nickname)
-      except KeyError:
+      except errors.NoSuchNick:
         pass
       else:
         is_on.append(nickname)
@@ -346,7 +349,7 @@ class UserHost(Command):
     for nickname in self.nicknames:
       try:
         user = client.server.get_client(nickname)
-      except KeyError:
+      except errors.NoSuchNick:
         pass
       else:
         user_hosts.append("{}={}{}".format(
@@ -371,13 +374,16 @@ class Mode(Command):
   def handle_for(self, client, prefix):
     if self.flags is None:
       if self.target[0] == "#":
-        channel = client.server.get_channel(self.target)
+        try:
+          channel = client.server.get_channel(self.target)
+        except errors.NoSuchNick:
+          raise errors.NoSuchChannel(self.target)
+
         # TODO: handle this!
       else:
         user = client.server.get_client(self.target)
         if user is not client:
-          # TODO: handle this!
-          return
+          raise errors.UsersDontMatch
 
         client.send_reply(replies.UmodeIs(user.modes))
       return
@@ -393,7 +399,11 @@ class Mode(Command):
     flags_with_args = itertools.zip_longest(flags, self.args, fillvalue=None)
 
     if self.target[0] == "#":
-      channel = client.server.get_channel(self.target)
+      try:
+        channel = client.server.get_channel(self.target)
+      except errors.NoSuchNick:
+        raise errors.NoSuchChannel(self.target)
+
       for flag, arg in flags_with_args:
         state, c = flag
         if state == "+":
@@ -405,8 +415,7 @@ class Mode(Command):
       user = client.server.get_client(self.target)
 
       if user is not client:
-        # TODO: handle this!
-        pass
+        raise errors.UsersDontMatch
 
       for flag, arg in flags_with_args:
         state, c = flag

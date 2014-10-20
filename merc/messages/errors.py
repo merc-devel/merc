@@ -28,6 +28,11 @@ class ParametrizedErrorMessage(ErrorMessage):
     return [client.displayed_nickname, self.param, self.REASON]
 
 
+class NoSuchNick(ParametrizedErrorMessage):
+  NAME = "401"
+  REASON = "No such nick/channel"
+
+
 class NoSuchChannel(ParametrizedErrorMessage):
   NAME = "403"
   REASON = "No such channel"
@@ -43,6 +48,11 @@ class NicknameInUse(ParametrizedErrorMessage):
   REASON = "Nickname in use"
 
 
+class NotRegistered(SimpleErrorMessage):
+  NAME = "451"
+  REASON = "You have not registered"
+
+
 class NeedMoreParams(ParametrizedErrorMessage):
   NAME = "461"
   REASON = "Not enough parameters"
@@ -56,3 +66,8 @@ class UnknownCommand(ParametrizedErrorMessage):
 class UmodeUnknownFlag(SimpleErrorMessage):
   NAME = "501"
   REASON = "Unknown MODE flag"
+
+
+class UsersDontMatch(SimpleErrorMessage):
+  NAME = "502"
+  REASON = "Can't change mode for other users"
