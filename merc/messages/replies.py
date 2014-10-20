@@ -66,9 +66,12 @@ class LUserClient(ReplyMessage):
   NAME = "251"
 
   def as_reply_params(self, client):
+    num_invisible = sum(
+        client.is_invisible for client in client.server.clients.values())
+
     return ["There are {} users and {} invisible on {} servers".format(
-        len(client.server.clients),
-        0,
+        len(client.server.clients) - num_invisible,
+        num_invisible,
         1)]
 
 

@@ -16,7 +16,6 @@ class Client(object):
   NICKNAME_REGEX = re.compile(r"^[a-z_\-\[\]\\^{}|`][a-z0-9_\-\[\]\\^{}|`]*$",
                               re.I)
   MAX_NICKNAME_LENGTH = 16
-  MODES = set("i")
 
   def __init__(self, server, transport):
     self.id = id(self)
@@ -35,6 +34,8 @@ class Client(object):
     self.disconnect_reason = None
 
     self.channels = {}
+
+    self.is_invisible = False
 
   @property
   def hostmask(self):
@@ -65,8 +66,25 @@ class Client(object):
     return self.nickname is not None and self.username is not None and \
            self.host is not None
 
+  def set_mode(self, mode, param=None):
+    try:
+      set, _ = self.MODES[mode]
+    except KeyError:
+      raise errors.UmodeUnknownFlag
+
+    set(self, param)
+
+  def unset_mode(self, mode, param=None):
+    try:
+      _, unset = self.MODES[mode]
+    except KeyError:
+      raise errors.UmodeUnknownFlag
+
+    unset(self, param)
+
   def register(self):
     self.server.register_client(self)
+    self.on_message(self.hostmask, commands.Mode(self.nickname, "+i"))
 
   def send(self, prefix, message):
     self.transport.write(message.emit(self, prefix).encode("utf-8") + b"\r\n")
@@ -156,3 +174,10 @@ class Client(object):
   def close(self, reason=None):
     self.disconnect_reason = reason
     self.transport.close()
+
+  def mutate_invisible(self, flag):
+    self.is_invisible = flag
+
+  MODES = {
+    "i": util.make_flag_pair(mutate_invisible)
+  }

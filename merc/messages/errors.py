@@ -51,3 +51,8 @@ class NeedMoreParams(ParametrizedErrorMessage):
 class UnknownCommand(ParametrizedErrorMessage):
   NAME = "421"
   REASON = "Unknown command"
+
+
+class UmodeUnknownFlag(SimpleErrorMessage):
+  NAME = "501"
+  REASON = "Unknown MODE flag"

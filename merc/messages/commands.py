@@ -138,44 +138,44 @@ class Privmsg(Command):
   NAME = "PRIVMSG"
   MIN_ARITY = 2
 
-  def __init__(self, channel_names, text, *args):
-    self.channel_names = channel_names.split(",")
+  def __init__(self, targets, text, *args):
+    self.targets = targets.split(",")
     self.text = text
 
   def as_params(self, client):
-    return [",".join(self.channel_names), self.text]
+    return [",".join(self.targets), self.text]
 
   @requires_registration
   def handle_for(self, client, prefix):
-    for channel_name in self.channel_names:
-      if channel_name[0] == "#":
-        channel = client.server.get_channel(channel_name)
-        client.relay_to_channel(channel, Privmsg(channel_name, self.text))
+    for target in self.targets:
+      if target[0] == "#":
+        channel = client.server.get_channel(target)
+        client.relay_to_channel(channel, Privmsg(target, self.text))
       else:
-        user = client.server.clients[util.to_irc_lower(channel_name)]
-        client.relay_to_client(user, Privmsg(channel_name, self.text))
+        user = client.server.get_client(target)
+        client.relay_to_client(user, Privmsg(target, self.text))
 
 
 class Notice(Command):
   NAME = "NOTICE"
   MIN_ARITY = 2
 
-  def __init__(self, channel_names, text, *args):
-    self.channel_names = channel_names.split(",")
+  def __init__(self, targets, text, *args):
+    self.targets = targets.split(",")
     self.text = text
 
   def as_params(self, client):
-    return [",".join(self.channel_names), self.text]
+    return [",".join(self.targets), self.text]
 
   @requires_registration
   def handle_for(self, client, prefix):
-    for channel_name in self.channel_names:
-      if channel_name[0] == "#":
-        channel = client.server.get_channel(channel_name)
-        client.relay_to_channel(channel, Notice(channel_name, self.text))
+    for target in self.targets:
+      if target[0] == "#":
+        channel = client.server.get_channel(target)
+        client.relay_to_channel(channel, Notice(target, self.text))
       else:
-        user = client.server.clients[util.to_irc_lower(channel_name)]
-        client.relay_to_client(user, Notice(channel_name, self.text))
+        user = client.server.get_client(target)
+        client.relay_to_client(user, Notice(target, self.text))
 
 
 class Join(Command):
@@ -353,3 +353,52 @@ class UserHost(Command):
             nickname, "-" if user.is_away else "+", user.hostmask))
 
     client.send_reply(replies.UserHost(user_hosts))
+
+
+class Mode(Command):
+  NAME = "MODE"
+  MIN_ARITY = 1
+
+  def __init__(self, target, flags, *args):
+    self.target = target
+    self.flags = flags
+    self.args = args
+
+  def as_params(self, client):
+    return [self.target, self.flags] + list(self.args)
+
+  @requires_registration
+  def handle_for(self, client, prefix):
+    flags = []
+    state = "+"
+    for c in self.flags:
+      if c in "+-":
+        state = c
+        continue
+      flags.append(state + c)
+
+    flags_with_args = itertools.zip_longest(flags, self.args, fillvalue=None)
+
+    if self.target[0] == "#":
+      channel = client.server.get_channel(self.target)
+      for flag, arg in flags_with_args:
+        state, c = flag
+        if state == "+":
+          channel.set_mode(c, arg)
+        elif state == "-":
+          channel.unset_mode(c, arg)
+      client.send_reply(Mode(channel.name, self.flags, *self.args))
+    else:
+      user = client.server.get_client(self.target)
+
+      if user is not client:
+        # TODO: handle this!
+        pass
+
+      for flag, arg in flags_with_args:
+        state, c = flag
+        if state == "+":
+          user.set_mode(c, arg)
+        elif state == "-":
+          user.unset_mode(c, arg)
+      client.send_reply(Mode(user.nickname, self.flags, *self.args))

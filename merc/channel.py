@@ -41,7 +41,7 @@ class ChannelUser(object):
 class Channel(object):
   CHANNEL_REGEX = re.compile("^#[^, ]*$")
 
-  MODES_WITHOUT_PARAMS = set("s")
+  MODES_WITHOUT_PARAMS = set("ns")
   MODES_WITH_PARAMS = set(ChannelUser.ROLE_MODES.values())
 
   MAX_TOPIC_LENGTH = 390
@@ -53,7 +53,18 @@ class Channel(object):
     self.name = name
     self.topic = None
 
+    self.is_disallowing_external_messages = False
+    self.is_secret = False
+
     self.users = {}
+
+  def set_mode(self, mode, param=None):
+    set, _ = self.MODES[mode]
+    set(self, param)
+
+  def unset_mode(self, mode, param=None):
+    unset, _ = self.MODES[mode]
+    unset(self, param)
 
   @property
   def normalized_name(self):
@@ -78,3 +89,14 @@ class Channel(object):
     else:
       self.topic = Topic(text[:self.MAX_TOPIC_LENGTH],
                          client.hostmask, datetime.datetime.utcnow())
+
+  def mutate_disallowing_external_messages(self, flag):
+    self.is_disallowing_external_messages = flag
+
+  def mutate_secret(self, flag):
+    self.is_secret = flag
+
+  MODES = {
+    "n": util.make_flag_pair(mutate_disallowing_external_messages),
+    "s": util.make_flag_pair(mutate_secret)
+  }
