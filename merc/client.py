@@ -85,7 +85,7 @@ class Client(object):
 
     if isinstance(ip, ipaddress.IPv4Address):
       rip = ".".join(reversed(ip.exploded.split("."))) + ".in-addr.arpa."
-      is_ipv4 = False
+      is_ipv4 = True
     elif isinstance(ip, ipaddress.IPv6Address):
       rip = ".".join(reversed("".join(ip.exploded.split(":")))) + ".ip6.arpa."
 
