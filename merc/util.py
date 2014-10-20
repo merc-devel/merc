@@ -1,4 +1,5 @@
 import operator
+import subprocess
 
 
 def to_irc_lower(s):
@@ -25,3 +26,14 @@ def show_modes(modes):
       args.append(v)
 
   return "+" + "".join(flags), args
+
+
+def get_version():
+  try:
+    hash = subprocess.check_output([
+        "git", "rev-parse", "--short", "HEAD"]).strip().decode("utf-8")
+    is_dirty = subprocess.check_output(["git", "status", "--porcelain"]) != ""
+  except subprocess.CalledProcessError:
+    return "HEAD"
+  else:
+    return hash + ("-dirty" if is_dirty else "")
