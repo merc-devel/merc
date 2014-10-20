@@ -1,3 +1,5 @@
+import itertools
+
 from merc.messages import errors
 from merc.messages import message
 
@@ -62,3 +64,25 @@ class Notice(message.Message):
 
   def as_params(self, client):
     return [self.channel, self.text]
+
+
+class Join(message.Message):
+  NAME = "JOIN"
+  MIN_ARITY = 1
+
+  def __init__(self, channel_names, keys=None, *args):
+    self.channel_names = channel_names.split(",")
+    self.keys = keys.split(",") if keys is not None else []
+
+  def handle_for(self, client, prefix):
+    for channel_name, key in itertools.zip_longest(self.channel_names,
+                                                   self.keys,
+                                                   fillvalue=None):
+      channel = client.server.join_channel(client, channel_name, key)
+      client.relay_to_channel(channel, Join(channel.name))
+
+  def as_params(self, client):
+    params = [",".join(self.channel_names)]
+    if self.keys:
+      params.append(",".join(self.keys))
+    return params

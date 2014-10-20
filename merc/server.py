@@ -66,6 +66,7 @@ class Server(object):
   def remove_client(self, client):
     if client.is_registered:
       del self.clients[client.normalized_nickname]
+    client.on_close()
 
   def get_or_new_channel(self, name):
     normalized_channel_name = util.to_irc_lower(name)
@@ -75,14 +76,14 @@ class Server(object):
 
     return self.channels[normalized_channel_name]
 
-  def join_channel(self, client, name):
+  def join_channel(self, client, name, key):
     channel = self.get_or_new_channel(name)
-    channel.clients.add(client)
+    channel.join(client, key)
     return channel
 
   def part_channel(self, client, name):
     channel = self.get_or_new_channel(name)
-    channel.clients.remove(client)
+    channel.part(client)
 
     if not channel.clients:
       del self.channels[util.to_irc_lower(name)]

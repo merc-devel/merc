@@ -52,9 +52,8 @@ class Client(object):
   def send_reply(self, message):
     self.send(self.server.name, message)
 
-  @property
-  def prefix(self):
-    return ":" + self.hostmask
+  def relay_to_channel(self, channel, message):
+    channel.broadcast(self.hostmask, message)
 
   def on_raw_message(self, prefix, command, params):
     try:
@@ -68,7 +67,11 @@ class Client(object):
   def on_message(self, prefix, message):
     message.handle_for(self, prefix)
 
+  def on_close(self):
+    for channel in list(self.channels):
+      self.server.part_channel(self, channel.name)
+
   def join(self, channel_name):
     self.server.join_channel(self, channel_name)
 
-  __hash__ = id
+  __hash__ = lambda self: id(self)

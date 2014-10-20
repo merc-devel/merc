@@ -28,6 +28,11 @@ class ParametrizedErrorMessage(ErrorMessage):
     return [client.displayed_nickname, self.param, self.REASON]
 
 
+class NoSuchChannel(ParametrizedErrorMessage):
+  NAME = "403"
+  REASON = "No such channel"
+
+
 class ErroneousNickname(SimpleErrorMessage):
   NAME = "432"
   REASON = "Erroneous nickname"
