@@ -2,8 +2,10 @@ import aiodns
 import argparse
 import asyncio
 import datetime
+import fnmatch
 import logging
 import operator
+import regex
 import ssl
 
 from merc import channel
@@ -147,6 +149,15 @@ class Server(object):
 
     return channel
 
+  def query_clients(self, pattern):
+    if "!" not in pattern:
+      pattern += "!*@*"
+
+    expr = regex.compile(fnmatch.translate(util.to_irc_lower(pattern)))
+
+    for client in self.clients.values():
+      if expr.match(util.to_irc_lower(client.hostmask)) is not None:
+        yield client
 
 def start(config, loop=None):
   if loop is None:
