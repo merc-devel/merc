@@ -359,7 +359,7 @@ class Mode(Command):
   NAME = "MODE"
   MIN_ARITY = 1
 
-  def __init__(self, target, flags, *args):
+  def __init__(self, target, flags=None, *args):
     self.target = target
     self.flags = flags
     self.args = args
@@ -369,6 +369,14 @@ class Mode(Command):
 
   @requires_registration
   def handle_for(self, client, prefix):
+    if self.flags is None:
+      if self.target[0] == "#":
+        channel = client.server.get_channel(self.target)
+        # TODO: handle this!
+      else:
+        user = client.server.get_client(self.target)
+        client.send_reply(replies.UmodeIs(user.nickname, user.modes))
+
     flags = []
     state = "+"
     for c in self.flags:

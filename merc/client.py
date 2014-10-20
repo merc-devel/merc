@@ -178,6 +178,13 @@ class Client(object):
   def mutate_invisible(self, flag):
     self.is_invisible = flag
 
+  @property
+  def modes(self):
+    modes = set()
+    if self.is_invisible:
+      modes.add("i")
+    return modes
+
   MODES = {
     "i": util.make_flag_pair(mutate_invisible)
   }

@@ -62,6 +62,16 @@ class ISupport(ReplyMessage):
         ["are supported by this server"]
 
 
+class UmodeIs(ReplyMessage):
+  NAME = "221"
+
+  def __init__(self, modes):
+    self.modes = modes
+
+  def as_reply_params(self, client):
+    return ["+" + "".join(sorted(self.modes))]
+
+
 class LUserClient(ReplyMessage):
   NAME = "251"
 
