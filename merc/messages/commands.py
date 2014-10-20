@@ -451,9 +451,9 @@ class Mode(Command):
 
 class Who(Command):
   NAME = "WHO"
-  MIN_ARITY = 0
+  MIN_ARITY = 1
 
-  def __init__(self, target=None, only_opers=None, *args):
+  def __init__(self, target, only_opers=None, *args):
     self.target = target
     self.only_opers = only_opers
 
