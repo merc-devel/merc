@@ -84,11 +84,13 @@ class LUserUnknown(ReplyMessage):
   def as_reply_params(self, client):
     return ["0", "unknown connections"]
 
+
 class LUserChannels(ReplyMessage):
   NAME = "254"
 
   def as_reply_params(self, client):
     return [str(len(client.server.channels)), "channels formed"]
+
 
 class LUserMe(ReplyMessage):
   NAME = "255"
@@ -97,6 +99,39 @@ class LUserMe(ReplyMessage):
     return ["I have {} clients and {} servers".format(
         len(client.server.clients),
         1)]
+
+
+class NoTopic(ReplyMessage):
+  NAME = "331"
+
+  def __init__(self, channel_name):
+    self.channel_name = channel_name
+
+  def as_reply_params(self, client):
+    return [self.channel_name, "No topic set"]
+
+
+class Topic(ReplyMessage):
+  NAME = "332"
+
+  def __init__(self, channel_name, text):
+    self.channel_name = channel_name
+    self.text = text
+
+  def as_reply_params(self, client):
+    return [self.channel_name, self.text]
+
+
+class TopicWhoTime(ReplyMessage):
+  NAME = "333"
+
+  def __init__(self, channel_name, who):
+    self.channel_name = channel_name
+    self.who = who
+    self.time = time
+
+  def as_reply_params(self, client):
+    return [self.channel_name, self.who, str(int(self.time.timestamp()))]
 
 
 class Motd(ReplyMessage):
@@ -126,20 +161,23 @@ class EndOfMotd(ReplyMessage):
 class NameReply(ReplyMessage):
   NAME = "353"
 
-  def __init__(self, _, channel_name, users):
+  def __init__(self, type, channel_name, users):
+    self.type = type
     self.channel_name = channel_name
     self.users = users
 
   def as_reply_params(self, client):
-    return ["@", self.channel_name,
+    return [self.type,
+            self.channel_name if self.channel_name is not None else "*",
             " ".join(user.client.nickname for user in self.users.values())]
 
 
 class EndOfNames(ReplyMessage):
   NAME = "366"
 
-  def __init__(self, channel_name):
+  def __init__(self, channel_name=None):
     self.channel_name = channel_name
 
   def as_reply_params(self, client):
-    return [self.channel_name, "End of /NAMES list"]
+    return [self.channel_name if self.channel_name is not None else "*",
+            "End of /NAMES list"]

@@ -1,3 +1,4 @@
+import datetime
 import functools
 import itertools
 
@@ -197,6 +198,9 @@ class Join(Command):
 
       client.on_message(client.hostmask, Names(channel.name))
 
+      if channel.topic is not None:
+        client.on_message(client.hostmask, Topic(channel.name))
+
   def as_params(self, client):
     params = [",".join(self.channel_names)]
     if self.keys:
@@ -222,24 +226,58 @@ class Part(Command):
 
   def as_params(self, client):
     params = [",".join(self.channel_names)]
-    if self.reason:
+    if self.reason is not None:
       params.append(self.reason)
     return params
 
 
 class Names(Command):
   NAME = "NAMES"
-  MIN_ARITY = 1
+  MIN_ARITY = 0
 
-  def __init__(self, channel_names, *args):
-    self.channel_names = channel_names.split(",")
+  def __init__(self, channel_names=None, *args):
+    self.channel_names = channel_names.split(",") if channel_names is not None \
+                                                  else None
 
   @requires_registration
   def handle_for(self, client, prefix):
-    for channel_name in self.channel_names:
-      channel = client.server.channels[channel_name]
-      client.send_reply(replies.NameReply("@", channel.name, channel.users))
-      client.send_reply(replies.EndOfNames(channel.name))
+    if self.channel_names is None:
+      client.send_reply(replies.EndOfNames(None))
+    else:
+      for channel_name in self.channel_names:
+        channel = client.server.channels[channel_name]
+        client.send_reply(replies.NameReply("@", channel.name, channel.users))
+        client.send_reply(replies.EndOfNames(channel.name))
 
   def as_params(self, client):
     return [",".join(self.channel_names)]
+
+
+class Topic(Command):
+  NAME = "TOPIC"
+  MIN_ARITY = 1
+
+  def __init__(self, channel_name, text=None):
+    self.channel_name = channel_name
+    self.text = text
+
+  @requires_registration
+  def handle_for(self, client, prefix):
+    channel = client.server.channels[self.channel_name]
+
+    if self.text is None:
+      if channel.topic:
+        client.send_reply(replies.Topic(channel.name, channel.topic))
+      else:
+        client.send_reply(replies.NoTopic(channel.name))
+    else:
+      channel.topic = self.text
+
+      client.relay_to_channel(channel, Topic(channel.name, channel.topic))
+      client.relay_to_self(Topic(channel.name, channel.topic))
+
+  def as_params(self, client):
+    params = [self.channel_name]
+    if self.text is not None:
+      params.append(self.text)
+    return params

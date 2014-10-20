@@ -44,6 +44,7 @@ class Channel(object):
       raise errors.NoSuchChannel(name)
 
     self.name = name
+    self.topic = ""
 
     self.users = {}
 
