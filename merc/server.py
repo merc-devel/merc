@@ -24,13 +24,12 @@ def make_config_parser():
   parser.add_argument("--network-name", help="The name of the network.",
                       default="ExampleNet")
   parser.add_argument("--ssl-cert", help="The SSL certificate to use.",
-                      default=None)
+                      default="server.crt")
   parser.add_argument("--ssl-key", help="The SSL certificate key to use.",
-                      default=None)
-  parser.add_argument("--bind-host", help="Host to bind to.",
-                      default="localhost")
-  parser.add_argument("--bind-port", help="Port to bind to.",
-                      default=6667)
+                      default="server.key")
+  parser.add_argument("--bind", help="Hosts to bind to.",
+                      default="127.0.0.1:6667,127.0.0.1:+6697," +
+                              "::1:6667,::1:+6697")
   parser.add_argument("--motd-file", help="MOTD file to read the MOTD from.",
                       default="motd.txt")
   return parser
@@ -158,23 +157,33 @@ def start(config, loop=None):
 
   server = Server(config.server_name, config.network_name, motd, loop)
 
-  if config.ssl_cert:
-    ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-    ssl_ctx.load_cert_chain(config.ssl_cert, config.ssl_key)
-  else:
-    ssl_ctx = None
+  ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+  ssl_ctx.load_cert_chain(config.ssl_cert, config.ssl_key)
 
-  coro = loop.create_server(
-      lambda: net.Protocol(server), config.bind_host, config.bind_port,
-      ssl=ssl_ctx)
-  proto_server = loop.run_until_complete(coro)
+  proto_servers = []
 
-  logger.info("Serving on {}".format(proto_server.sockets[0].getsockname()))
+  for bind_spec in config.bind.split(","):
+    host, _, port = bind_spec.rpartition(":")
+    cur_ssl_ctx = None
+
+    if port[0] == "+":
+      port = port[1:]
+      cur_ssl_ctx = ssl_ctx
+
+    coro = loop.create_server(
+        lambda: net.Protocol(server), host, port, ssl=cur_ssl_ctx)
+
+    proto_server = loop.run_until_complete(coro)
+    proto_servers.append(proto_server)
+
+    logger.info("Serving on {}".format(proto_server.sockets[0].getsockname()))
+
   try:
     loop.run_forever()
   except KeyboardInterrupt:
     pass
 
   proto_server.close()
-  loop.run_until_complete(proto_server.wait_closed())
+  loop.run_until_complete(asyncio.gather(*[proto_server.wait_closed()
+                                           for proto_server in proto_servers]))
   loop.close()
