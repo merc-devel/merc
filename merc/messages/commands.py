@@ -262,16 +262,48 @@ class Names(Command):
   @requires_registration
   def handle_for(self, client, prefix):
     if self.channel_names is None:
+      seen_nicknames = set()
+
+      for chan in client.server.channels.values():
+        if client.is_in_channel(chan):
+          client.send_reply(replies.NameReply("@", chan.name, chan.users.values()))
+          continue
+
+        if chan.is_secret:
+          continue
+
+        channel_users = []
+
+        for user in chan.users.values():
+          if not user.client.is_invisible:
+            seen_nicknames.add(user.client.normalized_nickname)
+            channel_users.append(user)
+
+          if channel_users:
+            client.send_reply(replies.NameReply("=", chan.name, channel_users))
+
+      visible_users = []
+
+      for user in client.server.clients.values():
+        if user.is_invisible and user is not client:
+          continue
+
+        if user.normalized_nickname not in seen_nicknames:
+          visible_users.append(channel.ChannelUser(user))
+
+        client.send_reply(replies.NameReply("*", None, visible_users))
+
       client.send_reply(replies.EndOfNames(None))
     else:
       for channel_name in self.channel_names:
         try:
-          channel = client.server.get_channel(channel_name)
+          chan = client.server.get_channel(channel_name)
         except errors.NoSuchNick:
           pass
         else:
-          channel_name = channel.name
-          client.send_reply(replies.NameReply("@", channel.name, channel.users))
+          channel_name = chan.name
+          client.send_reply(replies.NameReply("@", chan.name,
+                                              chan.users.values()))
         client.send_reply(replies.EndOfNames(channel_name))
 
   def as_params(self, client):

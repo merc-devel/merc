@@ -33,9 +33,9 @@ class ChannelUser(object):
     ROLE_OWNER: "q"
   }
 
-  def __init__(self, client):
+  def __init__(self, client, role=ROLE_NORMAL):
     self.client = client
-    self.role = ChannelUser.ROLE_NORMAL
+    self.role = role
 
 
 class Channel(object):

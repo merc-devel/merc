@@ -178,6 +178,17 @@ class Client(object):
     self.disconnect_reason = reason
     self.transport.close()
 
+  def is_in_channel(self, channel):
+    return channel.normalized_name in self.channels
+
+  def get_channels_visible_for(self, other):
+    for channel in self.channels:
+      if channel.is_secret:
+        if other.is_in_channel(channel):
+          yield channel
+      else:
+        yield channel
+
   def mutate_invisible(self, flag):
     if self.is_invisible == flag:
       return False
