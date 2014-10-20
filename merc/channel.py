@@ -79,7 +79,7 @@ class Channel(object):
     return util.to_irc_lower(self.name)
 
   def broadcast(self, client, prefix, message):
-    for user in self.users.values():
+    for user in list(self.users.values()):
       if user.client is not client:
         user.client.send(prefix, message)
 
