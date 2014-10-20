@@ -32,7 +32,7 @@ def get_version():
   try:
     hash = subprocess.check_output([
         "git", "rev-parse", "--short", "HEAD"]).strip().decode("utf-8")
-    is_dirty = subprocess.check_output(["git", "status", "--porcelain"]) != ""
+    is_dirty = bool(subprocess.check_output(["git", "status", "--porcelain"]))
   except subprocess.CalledProcessError:
     return "HEAD"
   else:
