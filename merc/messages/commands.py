@@ -281,3 +281,22 @@ class Topic(Command):
     if self.text is not None:
       params.append(self.text)
     return params
+
+
+class Quit(Command):
+  NAME = "QUIT"
+  MIN_ARITY = 0
+
+  def __init__(self, reason=None):
+    self.reason = reason
+
+  @requires_registration
+  def handle_for(self, client, prefix):
+    client.close("Quit: " + self.reason if self.reason is not None
+                                        else "Remote host closed connection")
+
+  def as_params(self, client):
+    params = []
+    if self.reason is not None:
+      params.append(self.reason)
+    return params

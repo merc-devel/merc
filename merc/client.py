@@ -3,6 +3,7 @@ import re
 
 from merc import emitter
 from merc import util
+from merc.messages import commands
 from merc.messages import errors
 from merc.messages import message
 from merc.messages import registry
@@ -26,6 +27,7 @@ class Client(object):
     self.realname = None
 
     self.is_registered = False
+    self.disconnect_reason = None
 
     self.channels = {}
 
@@ -53,7 +55,7 @@ class Client(object):
     self.server.register_client(self)
 
   def send(self, prefix, message):
-    self.transport.write(message.emit(self, prefix).encode("utf-8") + b"\n")
+    self.transport.write(message.emit(self, prefix).encode("utf-8") + b"\r\n")
 
   def send_reply(self, message):
     self.send(self.server.name, message)
@@ -91,8 +93,14 @@ class Client(object):
     message.handle_for(self, prefix)
 
   def on_close(self):
+    self.relay_to_all(commands.Quit(self.disconnect_reason))
+
     for channel_name in list(self.channels):
       self.server.part_channel(self, channel_name)
 
   def join(self, channel_name):
     self.server.join_channel(self, channel_name)
+
+  def close(self, reason=None):
+    self.disconnect_reason = reason
+    self.transport.close()
