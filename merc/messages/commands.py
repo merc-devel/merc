@@ -205,10 +205,12 @@ class Join(Command):
       client.relay_to_channel(channel, Join(channel.name))
       client.relay_to_self(Join(channel.name))
 
-      client.on_message(client.hostmask, Names(channel.name))
-
       if channel.topic is not None:
         client.on_message(client.hostmask, Topic(channel.name))
+
+      client.on_message(client.hostmask, Names(channel.name))
+      client.send_reply(replies.CreationTime(channel.name,
+                                             channel.creation_time))
 
   def as_params(self, client):
     params = [",".join(self.channel_names)]

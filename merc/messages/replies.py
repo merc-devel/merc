@@ -168,6 +168,17 @@ class ChannelModeIs(ReplyMessage):
     return [self.channel_name, flags] + args
 
 
+class CreationTime(ReplyMessage):
+  NAME = "329"
+
+  def __init__(self, channel_name, time):
+    self.channel_name = channel_name
+    self.time = time
+
+  def as_reply_params(self, client):
+    return [self.channel_name, str(int(self.time.timestamp()))]
+
+
 class NoTopic(ReplyMessage):
   NAME = "331"
   FORCE_TRAILING = True

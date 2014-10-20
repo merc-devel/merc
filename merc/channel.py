@@ -52,6 +52,7 @@ class Channel(object):
 
     self.name = name
     self.topic = None
+    self.creation_time = datetime.datetime.utcnow()
 
     self.is_disallowing_external_messages = False
     self.is_secret = False
