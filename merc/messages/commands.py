@@ -154,10 +154,10 @@ class Privmsg(Command):
     for target in self.targets:
       if util.is_channel_name(target):
         channel = client.server.get_channel(target)
-        client.relay_to_channel(channel, Privmsg(target, self.text))
+        client.relay_to_channel(channel, Privmsg(channel.name, self.text))
       else:
         user = client.server.get_client(target)
-        client.relay_to_client(user, Privmsg(target, self.text))
+        client.relay_to_client(user, Privmsg(user.nickname, self.text))
 
 
 class Notice(Command):
@@ -177,10 +177,10 @@ class Notice(Command):
     for target in self.targets:
       if util.is_channel_name(target):
         channel = client.server.get_channel(target)
-        client.relay_to_channel(channel, Notice(target, self.text))
+        client.relay_to_channel(channel, Notice(channel.name, self.text))
       else:
         user = client.server.get_client(target)
-        client.relay_to_client(user, Notice(target, self.text))
+        client.relay_to_client(user, Notice(user.nickname, self.text))
 
 
 class Join(Command):
