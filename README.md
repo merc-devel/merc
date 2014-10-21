@@ -21,6 +21,8 @@ performance, ease-of-use, and extensibility.
 
  * No `identd` support.
 
+ * (Questionably) live updates.
+
  * ... and hopefully more things to come!
 
 # Running
