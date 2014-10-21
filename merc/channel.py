@@ -14,14 +14,7 @@ Topic = collections.namedtuple("Topic", ["text", "who", "time"])
 def chanmode_needs_operator(f):
   @functools.wraps(f)
   def _wrapper(self, client, value):
-    try:
-      channel_user = self.get_channel_user_for(client)
-    except errors.NoSuchNick:
-      raise errors.ChanOpPrivsNeeded(self.name)
-
-    if not channel_user.is_operator:
-      raise errors.ChanOpPrivsNeeded(self.name)
-
+    self.check_is_operator(client)
     return f(self, client, value)
   return _wrapper
 
@@ -29,14 +22,7 @@ def chanmode_needs_operator(f):
 def chanrole_needs_operator(f):
   @functools.wraps(f)
   def _wrapper(self, client, value):
-    try:
-      channel_user = self.channel.get_channel_user_for(client)
-    except errors.NoSuchNick:
-      raise errors.ChanOpPrivsNeeded(self.channel.name)
-
-    if not channel_user.is_operator:
-      raise errors.ChanOpPrivsNeeded(self.channel.name)
-
+    self.channel.check_is_operator(client)
     return f(self, client, value)
   return _wrapper
 
@@ -110,6 +96,7 @@ class Channel(object):
 
     self.is_disallowing_external_messages = False
     self.is_secret = False
+    self.is_topic_locked = False
 
     self.users = {}
 
@@ -191,6 +178,14 @@ class Channel(object):
     self.is_secret = flag
     return True
 
+  @chanmode_needs_operator
+  def mutate_topic_lock(self, client, flag):
+    if self.is_topic_locked == flag:
+      return False
+
+    self.is_topic_locked = flag
+    return True
+
   @property
   def modes(self):
     modes = {}
@@ -201,13 +196,26 @@ class Channel(object):
     if self.is_disallowing_external_messages:
       modes["n"] = True
 
+    if self.is_topic_locked:
+      modes["t"] = True
+
     return modes
+
+  def check_is_operator(self, client):
+    try:
+      channel_user = self.get_channel_user_for(client)
+    except errors.NoSuchNick:
+      raise errors.ChanOpPrivsNeeded(self.name)
+
+    if not channel_user.is_operator:
+      raise errors.ChanOpPrivsNeeded(self.name)
 
   MODES = {
     "n": util.make_flag_pair(mutate_disallowing_external_messages),
     "s": util.make_flag_pair(mutate_secret),
+    "t": util.make_flag_pair(mutate_topic_lock),
     "o": ChannelUser.make_role_setter_pair(ChannelUser.mutate_operator)
   }
 
-  MODES_WITHOUT_PARAMS = set("ns")
+  MODES_WITHOUT_PARAMS = set("nst")
   MODES_WITH_PARAMS = set(ChannelUser.ROLE_MODES)
