@@ -212,5 +212,6 @@ class Client(object):
     return modes
 
   MODES = {
-    "i": util.make_flag_pair(mutate_invisible)
+    "i": util.make_flag_pair(mutate_invisible),
+    "Z": util.make_immutable_flag_pair()
   }
