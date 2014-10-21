@@ -68,7 +68,7 @@ class Client(object):
     return self.nickname is not None and self.username is not None and \
            self.host is not None
 
-  def set_mode(self, mode, param=None):
+  def set_mode(self, client, mode, param=None):
     try:
       set, _ = self.MODES[mode]
     except KeyError:
@@ -76,7 +76,7 @@ class Client(object):
 
     return set(self, param)
 
-  def unset_mode(self, mode, param=None):
+  def unset_mode(self, client, mode, param=None):
     try:
       _, unset = self.MODES[mode]
     except KeyError:
@@ -189,7 +189,7 @@ class Client(object):
     return (channel for channel in other.channels.values()
                     if self.can_see_channel(channel))
 
-  def mutate_invisible(self, flag):
+  def mutate_invisible(self, client, flag):
     if self.is_invisible == flag:
       return False
 

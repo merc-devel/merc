@@ -1,5 +1,6 @@
 import collections
 import datetime
+import functools
 import regex
 
 from merc import util
@@ -9,40 +10,69 @@ from merc.messages import errors
 Topic = collections.namedtuple("Topic", ["text", "who", "time"])
 
 
+
+def chanmode_needs_operator(f):
+  @functools.wraps(f)
+  def _wrapper(self, client, value):
+    try:
+      channel_user = self.get_channel_user_for(client)
+    except errors.NoSuchNick:
+      raise errors.ChanOpPrivsNeeded(self.name)
+
+    if not channel_user.is_operator:
+      raise errors.ChanOpPrivsNeeded(self.name)
+
+    return f(self, client, value)
+  return _wrapper
+
+
+def chanrole_needs_operator(f):
+  @functools.wraps(f)
+  def _wrapper(self, client, value):
+    if not self.is_operator:
+      raise errors.ChanOpPrivsNeeded(self.channel.name)
+
+    return f(self, client, value)
+  return _wrapper
+
+
 class ChannelUser(object):
-  ROLE_NORMAL = 0
-  ROLE_VOICED = 1
-  ROLE_HALFOP = 2
-  ROLE_OPERATOR = 3
-  ROLE_ADMIN = 4
-  ROLE_OWNER = 5
+  ROLE_CHARS = "~&@%+"
+  ROLE_MODES = "qahov"
 
-  ROLE_CHARS = {
-    ROLE_VOICED: "+",
-    ROLE_HALFOP: "%",
-    ROLE_OPERATOR: "@",
-    ROLE_ADMIN: "&",
-    ROLE_OWNER: "~"
-  }
-
-  ROLE_MODES = {
-    ROLE_VOICED: "v",
-    ROLE_HALFOP: "h",
-    ROLE_OPERATOR: "o",
-    ROLE_ADMIN: "a",
-    ROLE_OWNER: "q"
-  }
-
-  def __init__(self, client, role=ROLE_NORMAL):
+  def __init__(self, channel, client):
+    self.channel = channel
     self.client = client
-    self.role = role
+
+    self.is_voiced = False
+    self.is_halfop = False
+    self.is_operator = False
+    self.is_admin = False
+    self.is_owner = False
+
+  @chanrole_needs_operator
+  def mutate_operator(self, client, value):
+    if self.is_operator == value:
+      return False
+
+    self.is_operator = value
+    return True
+
+  @staticmethod
+  def make_role_setter_pair(mutator):
+    def setter(channel, client, param):
+      user = client.server.get_client(param)
+      return mutator(channel.get_channel_user_for(user), client, True)
+
+    def unsetter(channel, client, param):
+      user = client.server.get_client(param)
+      return mutator(channel.get_channel_user_for(user), client, False)
+
+    return (setter, unsetter)
 
 
 class Channel(object):
   CHANNEL_REGEX = regex.compile(r"^#[^\x00\x07\r\n,: ]*$")
-
-  MODES_WITHOUT_PARAMS = set("ns")
-  MODES_WITH_PARAMS = set(ChannelUser.ROLE_MODES.values())
 
   MAX_TOPIC_LENGTH = 390
 
@@ -59,21 +89,27 @@ class Channel(object):
 
     self.users = {}
 
-  def set_mode(self, mode, param=None):
+  def set_mode(self, client, mode, param=None):
     try:
       set, _ = self.MODES[mode]
     except KeyError:
       raise errors.UnknownMode(mode)
 
-    return set(self, param)
+    return set(self, client, param)
 
-  def unset_mode(self, mode, param=None):
+  def unset_mode(self, client, mode, param=None):
     try:
       _, unset = self.MODES[mode]
     except KeyError:
       raise errors.UnknownMode(mode)
 
-    return unset(self, param)
+    return unset(self, client, param)
+
+  def get_channel_user_for(self, client):
+    try:
+      return self.users[client.id]
+    except KeyError:
+      raise errors.NoSuchNick(self.name)
 
   @property
   def normalized_name(self):
@@ -85,7 +121,7 @@ class Channel(object):
         user.client.send(prefix, message)
 
   def join(self, client, key=None):
-    self.users[client.id] = ChannelUser(client)
+    self.users[client.id] = ChannelUser(self, client)
     client.channels[self.normalized_name] = self
 
   def part(self, client):
@@ -110,14 +146,16 @@ class Channel(object):
       if not user.client.is_invisible:
         yield user
 
-  def mutate_disallowing_external_messages(self, flag):
+  @chanmode_needs_operator
+  def mutate_disallowing_external_messages(self, client, flag):
     if self.is_disallowing_external_messages == flag:
       return False
 
     self.is_disallowing_external_messages = flag
     return True
 
-  def mutate_secret(self, flag):
+  @chanmode_needs_operator
+  def mutate_secret(self, client, flag):
     if self.is_secret == flag:
       return False
 
@@ -138,5 +176,9 @@ class Channel(object):
 
   MODES = {
     "n": util.make_flag_pair(mutate_disallowing_external_messages),
-    "s": util.make_flag_pair(mutate_secret)
+    "s": util.make_flag_pair(mutate_secret),
+    "o": ChannelUser.make_role_setter_pair(ChannelUser.mutate_operator)
   }
+
+  MODES_WITHOUT_PARAMS = set("ns")
+  MODES_WITH_PARAMS = set(ChannelUser.ROLE_MODES)

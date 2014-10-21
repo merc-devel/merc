@@ -7,8 +7,8 @@ def to_irc_lower(s):
 
 
 def make_flag_pair(mutator):
-  return (lambda o, param=None: mutator(o, True),
-          lambda o, param=None: mutator(o, False))
+  return (lambda o, client, param=None: mutator(o, client, True),
+          lambda o, client, param=None: mutator(o, client, False))
 
 
 def is_channel_name(name):

@@ -82,3 +82,8 @@ class UmodeUnknownFlag(SimpleErrorMessage):
 class UsersDontMatch(SimpleErrorMessage):
   NAME = "502"
   REASON = "Can't change mode for other users"
+
+
+class ChanOpPrivsNeeded(ParametrizedErrorMessage):
+  NAME = "482"
+  REASON = "You're not a channel operator"

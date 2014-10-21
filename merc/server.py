@@ -68,20 +68,12 @@ class Server(object):
 
   @property
   def isupport(self):
-    user_channel_modes = []
-    user_channel_chars = []
-
-    for i, m in sorted(channel.ChannelUser.ROLE_MODES.items(),
-                       key=operator.itemgetter(0), reverse=True):
-      user_channel_modes.append(m)
-      user_channel_chars.append(channel.ChannelUser.ROLE_CHARS[i])
-
     return {
       "CHANTYPES": "#",
       "NETWORK": self.network_name,
       "CASEMAPPING": "unicode",
-      "PREFIX": "({}){}".format("".join(user_channel_modes),
-                                "".join(user_channel_chars)),
+      "PREFIX": "({}){}".format(channel.ChannelUser.ROLE_MODES,
+                                channel.ChannelUser.ROLE_CHARS),
       "CHARSET": "utf-8",
       "NICKLEN": client.Client.MAX_NICKNAME_LENGTH,
       "TOPICLEN": channel.Channel.MAX_TOPIC_LENGTH

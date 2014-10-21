@@ -325,7 +325,7 @@ class Names(Command):
           continue
 
         if user.normalized_nickname not in seen_nicknames:
-          visible_users.append(channel.ChannelUser(user))
+          visible_users.append(channel.ChannelUser(None, user))
 
       if visible_users:
         client.send_reply(replies.NameReply("*", None, visible_users))
@@ -518,15 +518,15 @@ class Mode(Command):
             arg = next(args_iter)
           except StopIteration:
             pass
-        expanded_args.append(None)
+        expanded_args.append(arg)
 
       for flag, arg in zip(flags, expanded_args):
         state, c = flag
         if state == "+":
-          if chan.set_mode(c, arg):
+          if chan.set_mode(client, c, arg):
             applied_flags.append((flag, arg))
         elif state == "-":
-          if chan.unset_mode(c, arg):
+          if chan.unset_mode(client, c, arg):
             applied_flags.append((flag, arg))
 
       if applied_flags:
@@ -543,10 +543,10 @@ class Mode(Command):
         # TODO: do users have parametrized flags?
         state, c = flag
         if state == "+":
-          if user.set_mode(c, None):
+          if user.set_mode(self, c, None):
             applied_flags.append((flag, None))
         elif state == "-":
-          if user.unset_mode(c, None):
+          if user.unset_mode(self, c, None):
             applied_flags.append((flag, None))
 
       if applied_flags:
