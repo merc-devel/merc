@@ -3,11 +3,6 @@ from merc import message
 from merc import util
 
 
-class CannotSendToChan(errors.ParametrizedError):
-  NAME = "404"
-  REASON = "Cannot send to channel"
-
-
 class _Privmsg(message.Command):
   MIN_ARITY = 2
   FORCE_TRAILING = True
@@ -28,9 +23,11 @@ class _Privmsg(message.Command):
         except errors.NoSuchNick:
           continue
 
-        if not client.is_in_channel(channel) and \
-            channel.is_disallowing_external_messages:
-          raise CannotSendToChan(target)
+        if channel.is_disallowing_external_messages:
+          channel.check_has_client(client)
+
+        if channel.is_moderated:
+          channel.check_is_voiced(client)
 
         client.relay_to_channel(channel,
                                 self.__class__(channel.name, self.text))

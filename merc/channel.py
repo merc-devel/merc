@@ -49,6 +49,14 @@ class ChannelUser(object):
     self.is_operator = value
     return True
 
+  @chanrole_needs_operator
+  def mutate_voice(self, client, value):
+    if self.is_voiced == value:
+      return False
+
+    self.is_voiced = value
+    return True
+
   @staticmethod
   def make_role_setter_pair(mutator):
     def setter(channel, client, param):
@@ -97,6 +105,7 @@ class Channel(object):
     self.is_disallowing_external_messages = False
     self.is_secret = False
     self.is_topic_locked = False
+    self.is_moderated = False
 
     self.users = {}
 
@@ -186,6 +195,14 @@ class Channel(object):
     self.is_topic_locked = flag
     return True
 
+  @chanmode_needs_operator
+  def mutate_moderated(self, client, flag):
+    if self.is_moderated == flag:
+      return False
+
+    self.is_moderated = flag
+    return True
+
   @property
   def modes(self):
     modes = {}
@@ -199,6 +216,9 @@ class Channel(object):
     if self.is_topic_locked:
       modes["t"] = True
 
+    if self.is_moderated:
+      modes["m"] = True
+
     return modes
 
   def check_is_operator(self, client):
@@ -207,15 +227,34 @@ class Channel(object):
     except errors.NoSuchNick:
       raise errors.ChanOpPrivsNeeded(self.name)
 
-    if not channel_user.is_operator:
+    if not channel_user.is_operator and not channel_user.is_admin and \
+       not channel_user.is_owner:
       raise errors.ChanOpPrivsNeeded(self.name)
+
+  def check_is_voiced(self, client):
+    try:
+      channel_user = self.get_channel_user_for(client)
+    except errors.NoSuchNick:
+      raise errors.CannotSendToChan(self.name)
+
+    if not channel_user.is_voiced and not channel_user.is_halfop:
+      try:
+        self.check_is_operator(client)
+      except errors.ChanOpPrivsNeeded:
+        raise errors.CannotSendToChan(self.name)
+
+  def check_has_client(self, client):
+    if not self.has_client(client):
+      raise errors.CannotSendToChan(target)
 
   MODES = {
     "n": util.make_flag_pair(mutate_disallowing_external_messages),
     "s": util.make_flag_pair(mutate_secret),
     "t": util.make_flag_pair(mutate_topic_lock),
-    "o": ChannelUser.make_role_setter_pair(ChannelUser.mutate_operator)
+    "m": util.make_flag_pair(mutate_moderated),
+    "o": ChannelUser.make_role_setter_pair(ChannelUser.mutate_operator),
+    "v": ChannelUser.make_role_setter_pair(ChannelUser.mutate_voice),
   }
 
-  MODES_WITHOUT_PARAMS = set("nst")
-  MODES_WITH_PARAMS = set(ChannelUser.ROLE_MODES)
+  MODES_WITHOUT_PARAMS = set("nstm")
+  MODES_WITH_PARAMS = set(MODES) - MODES_WITHOUT_PARAMS
