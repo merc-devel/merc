@@ -4,11 +4,13 @@ import collections
 import ipaddress
 import regex
 
+from merc import errors
 from merc import emitter
+from merc import message
 from merc import util
-from merc.messages import commands
-from merc.messages import errors
-from merc.messages import message
+from merc.features import mode
+from merc.features import privmsg
+from merc.features import welcome
 
 
 class Client(object):
@@ -86,7 +88,7 @@ class Client(object):
 
   def register(self):
     self.server.register_client(self)
-    self.on_message(self.hostmask, commands.Mode(self.nickname, "+i"))
+    self.on_message(self.hostmask, mode.Mode(self.nickname, "+i"))
 
   def send(self, prefix, msg):
     raw = msg.emit(self, prefix).encode(
@@ -113,7 +115,7 @@ class Client(object):
   def on_connect(self):
     host, *_ = self.transport.get_extra_info("peername")
 
-    self.send_reply(commands.Notice("*", "*** Looking up your hostname..."))
+    self.send_reply(privmsg.Notice("*", "*** Looking up your hostname..."))
     ip = ipaddress.ip_address(host)
 
     is_ipv4 = False
@@ -132,14 +134,14 @@ class Client(object):
             forward, "AAAA" if not is_ipv4 else "A")
 
         if ip == ipaddress.ip_address(backward):
-          self.send_reply(commands.Notice(
+          self.send_reply(privmsg.Notice(
               "*", "*** Found your hostname ({})".format(forward)))
           self.host = forward
         else:
-          self.send_reply(commands.Notice(
+          self.send_reply(privmsg.Notice(
               "*", "*** Hostname does not resolve correctly"))
       except aiodns.error.DNSError:
-        self.send_reply(commands.Notice(
+        self.send_reply(privmsg.Notice(
             "*", "*** Couldn't look up your hostname"))
         self.host = host
 
@@ -150,7 +152,7 @@ class Client(object):
 
   def on_raw_message(self, prefix, command, params):
     try:
-      command_type = commands.Command.REGISTRY[command]
+      command_type = message.Command.REGISTRY[command]
     except KeyError:
       if self.is_registered:
         self.send_reply(errors.UnknownCommand(command))
@@ -160,14 +162,14 @@ class Client(object):
       except errors.Error as e:
         self.send(None, e)
         self.transport.close()
-      except errors.ErrorMessage as e:
+      except errors.BaseError as e:
         self.send_reply(e)
 
   def on_message(self, prefix, message):
     message.handle_for(self, prefix)
 
   def on_close(self):
-    self.relay_to_all(commands.Quit(self.disconnect_reason))
+    self.relay_to_all(welcome.Quit(self.disconnect_reason))
 
     for channel_name in list(self.channels):
       self.server.part_channel(self, channel_name)

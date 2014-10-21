@@ -3,8 +3,8 @@ import datetime
 import functools
 import regex
 
+from merc import errors
 from merc import util
-from merc.messages import errors
 
 
 Topic = collections.namedtuple("Topic", ["text", "who", "time"])

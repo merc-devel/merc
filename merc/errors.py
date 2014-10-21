@@ -1,11 +1,11 @@
-from merc.messages import message
+from merc import message
 
 
-class ErrorMessage(Exception, message.Message):
+class BaseError(Exception, message.Message):
   pass
 
 
-class Error(ErrorMessage):
+class Error(BaseError):
   NAME = "ERROR"
   FORCE_TRAILING = True
 
@@ -16,12 +16,12 @@ class Error(ErrorMessage):
     return [self.reason]
 
 
-class SimpleErrorMessage(ErrorMessage):
+class SimpleError(BaseError):
   def as_params(self, client):
     return [client.displayed_nickname, self.REASON]
 
 
-class ParametrizedErrorMessage(ErrorMessage):
+class ParametrizedError(BaseError):
   def __init__(self, param):
     self.param = param
 
@@ -29,61 +29,56 @@ class ParametrizedErrorMessage(ErrorMessage):
     return [client.displayed_nickname, self.param, self.REASON]
 
 
-class NoSuchNick(ParametrizedErrorMessage):
+class NoSuchNick(ParametrizedError):
   NAME = "401"
   REASON = "No such nick/channel"
 
 
-class NoSuchChannel(ParametrizedErrorMessage):
+class NoSuchChannel(ParametrizedError):
   NAME = "403"
   REASON = "No such channel"
 
 
-class CannotSendToChan(ParametrizedErrorMessage):
-  NAME = "404"
-  REASON = "Cannot send to channel"
-
-
-class ErroneousNickname(SimpleErrorMessage):
+class ErroneousNickname(SimpleError):
   NAME = "432"
   REASON = "Erroneous nickname"
 
 
-class NicknameInUse(ParametrizedErrorMessage):
+class NicknameInUse(ParametrizedError):
   NAME = "433"
   REASON = "Nickname in use"
 
 
-class NotRegistered(SimpleErrorMessage):
+class NotRegistered(SimpleError):
   NAME = "451"
   REASON = "You have not registered"
 
 
-class NeedMoreParams(ParametrizedErrorMessage):
+class NeedMoreParams(ParametrizedError):
   NAME = "461"
   REASON = "Not enough parameters"
 
 
-class UnknownCommand(ParametrizedErrorMessage):
+class UnknownCommand(ParametrizedError):
   NAME = "421"
   REASON = "Unknown command"
 
 
-class UnknownMode(ParametrizedErrorMessage):
+class UnknownMode(ParametrizedError):
   NAME = "472"
   REASON = "is an unknown mode char to me"
 
 
-class UmodeUnknownFlag(SimpleErrorMessage):
+class UmodeUnknownFlag(SimpleError):
   NAME = "501"
   REASON = "Unknown MODE flag"
 
 
-class UsersDontMatch(SimpleErrorMessage):
+class UsersDontMatch(SimpleError):
   NAME = "502"
   REASON = "Can't change mode for other users"
 
 
-class ChanOpPrivsNeeded(ParametrizedErrorMessage):
+class ChanOpPrivsNeeded(ParametrizedError):
   NAME = "482"
   REASON = "You're not a channel operator"

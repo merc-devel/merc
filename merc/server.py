@@ -12,12 +12,17 @@ import ssl
 from IPython.extensions import autoreload
 
 from merc import channel
+from merc import errors
 from merc import client
+from merc import message
 from merc import net
 from merc import util
-from merc.messages import commands
-from merc.messages import errors
-from merc.messages import replies
+from merc.features import lusers
+from merc.features import motd
+from merc.features import welcome
+
+# This initializes all the commands.
+from merc.features import *
 
 logger = logging.getLogger(__name__)
 
@@ -95,13 +100,9 @@ class Server(object):
     self.clients[client.normalized_nickname] = client
     client.is_registered = True
 
-    client.send_reply(replies.Welcome())
-    client.send_reply(replies.YourHost())
-    client.send_reply(replies.Created())
-    client.send_reply(replies.MyInfo())
-    client.send_reply(replies.ISupport(self.isupport))
-    client.on_message(client.hostmask, commands.LUsers())
-    client.on_message(client.hostmask, commands.Motd())
+    welcome.welcome(client, self)
+    client.on_message(client.hostmask, lusers.LUsers())
+    client.on_message(client.hostmask, motd.Motd())
 
   def rename_client(self, client, new_nickname):
     normalized_new_nickname = util.to_irc_lower(new_nickname)
