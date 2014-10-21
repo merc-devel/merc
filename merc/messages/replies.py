@@ -283,3 +283,32 @@ class EndOfNames(ReplyMessage):
   def as_reply_params(self, client):
     return [self.channel_name if self.channel_name is not None else "*",
             "End of /NAMES list"]
+
+
+class ListStart(ReplyMessage):
+  NAME = "321"
+  FORCE_TRAILING = True
+
+  def as_reply_params(self, client):
+    return ["Channels", "Users Name"]
+
+
+class List(ReplyMessage):
+  NAME = "322"
+  FORCE_TRAILING = True
+
+  def __init__(self, channel_name, num_visible, topic):
+    self.channel_name = channel_name
+    self.num_visible = num_visible
+    self.topic = topic
+
+  def as_reply_params(self, client):
+    return [self.channel_name, str(self.num_visible), self.topic]
+
+
+class ListEnd(ReplyMessage):
+  NAME = "323"
+  FORCE_TRAILING = True
+
+  def as_reply_params(self, client):
+    return ["End of /LIST"]

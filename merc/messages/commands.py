@@ -611,3 +611,38 @@ class Who(Command):
                                            client.server.name))
 
     client.send_reply(replies.EndOfWho())
+
+
+@Command.register
+class List(Command):
+  NAME = "LIST"
+  MIN_ARITY = 0
+
+  def __init__(self, target=None, *args):
+    self.target = target
+
+  @requires_registration
+  def handle_for(self, client, prefix):
+    client.send_reply(replies.ListStart())
+
+    try:
+      if self.target is not None:
+        channels = [client.server.get_channel(self.target)]
+      else:
+        channels = (channel for channel in client.server.channels.values())
+
+      for channel in channels:
+        if not client.can_see_channel(channel):
+          continue
+
+        if client.is_in_channel(channel):
+          num_visible = len(channel.users)
+        else:
+          num_visible = sum(not user.client.is_invisible
+                            for user in channel.users.values())
+
+        client.send_reply(replies.List(
+            channel.name, num_visible,
+            channel.topic is not None and channel.topic.text or ""))
+    finally:
+      client.send_reply(replies.ListEnd())
