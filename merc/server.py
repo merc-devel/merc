@@ -2,7 +2,6 @@ import aiodns
 import argparse
 import asyncio
 import datetime
-import fnmatch
 import logging
 import operator
 import regex
@@ -10,6 +9,8 @@ import signal
 import ssl
 
 from IPython.extensions import autoreload
+
+import merc
 
 from merc import channel
 from merc import errors
@@ -147,17 +148,19 @@ class Server(object):
     if "!" not in pattern:
       pattern += "!*@*"
 
-    expr = regex.compile(fnmatch.translate(util.to_irc_lower(pattern)))
-
-    for client in self.clients.values():
-      if expr.match(util.to_irc_lower(client.hostmask)) is not None:
-        yield client
+    return (client for client in self.clients.values()
+                   if client.hostmask_matches(pattern))
 
 def start(config, loop=None):
   if loop is None:
     loop = asyncio.get_event_loop()
 
   server = Server(config, loop)
+  logger.info("""
+Welcome to merc-{}, running for {} on network {}.
+
+{}\
+""".format(merc.__version__, server.name, server.network_name, server.motd))
 
   if "ssl" in config:
     ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)

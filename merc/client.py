@@ -1,6 +1,7 @@
 import aiodns
 import asyncio
 import collections
+import fnmatch
 import ipaddress
 import regex
 
@@ -40,6 +41,10 @@ class Client(object):
   @property
   def hostmask(self):
     return emitter.emit_hostmask(self.nickname, self.username, self.host)
+
+  def hostmask_matches(self, pattern):
+    return regex.match(fnmatch.translate(util.to_irc_lower(pattern)),
+                       util.to_irc_lower(self.hostmask)) is not None
 
   @property
   def displayed_nickname(self):
