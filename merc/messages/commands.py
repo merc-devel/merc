@@ -370,9 +370,6 @@ class Topic(Command):
   def handle_for(self, client, prefix):
     channel = client.server.get_channel(self.channel_name)
 
-    if channel.is_topic_locked:
-      channel.check_is_operator(client)
-
     if self.text is None:
       if channel.topic is not None:
         client.send_reply(replies.Topic(channel.name, channel.topic.text))
@@ -381,6 +378,9 @@ class Topic(Command):
       else:
         client.send_reply(replies.NoTopic(channel.name))
     else:
+      if channel.is_topic_locked:
+        channel.check_is_operator(client)
+
       channel.set_topic(client, self.text)
 
       client.relay_to_channel(channel, Topic(channel.name, channel.topic.text))
