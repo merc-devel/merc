@@ -1,6 +1,13 @@
 import coloredlogs
 import logging
+import yaml
+
 from merc import server
 
-coloredlogs.install(level=logging.WARN)
-server.start(server.make_config_parser().parse_args())
+coloredlogs.install(level=logging.INFO)
+logging.getLogger("asyncio").setLevel(logging.WARN)
+
+with open("merc.conf") as f:
+  config = yaml.load(f)
+
+server.start(config)

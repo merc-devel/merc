@@ -25,31 +25,10 @@ from merc.features import *
 logger = logging.getLogger(__name__)
 
 
-def make_config_parser():
-  parser = argparse.ArgumentParser()
-  parser.add_argument("--server-name", help="The name of the server.",
-                      default="irc.example.org")
-  parser.add_argument("--network-name", help="The name of the network.",
-                      default="ExampleNet")
-  parser.add_argument("--ssl-cert", help="The SSL certificate to use.",
-                      default="server.crt")
-  parser.add_argument("--ssl-key", help="The SSL certificate key to use.",
-                      default="server.key")
-  parser.add_argument("--bind", help="Hosts to bind to.",
-                      default="127.0.0.1:6667,127.0.0.1:+6697," +
-                              "::1:6667,::1:+6697")
-  parser.add_argument("--motd-file", help="MOTD file to read the MOTD from.",
-                      default="motd.txt")
-  return parser
-
-
 class Server(object):
-  def __init__(self, name, network_name, motd, loop):
+  def __init__(self, config, loop):
     self.loop = loop
-
-    self.name = name
-    self.network_name = network_name
-    self.motd = motd
+    self.config = config
 
     self.resolver = aiodns.DNSResolver(loop=loop)
 
@@ -60,6 +39,18 @@ class Server(object):
 
     self.reloader = autoreload.ModuleReloader()
     self.register_signal_handlers()
+
+  @property
+  def name(self):
+    return self.config["server_name"]
+
+  @property
+  def network_name(self):
+    return self.config["network_name"]
+
+  @property
+  def motd(self):
+    return self.config["motd"]
 
   def register_signal_handlers(self):
     signal.signal(signal.SIGUSR1, lambda signum, frame: self.reload_code())
@@ -166,27 +157,21 @@ def start(config, loop=None):
   if loop is None:
     loop = asyncio.get_event_loop()
 
-  with open(config.motd_file, "r") as f:
-    motd = f.read()
+  server = Server(config, loop)
 
-  server = Server(config.server_name, config.network_name, motd, loop)
-
-  ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-  ssl_ctx.load_cert_chain(config.ssl_cert, config.ssl_key)
+  if "ssl" in config:
+    ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+    ssl_ctx.load_cert_chain(config["ssl"]["cert"], config["ssl"]["key"])
+  else:
+    logger.warn("No SSL configuration found.")
+    ssl_ctx = None
 
   proto_servers = []
 
-  for bind_spec in config.bind.split(","):
-    host, _, port = bind_spec.rpartition(":")
-    use_ssl = False
-
-    if port[0] == "+":
-      port = port[1:]
-      use_ssl = True
-
+  for bind in config["bind"]:
     coro = loop.create_server(
-        lambda: net.Protocol(server), host, port,
-        ssl=ssl_ctx if use_ssl else None)
+        lambda: net.Protocol(server), bind["host"], bind["port"],
+        ssl=ssl_ctx if bind["ssl"] else None)
 
     proto_server = loop.run_until_complete(coro)
     proto_servers.append(proto_server)

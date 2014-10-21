@@ -2,3 +2,4 @@ coloredlogs
 regex
 aiodns
 IPython
+PyYAML
