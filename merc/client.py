@@ -9,11 +9,10 @@ from merc import util
 from merc.messages import commands
 from merc.messages import errors
 from merc.messages import message
-from merc.messages import registry
 
 
 class Client(object):
-  NICKNAME_REGEX = regex.compile(r"^[\p{L}\p{So}_\[\]\\^{}|`][\p{L}\p{So}0-9_\[\]\\^{}|`-]*$")
+  NICKNAME_REGEX = regex.compile(r"^[\p{L}\p{So}_\[\]\\^{}|`][\p{L}\p{So}\p{N}_\[\]\\^{}|`-]*$")
   MAX_NICKNAME_LENGTH = 16
 
   def __init__(self, server, transport):
@@ -149,7 +148,7 @@ class Client(object):
 
   def on_raw_message(self, prefix, command, params):
     try:
-      command_type = registry.REGISTRY[command]
+      command_type = commands.Command.REGISTRY[command]
     except KeyError:
       if self.is_registered:
         self.send_reply(errors.UnknownCommand(command))

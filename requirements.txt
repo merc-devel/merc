@@ -1,2 +1,4 @@
 coloredlogs
 regex
+aiodns
+IPython

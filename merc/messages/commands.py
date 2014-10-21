@@ -20,6 +20,13 @@ def requires_registration(f):
 
 
 class Command(message.Message):
+  REGISTRY = {}
+
+  @classmethod
+  def register(cls, type):
+    cls.REGISTRY[type.NAME] = type
+    return type
+
   def __init__(self, *args):
     pass
 
@@ -36,6 +43,7 @@ class Command(message.Message):
     pass
 
 
+@Command.register
 class Ping(Command):
   NAME = "PING"
   MIN_ARITY = 1
@@ -54,6 +62,8 @@ class Ping(Command):
                          else client.server.name,
         self.value))
 
+
+@Command.register
 class Pong(Command):
   NAME = "PONG"
   MIN_ARITY = 2
@@ -66,6 +76,7 @@ class Pong(Command):
     return [self.server_name, self.value]
 
 
+@Command.register
 class Nick(Command):
   NAME = "NICK"
   MIN_ARITY = 1
@@ -89,6 +100,7 @@ class Nick(Command):
         client.register()
 
 
+@Command.register
 class User(Command):
   NAME = "USER"
   MIN_ARITY = 4
@@ -110,6 +122,7 @@ class User(Command):
       client.register()
 
 
+@Command.register
 class LUsers(Command):
   NAME = "LUSERS"
   MIN_ARITY = 0
@@ -123,6 +136,7 @@ class LUsers(Command):
     client.send_reply(replies.LUserMe())
 
 
+@Command.register
 class Motd(Command):
   NAME = "MOTD"
   MIN_ARITY = 0
@@ -137,6 +151,7 @@ class Motd(Command):
     client.send_reply(replies.EndOfMotd())
 
 
+@Command.register
 class Privmsg(Command):
   NAME = "PRIVMSG"
   MIN_ARITY = 2
@@ -168,6 +183,7 @@ class Privmsg(Command):
         client.relay_to_client(user, Privmsg(user.nickname, self.text))
 
 
+@Command.register
 class Notice(Command):
   NAME = "NOTICE"
   MIN_ARITY = 2
@@ -199,6 +215,7 @@ class Notice(Command):
         client.relay_to_client(user, Notice(user.nickname, self.text))
 
 
+@Command.register
 class Join(Command):
   NAME = "JOIN"
   MIN_ARITY = 1
@@ -236,6 +253,7 @@ class Join(Command):
     return params
 
 
+@Command.register
 class Part(Command):
   NAME = "PART"
   MIN_ARITY = 1
@@ -267,6 +285,7 @@ class Part(Command):
     return params
 
 
+@Command.register
 class Names(Command):
   NAME = "NAMES"
   MIN_ARITY = 0
@@ -332,6 +351,7 @@ class Names(Command):
     return [",".join(self.channel_names)]
 
 
+@Command.register
 class Topic(Command):
   NAME = "TOPIC"
   MIN_ARITY = 1
@@ -368,6 +388,7 @@ class Topic(Command):
     return params
 
 
+@Command.register
 class Quit(Command):
   NAME = "QUIT"
   MIN_ARITY = 0
@@ -391,6 +412,7 @@ class Quit(Command):
     return params
 
 
+@Command.register
 class IsOn(Command):
   NAME = "ISON"
   MIN_ARITY = 0
@@ -412,6 +434,7 @@ class IsOn(Command):
     client.send_reply(replies.IsOn(is_on))
 
 
+@Command.register
 class UserHost(Command):
   NAME = "USERHOST"
   MIN_ARITY = 1
@@ -434,6 +457,7 @@ class UserHost(Command):
     client.send_reply(replies.UserHost(user_hosts))
 
 
+@Command.register
 class Mode(Command):
   NAME = "MODE"
   MIN_ARITY = 1
@@ -546,6 +570,8 @@ class Mode(Command):
 
     return flags, args
 
+
+@Command.register
 class Who(Command):
   NAME = "WHO"
   MIN_ARITY = 1

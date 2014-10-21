@@ -6,7 +6,10 @@ import fnmatch
 import logging
 import operator
 import regex
+import signal
 import ssl
+
+from IPython.extensions import autoreload
 
 from merc import channel
 from merc import client
@@ -51,6 +54,17 @@ class Server(object):
 
     self.clients = {}
     self.channels = {}
+
+    self.reloader = autoreload.ModuleReloader()
+    self.register_signal_handlers()
+
+  def register_signal_handlers(self):
+    signal.signal(signal.SIGUSR1, lambda signum, frame: self.reload_code())
+
+  def reload_code(self):
+    # very questionable
+    logger.warn("Reloading code (you should probably restart instead)...")
+    self.reloader.check(True)
 
   @property
   def isupport(self):
