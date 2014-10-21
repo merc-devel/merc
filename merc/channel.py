@@ -38,7 +38,7 @@ def chanrole_needs_operator(f):
 
 class ChannelUser(object):
   ROLE_CHARS = "~&@%+"
-  ROLE_MODES = "qahov"
+  ROLE_MODES = "qaohv"
 
   def __init__(self, channel, client):
     self.channel = channel
