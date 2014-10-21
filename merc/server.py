@@ -178,14 +178,15 @@ def start(config, loop=None):
 
   for bind_spec in config.bind.split(","):
     host, _, port = bind_spec.rpartition(":")
-    cur_ssl_ctx = None
+    use_ssl = False
 
     if port[0] == "+":
       port = port[1:]
-      cur_ssl_ctx = ssl_ctx
+      use_ssl = True
 
     coro = loop.create_server(
-        lambda: net.Protocol(server), host, port, ssl=cur_ssl_ctx)
+        lambda: net.Protocol(server), host, port,
+        ssl=ssl_ctx if use_ssl else None)
 
     proto_server = loop.run_until_complete(coro)
     proto_servers.append(proto_server)
