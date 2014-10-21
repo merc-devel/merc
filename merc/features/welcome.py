@@ -1,6 +1,8 @@
 import merc
 
 from merc import message
+from merc.features import lusers
+from merc.features import motd
 
 
 class Welcome(message.Reply):
@@ -65,6 +67,9 @@ def welcome(client, server):
   client.send_reply(Created())
   client.send_reply(MyInfo())
   client.send_reply(ISupport(server.isupport))
+
+  client.on_message(client.hostmask, lusers.LUsers())
+  client.on_message(client.hostmask, motd.Motd())
 
 
 @message.Command.register

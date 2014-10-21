@@ -17,8 +17,6 @@ from merc import client
 from merc import message
 from merc import net
 from merc import util
-from merc.features import lusers
-from merc.features import motd
 from merc.features import welcome
 
 # This initializes all the commands.
@@ -101,8 +99,6 @@ class Server(object):
     client.is_registered = True
 
     welcome.welcome(client, self)
-    client.on_message(client.hostmask, lusers.LUsers())
-    client.on_message(client.hostmask, motd.Motd())
 
   def rename_client(self, client, new_nickname):
     normalized_new_nickname = util.to_irc_lower(new_nickname)
