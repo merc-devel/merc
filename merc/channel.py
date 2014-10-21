@@ -29,7 +29,12 @@ def chanmode_needs_operator(f):
 def chanrole_needs_operator(f):
   @functools.wraps(f)
   def _wrapper(self, client, value):
-    if not self.is_operator:
+    try:
+      channel_user = self.channel.get_channel_user_for(client)
+    except errors.NoSuchNick:
+      raise errors.ChanOpPrivsNeeded(self.channel.name)
+
+    if not channel_user.is_operator:
       raise errors.ChanOpPrivsNeeded(self.channel.name)
 
     return f(self, client, value)
