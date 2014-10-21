@@ -7,6 +7,7 @@ import operator
 import regex
 import signal
 import ssl
+import yaml
 
 from IPython.extensions import autoreload
 
@@ -27,9 +28,14 @@ logger = logging.getLogger(__name__)
 
 
 class Server(object):
-  def __init__(self, config, loop):
+  def __init__(self, config_filename, loop=None):
+    if loop is None:
+      loop = asyncio.get_event_loop()
+
     self.loop = loop
-    self.config = config
+
+    self.config_filename = config_filename
+    self.rehash()
 
     self.resolver = aiodns.DNSResolver(loop=loop)
 
@@ -40,6 +46,10 @@ class Server(object):
 
     self.reloader = autoreload.ModuleReloader()
     self.register_signal_handlers()
+
+  def rehash(self):
+    with open(self.config_filename, "r") as f:
+      self.config = yaml.load(f)
 
   @property
   def name(self):
@@ -55,6 +65,7 @@ class Server(object):
 
   def register_signal_handlers(self):
     signal.signal(signal.SIGUSR1, lambda signum, frame: self.reload_code())
+    signal.signal(signal.SIGHUP, lambda signum, frame: self.rehash())
 
   def reload_code(self):
     # very questionable
@@ -148,42 +159,39 @@ class Server(object):
     return (client for client in self.clients.values()
                    if client.hostmask_matches(pattern))
 
-def start(config, loop=None):
-  if loop is None:
-    loop = asyncio.get_event_loop()
+  def start(self):
+    logger.info("""
+  Welcome to merc-{}, running for {} on network {}.
 
-  server = Server(config, loop)
-  logger.info("""
-Welcome to merc-{}, running for {} on network {}.
+  {}\
+  """.format(merc.__version__, self.name, self.network_name, self.motd))
 
-{}\
-""".format(merc.__version__, server.name, server.network_name, server.motd))
+    if "ssl" in self.config:
+      ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+      ssl_ctx.load_cert_chain(self.config["ssl"]["cert"],
+                              self.config["ssl"]["key"])
+    else:
+      logger.warn("No SSL configuration found.")
+      ssl_ctx = None
 
-  if "ssl" in config:
-    ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-    ssl_ctx.load_cert_chain(config["ssl"]["cert"], config["ssl"]["key"])
-  else:
-    logger.warn("No SSL configuration found.")
-    ssl_ctx = None
+    proto_servers = []
 
-  proto_servers = []
+    for bind in self.config["bind"]:
+      coro = self.loop.create_server(
+          lambda: net.Protocol(self), bind["host"], bind["port"],
+          ssl=ssl_ctx if bind["ssl"] else None)
 
-  for bind in config["bind"]:
-    coro = loop.create_server(
-        lambda: net.Protocol(server), bind["host"], bind["port"],
-        ssl=ssl_ctx if bind["ssl"] else None)
+      proto_server = self.loop.run_until_complete(coro)
+      proto_servers.append(proto_server)
 
-    proto_server = loop.run_until_complete(coro)
-    proto_servers.append(proto_server)
+      logger.info("Serving on {}".format(proto_server.sockets[0].getsockname()))
 
-    logger.info("Serving on {}".format(proto_server.sockets[0].getsockname()))
+    try:
+      self.loop.run_forever()
+    except KeyboardInterrupt:
+      pass
 
-  try:
-    loop.run_forever()
-  except KeyboardInterrupt:
-    pass
-
-  proto_server.close()
-  loop.run_until_complete(asyncio.gather(*[proto_server.wait_closed()
-                                           for proto_server in proto_servers]))
-  loop.close()
+    proto_server.close()
+    self.loop.run_until_complete(asyncio.gather(*[proto_server.wait_closed()
+                                               for proto_server in proto_servers]))
+    self.loop.close()
