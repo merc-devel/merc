@@ -70,6 +70,25 @@ class ChannelUser(object):
 
     return (setter, unsetter)
 
+  @property
+  def sigil(self):
+    if self.is_owner:
+      return "~"
+
+    if self.is_admin:
+      return "&"
+
+    if self.is_operator:
+      return "@"
+
+    if self.is_halfop:
+      return "%"
+
+    if self.is_voiced:
+      return "+"
+
+    return ""
+
 
 class Channel(object):
   CHANNEL_REGEX = regex.compile(r"^#[^\x00\x07\r\n,: ]*$")
@@ -121,7 +140,12 @@ class Channel(object):
         user.client.send(prefix, message)
 
   def join(self, client, key=None):
-    self.users[client.id] = ChannelUser(self, client)
+    cu = ChannelUser(self, client)
+
+    if not self.users:
+      cu.is_operator = True
+
+    self.users[client.id] = cu
     client.channels[self.normalized_name] = self
 
   def part(self, client):

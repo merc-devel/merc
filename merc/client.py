@@ -172,9 +172,6 @@ class Client(object):
     for channel_name in list(self.channels):
       self.server.part_channel(self, channel_name)
 
-  def join(self, channel_name):
-    self.server.join_channel(self, channel_name)
-
   def close(self, reason=None):
     self.disconnect_reason = reason
     self.transport.close()

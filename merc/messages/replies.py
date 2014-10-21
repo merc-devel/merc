@@ -270,7 +270,7 @@ class NameReply(ReplyMessage):
   def as_reply_params(self, client):
     return [self.type,
             self.channel_name if self.channel_name is not None else "*",
-            " ".join(user.client.nickname for user in self.users)]
+            " ".join(user.sigil + user.client.nickname for user in self.users)]
 
 
 class EndOfNames(ReplyMessage):
