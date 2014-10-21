@@ -36,7 +36,7 @@ class Client(object):
 
     self.channels = {}
 
-    self.is_invisible = False
+    self.is_invisible = True
 
   @property
   def hostmask(self):
@@ -93,7 +93,6 @@ class Client(object):
 
   def register(self):
     self.server.register_client(self)
-    self.on_message(self.hostmask, mode.Mode(self.nickname, "+i"))
 
   def send(self, prefix, msg):
     raw = msg.emit(self, prefix).encode(
@@ -206,6 +205,9 @@ class Client(object):
 
     if self.is_invisible:
       modes["i"] = True
+
+    if self.is_securely_connected:
+      modes["Z"] = True
 
     return modes
 

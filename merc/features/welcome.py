@@ -1,7 +1,9 @@
 import merc
 
 from merc import message
+from merc import util
 from merc.features import lusers
+from merc.features import mode
 from merc.features import motd
 
 
@@ -70,6 +72,10 @@ def welcome(client, server):
 
   client.on_message(client.hostmask, lusers.LUsers())
   client.on_message(client.hostmask, motd.Motd())
+
+  if client.modes:
+    flags, args = util.show_modes(client.modes)
+    client.relay_to_self(mode.Mode(client.nickname, flags, *args))
 
 
 @message.Command.register
