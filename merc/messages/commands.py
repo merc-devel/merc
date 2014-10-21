@@ -637,14 +637,8 @@ class List(Command):
         if not client.can_see_channel(channel):
           continue
 
-        if client.is_in_channel(channel):
-          num_visible = len(channel.users)
-        else:
-          num_visible = sum(not user.client.is_invisible
-                            for user in channel.users.values())
-
         client.send_reply(replies.List(
-            channel.name, num_visible,
+            channel.name, len(channel.users),
             channel.topic is not None and channel.topic.text or ""))
     finally:
       client.send_reply(replies.ListEnd())
