@@ -9,6 +9,5 @@ class Message(object):
     raise NotImplementedError
 
   def emit(self, client, prefix):
-    raw = emitter.emit_message(prefix, self.NAME, self.as_params(client),
-                               force_trailing=self.FORCE_TRAILING)
-    return raw.encode("utf-8")[:self.MAX_LENGTH].decode("utf-8", "ignore")
+    return emitter.emit_message(prefix, self.NAME, self.as_params(client),
+                                force_trailing=self.FORCE_TRAILING)

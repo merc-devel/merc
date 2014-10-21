@@ -88,8 +88,10 @@ class Client(object):
     self.server.register_client(self)
     self.on_message(self.hostmask, commands.Mode(self.nickname, "+i"))
 
-  def send(self, prefix, message):
-    self.transport.write(message.emit(self, prefix).encode("utf-8") + b"\r\n")
+  def send(self, prefix, msg):
+    raw = msg.emit(self, prefix).encode(
+        "utf-8")[:message.Message.MAX_LENGTH].decode("utf-8", "ignore")
+    self.transport.write(raw.encode("utf-8") + b"\r\n")
 
   def send_reply(self, message):
     self.send(self.server.name, message)
