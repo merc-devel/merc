@@ -338,13 +338,15 @@ class Names(Command):
         except errors.NoSuchNick:
           pass
         else:
-          if client.can_see_channel(chan):
-            channel_name = chan.name
+          if not client.can_see_channel(chan):
+            continue
 
-            client.send_reply(replies.NameReply(
-                "@" if client.is_in_channel(chan) else "*",
-                chan.name,
-                chan.get_visible_users_for(client)))
+          channel_name = chan.name
+
+          client.send_reply(replies.NameReply(
+              "@" if client.is_in_channel(chan) else "*",
+              chan.name,
+              chan.get_visible_users_for(client)))
         client.send_reply(replies.EndOfNames(channel_name))
 
   def as_params(self, client):
