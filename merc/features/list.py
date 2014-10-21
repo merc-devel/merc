@@ -1,5 +1,6 @@
 from merc import message
 
+
 class ListStart(message.Reply):
   NAME = "321"
   FORCE_TRAILING = True

@@ -245,7 +245,7 @@ class Channel(object):
 
   def check_has_client(self, client):
     if not self.has_client(client):
-      raise errors.CannotSendToChan(target)
+      raise errors.NoSuchNick(client.nickname)
 
   MODES = {
     "n": util.make_flag_pair(mutate_disallowing_external_messages),

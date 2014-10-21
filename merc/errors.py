@@ -87,3 +87,8 @@ class UsersDontMatch(SimpleError):
 class ChanOpPrivsNeeded(ParametrizedError):
   NAME = "482"
   REASON = "You're not a channel operator"
+
+
+class NotOnChannel(ParametrizedError):
+  NAME = "442"
+  REASON = "You're not on that channel"

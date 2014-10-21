@@ -24,7 +24,10 @@ class _Privmsg(message.Command):
           continue
 
         if channel.is_disallowing_external_messages:
-          channel.check_has_client(client)
+          try:
+            channel.check_has_client(client)
+          except errors.NoSuchNick:
+            raise errors.CannotSendToChan(channel.name)
 
         if channel.is_moderated:
           channel.check_is_voiced(client)
