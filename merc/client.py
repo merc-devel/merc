@@ -1,6 +1,7 @@
 import aiodns
 import asyncio
 import collections
+import datetime
 import fnmatch
 import ipaddress
 import regex
@@ -10,6 +11,7 @@ from merc import emitter
 from merc import message
 from merc import util
 from merc.features import mode
+from merc.features import ping
 from merc.features import privmsg
 from merc.features import welcome
 
@@ -17,6 +19,9 @@ from merc.features import welcome
 class Client(object):
   NICKNAME_REGEX = regex.compile(r"^[\p{L}\p{So}_\[\]\\^{}|`][\p{L}\p{So}\p{N}_\[\]\\^{}|`-]*$")
   MAX_NICKNAME_LENGTH = 16
+
+  PING_TIMEOUT = datetime.timedelta(seconds=240)
+  PONG_TIMEOUT = datetime.timedelta(seconds=20)
 
   def __init__(self, server, transport):
     self.id = id(self)
@@ -37,6 +42,12 @@ class Client(object):
     self.channels = {}
 
     self.is_invisible = True
+
+    self.creation_time = datetime.datetime.utcnow()
+    self.last_activity_time = self.creation_time
+
+    self.ping_check_handle = None
+    self.pong_check_handle = None
 
   @property
   def hostmask(self):
@@ -93,6 +104,7 @@ class Client(object):
 
   def register(self):
     self.server.register_client(self)
+    self.reschedule_ping_check()
 
   def send(self, prefix, msg):
     raw = msg.emit(self, prefix).encode(
@@ -116,7 +128,8 @@ class Client(object):
     for channel in self.channels.values():
       self.relay_to_channel(channel, message, prefix)
 
-  def on_connect(self):
+  @asyncio.coroutine
+  def resolve_hostname_coro(self):
     host, *_ = self.transport.get_extra_info("peername")
 
     self.send_reply(privmsg.Notice("*", "*** Looking up your hostname..."))
@@ -130,29 +143,47 @@ class Client(object):
     elif isinstance(ip, ipaddress.IPv6Address):
       rip = ".".join(reversed("".join(ip.exploded.split(":")))) + ".ip6.arpa."
 
-    @asyncio.coroutine
-    def lookup_coro():
-      try:
-        forward, *_ = yield from self.server.resolver.query(rip, "PTR")
-        backward, *_ = yield from self.server.resolver.query(
-            forward, "AAAA" if not is_ipv4 else "A")
+    try:
+      forward, *_ = yield from self.server.resolver.query(rip, "PTR")
+      backward, *_ = yield from self.server.resolver.query(
+          forward, "AAAA" if not is_ipv4 else "A")
 
-        if ip == ipaddress.ip_address(backward):
-          self.send_reply(privmsg.Notice(
-              "*", "*** Found your hostname ({})".format(forward)))
-          self.host = forward
-        else:
-          self.send_reply(privmsg.Notice(
-              "*", "*** Hostname does not resolve correctly"))
-      except aiodns.error.DNSError:
+      if ip == ipaddress.ip_address(backward):
         self.send_reply(privmsg.Notice(
-            "*", "*** Couldn't look up your hostname"))
-        self.host = host
+            "*", "*** Found your hostname ({})".format(forward)))
+        self.host = forward
+      else:
+        self.send_reply(privmsg.Notice(
+            "*", "*** Hostname does not resolve correctly"))
+    except aiodns.error.DNSError:
+      self.send_reply(privmsg.Notice(
+          "*", "*** Couldn't look up your hostname"))
+      self.host = host
 
-      if self.is_ready_for_registration:
-        self.register()
+    if self.is_ready_for_registration:
+      self.register()
 
-    asyncio.async(lookup_coro(), loop=self.server.loop)
+  def reschedule_ping_check(self):
+    if self.ping_check_handle is not None:
+      self.ping_check_handle.cancel()
+
+    if self.pong_check_handle is not None:
+      self.pong_check_handle.cancel()
+
+    def ping_check():
+      self.send(self.server.name, ping.Ping(self.server.name))
+      self.pong_check_handle = self.server.loop.call_later(
+          self.PONG_TIMEOUT.total_seconds(), pong_check)
+
+    def pong_check():
+      self.close("Ping timeout: {} seconds".format(
+          int(self.PING_TIMEOUT.total_seconds())))
+
+    self.ping_check_handle = self.server.loop.call_later(
+        self.PING_TIMEOUT.total_seconds(), ping_check)
+
+  def on_connect(self):
+    asyncio.async(self.resolve_hostname_coro(), loop=self.server.loop)
 
   def on_raw_message(self, prefix, command, params):
     try:
@@ -170,6 +201,11 @@ class Client(object):
         self.send_reply(e)
 
   def on_message(self, prefix, message):
+    self.last_activity_time = datetime.datetime.utcnow()
+
+    if self.is_registered:
+      self.reschedule_ping_check()
+
     message.handle_for(self, prefix)
 
   def on_close(self):
