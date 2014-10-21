@@ -102,8 +102,8 @@ class Channel(object):
     self.topic = None
     self.creation_time = datetime.datetime.utcnow()
 
-    self.is_disallowing_external_messages = False
-    self.is_secret = False
+    self.is_disallowing_external_messages = True
+    self.is_secret = True
     self.is_topic_locked = False
     self.is_moderated = False
 

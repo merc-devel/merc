@@ -2,6 +2,8 @@ import itertools
 
 from merc import errors
 from merc import message
+from merc import util
+from merc.features import mode
 from merc.features import names
 from merc.features import topic
 
@@ -31,7 +33,13 @@ class Join(message.Command):
     for channel_name, key in itertools.zip_longest(self.channel_names,
                                                    self.keys,
                                                    fillvalue=None):
-      channel = client.server.get_or_new_channel(channel_name)
+      is_new = False
+
+      try:
+        channel = client.server.get_channel(channel_name)
+      except errors.NoSuchNick:
+        channel = client.server.new_channel(channel_name)
+        is_new = True
 
       if channel.has_client(client):
         continue
@@ -46,6 +54,10 @@ class Join(message.Command):
 
       client.on_message(client.hostmask, names.Names(channel.name))
       client.send_reply(CreationTime(channel.name, channel.creation_time))
+
+      if is_new and channel.modes:
+        flags, args = util.show_modes(channel.modes)
+        client.send_reply(mode.Mode(channel.name, flags, *args))
 
   def as_params(self, client):
     params = [",".join(self.channel_names)]

@@ -124,13 +124,10 @@ class Server(object):
     except KeyError:
       raise errors.NoSuchNick(name)
 
-  def get_or_new_channel(self, name):
-    normalized_channel_name = util.to_irc_lower(name)
-
-    if normalized_channel_name not in self.channels:
-      self.channels[normalized_channel_name] = channel.Channel(name)
-
-    return self.get_channel(name)
+  def new_channel(self, name):
+    c = channel.Channel(name)
+    self.channels[c.normalized_name] = c
+    return c
 
   def remove_channel(self, channel):
     del self.channels[channel.normalized_name]
