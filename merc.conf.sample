@@ -33,3 +33,13 @@ bind:
   - host: "::"
     port: 6697
     ssl: true
+
+crypto:
+  hash_schemes:
+    - pbkdf2_sha256
+
+opers:
+  operator:
+    password: "$pbkdf2-sha256$20000$0nqvFcL4v/e.V2otxZgTQg$QaTfsdLzNpx0eMZqmxwCoc5q7cyvmC.UKKW.cONxNSE"
+    hostmasks:
+      - "*!*@*"
