@@ -16,7 +16,7 @@ class Kill(message.Command):
     client.check_is_irc_operator()
     user = client.server.get_client(self.nickname)
 
-    disconnect_reason = "Killed by {}: {}".format(self.nickname, self.reason)
+    disconnect_reason = "Killed by {}: {}".format(client.nickname, self.reason)
 
     user.send(None, errors.Error(disconnect_reason))
     user.close(disconnect_reason)
