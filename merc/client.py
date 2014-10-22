@@ -171,7 +171,7 @@ class Client(object):
       self.pong_check_handle.cancel()
 
     def ping_check():
-      self.send(self.server.name, ping.Ping(self.server.name))
+      self.send(None, ping.Ping(self.server.name))
       self.pong_check_handle = self.server.loop.call_later(
           self.PONG_TIMEOUT.total_seconds(), pong_check)
 

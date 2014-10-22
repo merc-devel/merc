@@ -6,14 +6,11 @@ from merc import message
 class Ping(message.Command):
   NAME = "PING"
   MIN_ARITY = 1
+  FORCE_TRAILING = True
 
   def __init__(self, value, server_name=None, *args):
     self.value = value
     self.server_name = server_name
-
-  @property
-  def FORCE_TRAILING(self):
-    return self.server_name is not None
 
   def as_params(self, client):
     params = [self.value]
