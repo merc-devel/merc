@@ -11,9 +11,12 @@ def make_flag_pair(mutator):
           lambda o, client, param=None: mutator(o, client, False))
 
 
+def immutable_mutator(o, client, param=None):
+  return False
+
+
 def make_immutable_flag_pair():
-  return (lambda o, client, param=None: False,
-          lambda o, client, param=None: False)
+  return (immutable_mutator, immutable_mutator)
 
 
 def is_channel_name(name):

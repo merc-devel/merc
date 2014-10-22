@@ -240,6 +240,13 @@ class Client(object):
     self.is_invisible = flag
     return True
 
+  def mutate_irc_operator(self, client, flag):
+    if not self.is_irc_operator:
+      return False
+
+    self.is_irc_operator = flag
+    return True
+
   @property
   def modes(self):
     modes = {}
@@ -257,6 +264,6 @@ class Client(object):
 
   MODES = {
     "i": util.make_flag_pair(mutate_invisible),
-    "o": util.make_immutable_flag_pair(),
+    "o": util.make_flag_pair(mutate_irc_operator),
     "Z": util.make_immutable_flag_pair()
   }
