@@ -92,3 +92,18 @@ class ChanOpPrivsNeeded(ParametrizedError):
 class NotOnChannel(ParametrizedError):
   NAME = "442"
   REASON = "You're not on that channel"
+
+
+class NoOperHost(SimpleError):
+  NAME = "491"
+  REASON = "No O-lines for your host"
+
+
+class PasswordMismatch(SimpleError):
+  NAME = "464"
+  REASON = "Password mismatch"
+
+
+class NoPrivileges(SimpleError):
+  NAME = "481"
+  REASON = "You're not an IRC operator"

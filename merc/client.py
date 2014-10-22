@@ -42,6 +42,7 @@ class Client(object):
     self.channels = {}
 
     self.is_invisible = True
+    self.is_irc_operator = False
 
     self.creation_time = datetime.datetime.utcnow()
     self.last_activity_time = self.creation_time
@@ -228,6 +229,10 @@ class Client(object):
     return (channel for channel in other.channels.values()
                     if self.can_see_channel(channel))
 
+  def check_is_irc_operator(self):
+    if not self.is_irc_operator:
+      raise errors.NoPrivileges
+
   def mutate_invisible(self, client, flag):
     if self.is_invisible == flag:
       return False
@@ -245,9 +250,13 @@ class Client(object):
     if self.is_securely_connected:
       modes["Z"] = True
 
+    if self.is_irc_operator:
+      modes["o"] = True
+
     return modes
 
   MODES = {
     "i": util.make_flag_pair(mutate_invisible),
+    "o": util.make_immutable_flag_pair(),
     "Z": util.make_immutable_flag_pair()
   }

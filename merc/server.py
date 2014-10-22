@@ -9,6 +9,8 @@ import signal
 import ssl
 import yaml
 
+import passlib.context
+
 from IPython.extensions import autoreload
 
 import merc
@@ -38,6 +40,8 @@ class Server(object):
     self.rehash()
 
     self.resolver = aiodns.DNSResolver(loop=loop)
+    self.crypt_context = passlib.context.CryptContext(
+        schemes=self.config["crypto"]["hash_schemes"])
 
     self.creation_time = datetime.datetime.utcnow()
 

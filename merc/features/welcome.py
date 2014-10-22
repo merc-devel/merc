@@ -1,5 +1,6 @@
 import merc
 
+from merc import errors
 from merc import message
 from merc import util
 from merc.features import lusers
@@ -61,6 +62,14 @@ class ISupport(message.Reply):
   def as_reply_params(self, client):
     return ["{}={}".format(k, v) for k, v in self.support_params.items()] + \
         ["are supported by this server"]
+
+
+class YoureOper(message.Reply):
+  NAME = "381"
+  FORCE_TRAILING = True
+
+  def as_reply_params(self, client):
+    return ["You are now an IRC operator"]
 
 
 def welcome(client, server):
@@ -146,3 +155,32 @@ class Quit(message.Command):
     if self.reason is not None:
       params.append(self.reason)
     return params
+
+
+@message.Command.register
+class Oper(message.Command):
+  NAME = "OPER"
+  MIN_ARITY = 2
+
+  def __init__(self, username, password, *args):
+    self.username = username
+    self.password = password
+
+  @message.Command.requires_registration
+  def handle_for(self, client, prefix):
+    try:
+      oper_spec = client.server.config["opers"][self.username]
+    except KeyError:
+      raise errors.NoOperHost
+
+    if not any(client.hostmask_matches(hostmask)
+               for hostmask in oper_spec["hostmasks"]):
+      raise errors.NoOperHost
+
+    if not client.server.crypt_context.verify(self.password,
+                                              oper_spec["password"]):
+      raise errors.PasswordMismatch
+
+    client.is_irc_operator = True
+    client.send_reply(YoureOper())
+    client.relay_to_self(mode.Mode(client.nickname, "+o"))

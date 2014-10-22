@@ -3,3 +3,4 @@ regex
 aiodns
 IPython
 PyYAML
+passlib
