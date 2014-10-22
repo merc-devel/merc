@@ -94,11 +94,6 @@ class NotOnChannel(ParametrizedError):
   REASON = "You're not on that channel"
 
 
-class NoOperHost(SimpleError):
-  NAME = "491"
-  REASON = "No O-lines for your host"
-
-
 class PasswordMismatch(SimpleError):
   NAME = "464"
   REASON = "Password mismatch"

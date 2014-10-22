@@ -171,11 +171,11 @@ class Oper(message.Command):
     try:
       oper_spec = client.server.config["opers"][self.username]
     except KeyError:
-      raise errors.NoOperHost
+      raise errors.PasswordMismatch
 
     if not any(client.hostmask_matches(hostmask)
                for hostmask in oper_spec["hostmasks"]):
-      raise errors.NoOperHost
+      raise errors.PasswordMismatch
 
     if not client.server.crypt_context.verify(self.password,
                                               oper_spec["password"]):
