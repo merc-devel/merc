@@ -105,7 +105,7 @@ class Nick(message.Command):
 
     if client.is_registered:
       client.relay_to_all(Nick(self.nickname), old_hostmask)
-      client.relay_to_self(Nick(self.nickname), old_hostmask)
+      client.send(old_hostmask, Nick(self.nickname))
     else:
       if client.is_ready_for_registration:
         client.register()

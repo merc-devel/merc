@@ -65,9 +65,8 @@ class Topic(message.Command):
         channel.check_is_operator(client)
 
       channel.set_topic(client, self.text)
-
-      client.relay_to_channel(channel, Topic(channel.name, channel.topic.text))
-      client.relay_to_self(Topic(channel.name, channel.topic.text))
+      channel.broadcast(None, client.hostmask,
+                        Topic(channel.name, channel.topic.text))
 
   def as_params(self, client):
     params = [self.channel_name]

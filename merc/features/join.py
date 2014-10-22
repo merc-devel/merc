@@ -45,9 +45,7 @@ class Join(message.Command):
         continue
 
       channel.join(client)
-
-      client.relay_to_channel(channel, Join(channel.name))
-      client.relay_to_self(Join(channel.name))
+      channel.broadcast(None, client.hostmask, Join(channel.name))
 
       if channel.topic is not None:
         client.on_message(client.hostmask, topic.Topic(channel.name))
@@ -88,8 +86,8 @@ class Part(message.Command):
         raise errors.NoSuchChannel(channel_name)
       else:
         client.server.part_channel(client, channel_name)
-        client.relay_to_channel(channel, Part(channel.name, self.reason))
-        client.relay_to_self(Part(channel.name, self.reason))
+        channel.broadcast(None, client.hostmask,
+                          Part(channel.name, self.reason))
 
   def as_params(self, client):
     params = [",".join(self.channel_names)]

@@ -83,9 +83,8 @@ class _Mode(message.Command):
       if applied_flags:
         flags, args = self._coalesce_flags(applied_flags)
 
-        msg_prefix = self.get_prefix(client)
-        client.relay_to_channel(chan, Mode(chan.name, flags, *args), msg_prefix)
-        client.relay_to_self(Mode(chan.name, flags, *args), msg_prefix)
+        chan.broadcast(None, self.get_prefix(client),
+                       Mode(chan.name, flags, *args))
     else:
       user = client.server.get_client(self.target)
       self.check_can_set_user_flags(client, user)
@@ -104,7 +103,8 @@ class _Mode(message.Command):
         flags, args = self._coalesce_flags(applied_flags)
 
         msg_prefix = self.get_prefix(client)
-        client.relay_to_self(Mode(user.nickname, flags, *args), msg_prefix)
+        user.send(self.get_prefix(client),
+                  Mode(user.nickname, flags, *args))
 
   def _coalesce_flags(self, applied_flags):
     flags = ""

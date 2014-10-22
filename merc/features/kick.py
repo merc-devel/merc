@@ -30,9 +30,8 @@ class Kick(message.Command):
     channel.check_has_client(user)
     channel.check_is_operator(client)
 
-    client.relay_to_channel(channel,
-                            Kick(self.channel_name, self.nickname, self.reason))
-    client.relay_to_self(Kick(self.channel_name, self.nickname, self.reason))
+    channel.broadcast(None, client.hostmask,
+                      Kick(self.channel_name, self.nickname, self.reason))
     client.server.part_channel(user, channel.name)
 
 
