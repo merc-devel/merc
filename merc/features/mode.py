@@ -27,11 +27,7 @@ class ChannelModeIs(message.Reply):
     return [self.channel_name, flags] + args
 
 
-@message.Command.register
-class Mode(message.Command):
-  NAME = "MODE"
-  MIN_ARITY = 1
-
+class _Mode(message.Command):
   def __init__(self, target, flags=None, *args):
     self.target = target
     self.flags = flags
@@ -42,23 +38,6 @@ class Mode(message.Command):
 
   @message.Command.requires_registration
   def handle_for(self, client, prefix):
-    if self.flags is None:
-      if util.is_channel_name(self.target):
-        try:
-          chan = client.server.get_channel(self.target)
-        except errors.NoSuchNick:
-          raise errors.NoSuchChannel(self.target)
-
-        client.send_reply(ChannelModeIs(chan.name, chan.modes))
-        # TODO: send creation time
-      else:
-        user = client.server.get_client(self.target)
-        if user is not client:
-          raise errors.UsersDontMatch
-
-        client.send_reply(UmodeIs(user.modes))
-      return
-
     flags = []
     state = "+"
     for c in self.flags:
@@ -76,6 +55,8 @@ class Mode(message.Command):
         chan = client.server.get_channel(self.target)
       except errors.NoSuchNick:
         raise errors.NoSuchChannel(self.target)
+
+      self.check_can_set_chanenl_flags(client, chan)
 
       expanded_args = []
 
@@ -101,13 +82,13 @@ class Mode(message.Command):
 
       if applied_flags:
         flags, args = self._coalesce_flags(applied_flags)
-        client.relay_to_channel(chan, Mode(chan.name, flags, *args))
-        client.relay_to_self(Mode(chan.name, flags, *args))
+
+        msg_prefix = self.get_prefix(client)
+        client.relay_to_channel(chan, Mode(chan.name, flags, *args), msg_prefix)
+        client.relay_to_self(Mode(chan.name, flags, *args), msg_prefix)
     else:
       user = client.server.get_client(self.target)
-
-      if user is not client:
-        raise errors.UsersDontMatch
+      self.check_can_set_user_flags(client, user)
 
       for flag in flags:
         # TODO: do users have parametrized flags?
@@ -121,7 +102,9 @@ class Mode(message.Command):
 
       if applied_flags:
         flags, args = self._coalesce_flags(applied_flags)
-        client.relay_to_self(Mode(user.nickname, flags, *args))
+
+        msg_prefix = self.get_prefix(client)
+        client.relay_to_self(Mode(user.nickname, flags, *args), msg_prefix)
 
   def _coalesce_flags(self, applied_flags):
     flags = ""
@@ -139,3 +122,54 @@ class Mode(message.Command):
         args.append(arg)
 
     return flags, args
+
+
+@message.Command.register
+class Mode(_Mode):
+  NAME = "MODE"
+  MIN_ARITY = 1
+
+  @message.Command.requires_registration
+  def handle_for(self, client, prefix):
+    if self.flags is None:
+      if util.is_channel_name(self.target):
+        try:
+          chan = client.server.get_channel(self.target)
+        except errors.NoSuchNick:
+          raise errors.NoSuchChannel(self.target)
+
+        client.send_reply(ChannelModeIs(chan.name, chan.modes))
+        # TODO: send creation time
+      else:
+        user = client.server.get_client(self.target)
+        if user is not client:
+          raise errors.UsersDontMatch
+
+        client.send_reply(UmodeIs(user.modes))
+    else:
+        super().handle_for(client, prefix)
+
+  def check_can_set_chanenl_flags(self, client, channel):
+    channel.check_is_operator(client)
+
+  def check_can_set_user_flags(self, client, user):
+    if user is not client:
+      raise errors.UsersDontMatch
+
+  def get_prefix(self, client):
+    return client.hostmask
+
+
+@message.Command.register
+class SAMode(_Mode):
+  NAME = "SAMODE"
+  MIN_ARITY = 2
+
+  def check_can_set_chanenl_flags(self, client, channel):
+    client.check_is_irc_operator()
+
+  def check_can_set_user_flags(self, client, user):
+    client.check_is_irc_operator()
+
+  def get_prefix(self, client):
+    return client.server.name

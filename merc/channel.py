@@ -10,23 +10,6 @@ from merc import util
 Topic = collections.namedtuple("Topic", ["text", "who", "time"])
 
 
-
-def chanmode_needs_operator(f):
-  @functools.wraps(f)
-  def _wrapper(self, client, value):
-    self.check_is_operator(client)
-    return f(self, client, value)
-  return _wrapper
-
-
-def chanrole_needs_operator(f):
-  @functools.wraps(f)
-  def _wrapper(self, client, value):
-    self.channel.check_is_operator(client)
-    return f(self, client, value)
-  return _wrapper
-
-
 class ChannelUser(object):
   ROLE_CHARS = "~&@%+"
   ROLE_MODES = "qaohv"
@@ -41,7 +24,6 @@ class ChannelUser(object):
     self.is_admin = False
     self.is_owner = False
 
-  @chanrole_needs_operator
   def mutate_operator(self, client, value):
     if self.is_operator == value:
       return False
@@ -49,7 +31,6 @@ class ChannelUser(object):
     self.is_operator = value
     return True
 
-  @chanrole_needs_operator
   def mutate_voice(self, client, value):
     if self.is_voiced == value:
       return False
@@ -171,7 +152,6 @@ class Channel(object):
       if not user.client.is_invisible:
         yield user
 
-  @chanmode_needs_operator
   def mutate_disallowing_external_messages(self, client, flag):
     if self.is_disallowing_external_messages == flag:
       return False
@@ -179,7 +159,6 @@ class Channel(object):
     self.is_disallowing_external_messages = flag
     return True
 
-  @chanmode_needs_operator
   def mutate_secret(self, client, flag):
     if self.is_secret == flag:
       return False
@@ -187,7 +166,6 @@ class Channel(object):
     self.is_secret = flag
     return True
 
-  @chanmode_needs_operator
   def mutate_topic_lock(self, client, flag):
     if self.is_topic_locked == flag:
       return False
@@ -195,7 +173,6 @@ class Channel(object):
     self.is_topic_locked = flag
     return True
 
-  @chanmode_needs_operator
   def mutate_moderated(self, client, flag):
     if self.is_moderated == flag:
       return False
