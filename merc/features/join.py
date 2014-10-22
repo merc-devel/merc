@@ -19,17 +19,11 @@ class CreationTime(message.Reply):
     return [self.channel_name, str(int(self.time.timestamp()))]
 
 
-@message.Command.register
-class Join(message.Command):
-  NAME = "JOIN"
-  MIN_ARITY = 1
-
-  def __init__(self, channel_names, keys=None, *args):
-    self.channel_names = channel_names.split(",")
-    self.keys = keys.split(",") if keys is not None else []
-
+class _Join(message.Command):
   @message.Command.requires_registration
   def handle_for(self, client, prefix):
+    user = self.get_joining_client(client)
+
     for channel_name, key in itertools.zip_longest(self.channel_names,
                                                    self.keys,
                                                    fillvalue=None):
@@ -41,21 +35,39 @@ class Join(message.Command):
         channel = client.server.new_channel(channel_name)
         is_new = True
 
-      if channel.has_client(client):
+      if channel.has_client(user):
         continue
 
-      channel.join(client)
-      channel.broadcast(None, client.hostmask, Join(channel.name))
+      self.check_can_join(user, channel, key)
+
+      channel.join(user)
+      channel.broadcast(None, user.hostmask, Join(channel.name))
 
       if channel.topic is not None:
-        client.on_message(client.hostmask, topic.Topic(channel.name))
+        user.on_message(user.hostmask, topic.Topic(channel.name))
 
-      client.on_message(client.hostmask, names.Names(channel.name))
-      client.send_reply(CreationTime(channel.name, channel.creation_time))
+      user.on_message(user.hostmask, names.Names(channel.name))
+      user.send_reply(CreationTime(channel.name, channel.creation_time))
 
       if is_new and channel.modes:
         flags, args = util.show_modes(channel.modes)
-        client.send_reply(mode.Mode(channel.name, flags, *args))
+        user.send_reply(mode.Mode(channel.name, flags, *args))
+
+
+@message.Command.register
+class Join(_Join):
+  NAME = "JOIN"
+  MIN_ARITY = 1
+
+  def __init__(self, channel_names, keys=None, *args):
+    self.channel_names = channel_names.split(",")
+    self.keys = keys.split(",") if keys is not None else []
+
+  def check_can_join(self, client, channel, key):
+    return
+
+  def get_joining_client(self, client):
+    return client
 
   def as_params(self, client):
     params = [",".join(self.channel_names)]
@@ -65,7 +77,45 @@ class Join(message.Command):
 
 
 @message.Command.register
-class Part(message.Command):
+class SaJoin(_Join):
+  NAME = "SAJOIN"
+  MIN_ARITY = 2
+
+  def __init__(self, nickname, channel_names, *args):
+    self.nickname = nickname
+    self.channel_names = channel_names.split(",")
+    self.keys = []
+
+  def check_can_join(self, client, channel, key):
+    return
+
+  def get_joining_client(self, client):
+    return client.server.get_client(self.nickname)
+
+  @message.Command.requires_registration
+  def handle_for(self, client, prefix):
+    client.check_is_irc_operator()
+    super().handle_for(client, prefix)
+
+
+class _Part(message.Command):
+  @message.Command.requires_registration
+  def handle_for(self, client, prefix):
+    user = self.get_parting_client(client)
+
+    for channel_name in self.channel_names:
+      try:
+        channel = client.server.get_channel(channel_name)
+      except errors.NoSuchNick:
+        raise errors.NoSuchChannel(channel_name)
+      else:
+        channel.broadcast(None, user.hostmask,
+                          Part(channel.name, self.reason))
+        client.server.part_channel(user, channel_name)
+
+
+@message.Command.register
+class Part(_Part):
   NAME = "PART"
   MIN_ARITY = 1
 
@@ -77,17 +127,8 @@ class Part(message.Command):
   def FORCE_TRAILING(self):
     return self.reason is not None
 
-  @message.Command.requires_registration
-  def handle_for(self, client, prefix):
-    for channel_name in self.channel_names:
-      try:
-        channel = client.server.get_channel(channel_name)
-      except errors.NoSuchNick:
-        raise errors.NoSuchChannel(channel_name)
-      else:
-        client.server.part_channel(client, channel_name)
-        channel.broadcast(None, client.hostmask,
-                          Part(channel.name, self.reason))
+  def get_parting_client(self, client):
+    return client
 
   def as_params(self, client):
     params = [",".join(self.channel_names)]
@@ -95,3 +136,21 @@ class Part(message.Command):
       params.append(self.reason)
     return params
 
+
+@message.Command.register
+class SaPart(_Part):
+  NAME = "SAPART"
+  MIN_ARITY = 2
+
+  def __init__(self, nickname, channel_names, reason=None, *args):
+    self.nickname = nickname
+    self.channel_names = channel_names.split(",")
+    self.reason = reason
+
+  def get_parting_client(self, client):
+    return client.server.get_client(self.nickname)
+
+  @message.Command.requires_registration
+  def handle_for(self, client, prefix):
+    client.check_is_irc_operator()
+    super().handle_for(client, prefix)
