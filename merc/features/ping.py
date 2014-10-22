@@ -30,12 +30,21 @@ class Pong(message.Command):
   NAME = "PONG"
   MIN_ARITY = 1
 
+  @property
+  def FORCE_TRAILING(self):
+    return self.value is not None
+
   def __init__(self, server_name, value=None, *args):
     self.server_name = server_name
     self.value = value
 
   def as_params(self, client):
-    return [self.server_name, self.value]
+    params = [self.server_name]
+
+    if self.value is not None:
+      params.append(self.value)
+
+    return params
 
   def handle_for(self, client, prefix):
     pass
