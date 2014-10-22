@@ -20,7 +20,7 @@ class LUserOp(message.Reply):
   FORCE_TRAILING = True
 
   def as_reply_params(self, client):
-    return [str(len(client.is_irc_operator
+    return [str(sum(client.is_irc_operator
                     for client in client.server.clients.values())),
             "IRC operators online"]
 
