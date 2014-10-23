@@ -13,13 +13,13 @@ class WhoIsUser(message.Reply):
     self.gecos = gecos
 
   def as_reply_params(self, client):
-    return [self.nick, self.user, self.host, '*', self.gecos]
+    return [self.nick, self.user, self.host, "*", self.gecos]
 
 class WhoIsServer(message.Reply):
   NAME = "312"
   FORCE_TRAILING = True
 
-  def __init__(self, nick, server, server_info=''):
+  def __init__(self, nick, server, server_info=""):
     self.nick = nick
     self.server = server
     self.server_info = server_info
@@ -35,7 +35,7 @@ class WhoIsOperator(message.Reply):
     self.nick = nick
 
   def as_reply_params(self, client):
-    return [self.nick, 'is an IRC operator']
+    return [self.nick, "is an IRC operator"]
 
 class WhoIsIdle(message.Reply):
   NAME = "317"
@@ -46,7 +46,7 @@ class WhoIsIdle(message.Reply):
     self.idle_time = idle_time
 
   def as_reply_params(self, client):
-    return [self.nick, str(round(self.idle_time)), 'seconds idle']
+    return [self.nick, str(round(self.idle_time)), "seconds idle"]
 
 class WhoIsEnd(message.Reply):
   NAME = "318"
@@ -56,7 +56,7 @@ class WhoIsEnd(message.Reply):
     self.nick = nick
 
   def as_reply_params(self, client):
-    return [self.nick, 'End of /WHOIS list']
+    return [self.nick, "End of /WHOIS list"]
 
 class WhoIsChannels(message.Reply):
   NAME = "319"
@@ -67,7 +67,7 @@ class WhoIsChannels(message.Reply):
     self.channels = channels
 
   def as_reply_params(self, client):
-    return [self.nick, ' '.join(self.channels)]
+    return [self.nick, " ".join(self.channels)]
 
 
 @message.Command.register
@@ -76,7 +76,7 @@ class WhoIs(message.Command):
   MIN_ARITY = 1
 
   def __init__(self, nicknames, *args):
-    self.nicknames = nicknames.split(',')
+    self.nicknames = nicknames.split(",")
 
   @message.Command.requires_registration
   def handle_for(self, client, prefix):
@@ -86,6 +86,7 @@ class WhoIs(message.Command):
       except errors.NoSuchNick as e:
         client.send_reply(e)
       else:
+        idle_time = (target.last_activity_time - target.creation_time).total_seconds()
         channels = []
         for channel in client.get_channels_visible_for(target):
           sigil = channel.get_channel_user_for(target).sigil
@@ -96,7 +97,7 @@ class WhoIs(message.Command):
         client.send_reply(WhoIsServer(target.nickname, target.server.name, target.server.network_name))
         if client.is_irc_operator:
           client.send_reply(WhoIsOperator(target.nickname))
-        client.send_reply(WhoIsIdle(target.nickname, (target.last_activity_time - target.creation_time).total_seconds()))
+        client.send_reply(WhoIsIdle(target.nickname, idle_time))
         if channels:
           client.send_reply(WhoIsChannels(target.nickname, channels))
         client.send_reply(WhoIsEnd(target.nickname))
