@@ -54,7 +54,7 @@ class Who(message.Command):
         if client.can_see_channel(chan):
           who = [(chan.name, user.client)
                  for user in chan.get_visible_users_for(client)
-                 if self.client_matches_query_type(user)]
+                 if self.client_matches_query_type(user.client)]
       else:
         for user in client.server.query_clients(self.target):
           if not self.client_matches_query_type(user):
