@@ -6,14 +6,14 @@ class WhoIsUser(message.Reply):
   NAME = "311"
   FORCE_TRAILING = True
 
-  def __init__(self, nick, user, host, gecos):
+  def __init__(self, nick, user, host, realname):
     self.nick = nick
     self.user = user
     self.host = host
-    self.gecos = gecos
+    self.realname = realname
 
   def as_reply_params(self, client):
-    return [self.nick, self.user, self.host, "*", self.gecos]
+    return [self.nick, self.user, self.host, "*", self.realname]
 
 class WhoIsServer(message.Reply):
   NAME = "312"
