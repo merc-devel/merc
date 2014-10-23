@@ -67,6 +67,22 @@ class Server(object):
   def motd(self):
     return self.config["motd"]
 
+  @property
+  def admin_location(self):
+    return self.config["admin"]["location"]
+
+  @property
+  def admin_location_fine(self):
+    return self.config["admin"]["location_fine"]
+
+  @property
+  def admin_name(self):
+    return self.config["admin"]["name"]
+
+  @property
+  def admin_email(self):
+    return self.config["admin"]["email"]
+
   def register_signal_handlers(self):
     signal.signal(signal.SIGUSR1, lambda signum, frame: self.reload_code())
     signal.signal(signal.SIGHUP, lambda signum, frame: self.rehash())
