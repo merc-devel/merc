@@ -1,6 +1,6 @@
 from merc import errors
 from merc import message
-from .away import IsAway
+from merc.features import away
 
 
 class WhoIsUser(message.Reply):
@@ -115,5 +115,5 @@ class WhoIs(message.Command):
         if target.is_securely_connected:
           client.send_reply(WhoIsSecure(target.nickname, "*"))
         if target.is_away:
-          client.send_reply(IsAway(target.nickname, target.away_message))
+          client.send_reply(away.IsAway(target.nickname, target.away_message))
         client.send_reply(WhoIsEnd(target.nickname))
