@@ -8,8 +8,11 @@ class EndOfWho(message.Reply):
   NAME = "315"
   FORCE_TRAILING = True
 
+  def __init__(self, channel_name):
+    self.channel_name = channel_name
+
   def as_reply_params(self, client):
-    return ["End of /WHO command"]
+    return [self.channel_name, "End of /WHO command"]
 
 
 class WhoReply(message.Reply):
@@ -75,7 +78,7 @@ class Who(message.Command):
 
     for channel_name, user in who:
         client.send_reply(WhoReply(channel_name, user, 0,
-                                           client.server.name))
+                                   client.server.name))
 
-    client.send_reply(EndOfWho())
+    client.send_reply(EndOfWho(self.channel_name))
 
