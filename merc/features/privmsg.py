@@ -2,6 +2,7 @@ from merc import channel
 from merc import errors
 from merc import message
 from merc import util
+from .away import IsAway
 
 
 class _Privmsg(message.Command):
@@ -37,6 +38,8 @@ class _Privmsg(message.Command):
                                 self.__class__(chan.name, self.text))
       else:
         user = client.server.get_client(target)
+        if user.is_away:
+          client.send_reply(IsAway(user.nickname, user.away_message))
         client.relay_to_client(user,
                                self.__class__(user.nickname, self.text))
 
