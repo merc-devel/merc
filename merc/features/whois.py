@@ -37,6 +37,17 @@ class WhoIsOperator(message.Reply):
   def as_reply_params(self, client):
     return [self.nick, "is an IRC operator"]
 
+class WhoIsSecure(message.Reply):
+  NAME = "671"
+  FORCE_TRAILING = True
+
+  def __init__(self, nick, type):
+    self.nick = nick
+    self.type = type
+
+  def as_reply_params(self, client):
+    return [self.nick, self.type, "is using a secure connection"]
+
 class WhoIsIdle(message.Reply):
   NAME = "317"
   FORCE_TRAILING = True
@@ -100,5 +111,7 @@ class WhoIs(message.Command):
         client.send_reply(WhoIsIdle(target.nickname, idle_time))
         if channels:
           client.send_reply(WhoIsChannels(target.nickname, channels))
+        if client.is_securely_connected:
+          client.send_reply(WhoIsSecure(target.nickname, "*"))
         client.send_reply(WhoIsEnd(target.nickname))
 
