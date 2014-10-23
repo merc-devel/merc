@@ -19,10 +19,6 @@ def make_immutable_flag_pair():
   return (immutable_mutator, immutable_mutator)
 
 
-def is_channel_name(name):
-  return name and name[0] == "#"
-
-
 def show_modes(modes):
   flags = []
   args = []

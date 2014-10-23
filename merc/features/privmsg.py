@@ -1,3 +1,4 @@
+from merc import channel
 from merc import errors
 from merc import message
 from merc import util
@@ -17,23 +18,23 @@ class _Privmsg(message.Command):
   @message.Command.requires_registration
   def handle_for(self, client, prefix):
     for target in self.targets:
-      if util.is_channel_name(target):
+      if channel.Channel.is_valid_name(target):
         try:
-          channel = client.server.get_channel(target)
+          chan = client.server.get_channel(target)
         except errors.NoSuchNick:
           continue
 
-        if channel.is_disallowing_external_messages:
+        if chan.is_disallowing_external_messages:
           try:
-            channel.check_has_client(client)
+            chan.check_has_client(client)
           except errors.NoSuchNick:
-            raise errors.CannotSendToChan(channel.name)
+            raise errors.CannotSendToChan(chan.name)
 
-        if channel.is_moderated:
-          channel.check_is_voiced(client)
+        if chan.is_moderated:
+          chan.check_is_voiced(client)
 
-        client.relay_to_channel(channel,
-                                self.__class__(channel.name, self.text))
+        client.relay_to_channel(chan,
+                                self.__class__(chan.name, self.text))
       else:
         user = client.server.get_client(target)
         client.relay_to_client(user,

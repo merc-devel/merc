@@ -50,7 +50,7 @@ class _Mode(message.Command):
 
     applied_flags = []
 
-    if util.is_channel_name(self.target):
+    if channel.Channel.is_valid_name(self.target):
       try:
         chan = client.server.get_channel(self.target)
       except errors.NoSuchNick:
@@ -132,7 +132,7 @@ class Mode(_Mode):
   @message.Command.requires_registration
   def handle_for(self, client, prefix):
     if self.flags is None:
-      if util.is_channel_name(self.target):
+      if channel.Channel.is_valid_name(self.target):
         try:
           chan = client.server.get_channel(self.target)
         except errors.NoSuchNick:

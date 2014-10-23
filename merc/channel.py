@@ -71,12 +71,20 @@ class ChannelUser(object):
 
 
 class Channel(object):
-  CHANNEL_REGEX = regex.compile(r"^#[^\x00\x07\r\n,: ]*$")
+  CHANNEL_NAME_REGEX = regex.compile(r"^[^\x00\x07\r\n,: ]*$")
+  CHANNEL_CHARS = {"#", "&"}
 
   MAX_TOPIC_LENGTH = 390
 
+  @classmethod
+  def is_valid_name(cls, name):
+    sigil, *rest = name
+
+    return cls.CHANNEL_NAME_REGEX.match("".join(rest)) is not None and \
+           sigil in cls.CHANNEL_CHARS
+
   def __init__(self, name):
-    if self.CHANNEL_REGEX.match(name) is None:
+    if not self.is_valid_name(name):
       raise errors.NoSuchChannel(name)
 
     self.name = name
@@ -89,6 +97,10 @@ class Channel(object):
     self.is_moderated = False
 
     self.users = {}
+
+  @property
+  def is_local(self):
+    return self.name[0] == "&"
 
   def set_mode(self, client, mode, param=None):
     try:

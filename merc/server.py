@@ -79,7 +79,7 @@ class Server(object):
   @property
   def isupport(self):
     return {
-      "CHANTYPES": "#",
+      "CHANTYPES": "".join(channel.Channel.CHANNEL_CHARS),
       "NETWORK": self.network_name,
       "CASEMAPPING": "unicode",
       "PREFIX": "({}){}".format(channel.ChannelUser.ROLE_MODES,

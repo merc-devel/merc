@@ -1,3 +1,4 @@
+from merc import channel
 from merc import errors
 from merc import message
 from merc import util
@@ -42,12 +43,12 @@ class Who(message.Command):
     who = []
 
     try:
-      if util.is_channel_name(self.target):
-        channel = client.server.get_channel(self.target)
+      if channel.Channel.is_valid_name(self.target):
+        chan = client.server.get_channel(self.target)
 
-        if client.can_see_channel(channel):
-          who = [(channel.name, user.client)
-                 for user in channel.get_visible_users_for(client)]
+        if client.can_see_channel(chan):
+          who = [(chan.name, user.client)
+                 for user in chan.get_visible_users_for(client)]
       else:
         for user in client.server.query_clients(self.target):
           visible_it = iter(client.get_channels_visible_for(user))
