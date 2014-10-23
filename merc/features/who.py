@@ -34,9 +34,14 @@ class Who(message.Command):
   NAME = "WHO"
   MIN_ARITY = 1
 
-  def __init__(self, target, only_opers=None, *args):
+  def __init__(self, target, query_type=None, *args):
     self.target = target
-    self.only_opers = only_opers
+    self.query_type = query_type
+
+  def client_matches_query_type(self, user):
+    if self.query_type == "o":
+      return user.is_irc_operator
+    return True
 
   @message.Command.requires_registration
   def handle_for(self, client, prefix):
@@ -48,9 +53,13 @@ class Who(message.Command):
 
         if client.can_see_channel(chan):
           who = [(chan.name, user.client)
-                 for user in chan.get_visible_users_for(client)]
+                 for user in chan.get_visible_users_for(client)
+                 if self.client_matches_query_type(user)]
       else:
         for user in client.server.query_clients(self.target):
+          if not self.client_matches_query_type(user):
+            continue
+
           visible_it = iter(client.get_channels_visible_for(user))
 
           try:
