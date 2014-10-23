@@ -106,12 +106,12 @@ class WhoIs(message.Command):
 
         client.send_reply(WhoIsUser(target.nickname, target.username, target.host, target.realname))
         client.send_reply(WhoIsServer(target.nickname, target.server.name, target.server.network_name))
-        if client.is_irc_operator:
+        if target.is_irc_operator:
           client.send_reply(WhoIsOperator(target.nickname))
         client.send_reply(WhoIsIdle(target.nickname, idle_time))
         if channels:
           client.send_reply(WhoIsChannels(target.nickname, channels))
-        if client.is_securely_connected:
+        if target.is_securely_connected:
           client.send_reply(WhoIsSecure(target.nickname, "*"))
         client.send_reply(WhoIsEnd(target.nickname))
 
