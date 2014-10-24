@@ -90,9 +90,7 @@ class Server(object):
       "CASEMAPPING": "unicode",
       "PREFIX": "({}){}".format(channel.ChannelUser.ROLE_MODES,
                                 channel.ChannelUser.ROLE_CHARS),
-      "CHARSET": "utf-8",
-      "NICKLEN": client.Client.MAX_NICKNAME_LENGTH,
-      "TOPICLEN": channel.Channel.MAX_TOPIC_LENGTH
+      "CHARSET": "utf-8"
     }
 
   def new_client(self, transport):

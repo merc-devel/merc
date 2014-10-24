@@ -4,8 +4,7 @@ from merc import message
 
 
 class IsOnFeature(feature.Feature):
-  def on_client_new(self, client):
-    client.away_message = None
+  pass
 
 
 install = IsOnFeature

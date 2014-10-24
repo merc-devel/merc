@@ -17,9 +17,6 @@ from merc.features import welcome
 
 
 class Client(object):
-  NICKNAME_REGEX = regex.compile(r"^[\p{L}\p{So}_\[\]\\^{}|`][\p{L}\p{So}\p{N}_\[\]\\^{}|`-]*$")
-  MAX_NICKNAME_LENGTH = 16
-
   PING_TIMEOUT = datetime.timedelta(seconds=240)
   PONG_TIMEOUT = datetime.timedelta(seconds=20)
 
@@ -74,13 +71,6 @@ class Client(object):
   def normalized_nickname(self):
     return util.to_irc_lower(self.nickname) if self.nickname is not None \
                                             else None
-
-  def rename(self, new_nickname):
-    if self.NICKNAME_REGEX.match(new_nickname) is None or \
-        len(new_nickname) > self.MAX_NICKNAME_LENGTH:
-      raise errors.ErroneousNickname
-
-    self.server.rename_client(self, new_nickname)
 
   @property
   def is_ready_for_registration(self):

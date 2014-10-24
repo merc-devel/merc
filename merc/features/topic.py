@@ -8,11 +8,10 @@ from merc import util
 
 
 Topic = collections.namedtuple("Topic", ["text", "who", "time"])
+MAX_TOPIC_LENGTH = 390
 
 
 class TopicFeature(feature.Feature):
-  MAX_TOPIC_LENGTH = 390
-
   ISUPPORT = {
       "TOPICLEN": MAX_TOPIC_LENGTH
   }
@@ -87,8 +86,8 @@ class Topic(message.Command):
       if not self.text:
         channel.topic = None
       else:
-        channel.topic = Topic(text[:TopicFeature.MAX_TOPIC_LENGTH],
-                              client.hostmask, datetime.datetime.utcnow())
+        channel.topic = Topic(text[:MAX_TOPIC_LENGTH], client.hostmask,
+                              datetime.datetime.utcnow())
 
       channel.broadcast(None, client.hostmask,
                         Topic(channel.name, channel.topic.text))
