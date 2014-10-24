@@ -34,6 +34,11 @@ class NoSuchNick(ParametrizedError):
   REASON = "No such nick/channel"
 
 
+class NoSuchServer(ParametrizedError):
+  NAME = "402"
+  REASON = "No such server"
+
+
 class NoSuchChannel(ParametrizedError):
   NAME = "403"
   REASON = "No such channel"

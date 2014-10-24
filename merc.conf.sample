@@ -13,6 +13,12 @@ motd: |
 
     Join us on #merc-devel @ irc.freenode.net (ironic, I know)!
 
+admin:
+  name: operator
+  email: dev@nu.ll
+  location: Amsterdam, the Netherlands
+  location_fine: Schuberg-Philis
+
 ssl:
   cert: server.crt
   key: server.key
