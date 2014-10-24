@@ -10,16 +10,9 @@ from merc import errors
 from merc import emitter
 from merc import message
 from merc import util
-from merc.features import mode
-from merc.features import ping
-from merc.features import privmsg
-from merc.features import welcome
 
 
 class Client(object):
-  PING_TIMEOUT = datetime.timedelta(seconds=240)
-  PONG_TIMEOUT = datetime.timedelta(seconds=20)
-
   def __init__(self, server, transport):
     self.id = id(self)
 
@@ -37,15 +30,12 @@ class Client(object):
     self.disconnect_reason = None
 
     self.channels = {}
+    self.modes = {}
 
-    self.is_invisible = True
     self.is_irc_operator = False
 
     self.creation_time = datetime.datetime.utcnow()
     self.last_activity_time = self.creation_time
-
-    self.ping_check_handle = None
-    self.pong_check_handle = None
 
   @property
   def hostmask(self):
@@ -77,29 +67,35 @@ class Client(object):
     return self.nickname is not None and self.username is not None and \
            self.host is not None
 
-  def set_mode(self, client, mode, param=None):
-    try:
-      set, _ = self.MODES[mode]
-    except KeyError:
-      raise errors.UmodeUnknownFlag
 
-    return set(self, param)
+  def set_mode(self, client, mode, param=None):
+    if mode not in self.modes:
+      try:
+        mode_factory = self.server.user_modes[mode]
+      except KeyError:
+        raise errors.UnknownMode(mode)
+
+      self.modes[mode] = mode_factory()
+
+    return self.modes[mode].set(client, param)
 
   def unset_mode(self, client, mode, param=None):
-    try:
-      _, unset = self.MODES[mode]
-    except KeyError:
-      raise errors.UmodeUnknownFlag
+    if mode not in self.modes:
+      try:
+        mode_factory = self.server.user_modes[mode]
+      except KeyError:
+        raise errors.UnknownMode(mode)
 
-    return unset(self, param)
+      self.modes[mode] = mode_factory()
+
+    return self.modes[mode].unset(client, param)
 
   def register(self):
     self.server.register_client(self)
-    self.reschedule_ping_check()
 
   def send(self, prefix, msg):
-    raw = msg.emit(self, prefix).encode(
-        "utf-8")[:message.Message.MAX_LENGTH].decode("utf-8", "ignore")
+    raw = msg.emit(self, prefix).encode("utf-8")[:message.Message.MAX_LENGTH] \
+        .decode("utf-8", "ignore")
     self.transport.write(raw.encode("utf-8") + b"\r\n")
 
   def send_reply(self, message):
@@ -123,7 +119,8 @@ class Client(object):
   def resolve_hostname_coro(self):
     host, *_ = self.transport.get_extra_info("peername")
 
-    self.send_reply(privmsg.Notice("*", "*** Looking up your hostname..."))
+    self.server.run_hooks("send_server_notice",
+                          "*** Looking up your hostname...")
     ip = ipaddress.ip_address(host)
 
     is_ipv4 = False
@@ -140,38 +137,19 @@ class Client(object):
           forward, "AAAA" if not is_ipv4 else "A")
 
       if ip == ipaddress.ip_address(backward):
-        self.send_reply(privmsg.Notice(
-            "*", "*** Found your hostname ({})".format(forward)))
+        self.server.run_hooks("send_server_notice",
+                              "*** Found your hostname ({})".format(forward))
         self.host = forward
       else:
-        self.send_reply(privmsg.Notice(
-            "*", "*** Hostname does not resolve correctly"))
+        self.server.run_hooks("send_server_notice",
+                              "*** Hostname does not resolve correctly")
     except aiodns.error.DNSError:
-      self.send_reply(privmsg.Notice(
-          "*", "*** Couldn't look up your hostname"))
+      self.server.run_hooks("send_server_notice",
+                            "*** Couldn't look up your hostname")
       self.host = host
 
     if self.is_ready_for_registration:
       self.register()
-
-  def reschedule_ping_check(self):
-    if self.ping_check_handle is not None:
-      self.ping_check_handle.cancel()
-
-    if self.pong_check_handle is not None:
-      self.pong_check_handle.cancel()
-
-    def ping_check():
-      self.send(None, ping.Ping(self.server.name))
-      self.pong_check_handle = self.server.loop.call_later(
-          self.PONG_TIMEOUT.total_seconds(), pong_check)
-
-    def pong_check():
-      self.close("Ping timeout: {} seconds".format(
-          int(self.PING_TIMEOUT.total_seconds())))
-
-    self.ping_check_handle = self.server.loop.call_later(
-        self.PING_TIMEOUT.total_seconds(), ping_check)
 
   def on_connect(self):
     asyncio.async(self.resolve_hostname_coro(), loop=self.server.loop)
@@ -193,15 +171,10 @@ class Client(object):
 
   def on_message(self, prefix, message):
     self.last_activity_time = datetime.datetime.utcnow()
-
-    if self.is_registered:
-      self.reschedule_ping_check()
-
     message.handle_for(self, prefix)
+    self.server.run_hooks("after_message", self, message, prefix)
 
   def on_close(self):
-    self.relay_to_all(welcome.Quit(self.disconnect_reason))
-
     for channel_name in list(self.channels):
       self.server.part_channel(self, channel_name)
 
@@ -223,37 +196,5 @@ class Client(object):
     if not self.is_irc_operator:
       raise errors.NoPrivileges
 
-  def mutate_invisible(self, client, flag):
-    if self.is_invisible == flag:
-      return False
-
-    self.is_invisible = flag
-    return True
-
-  def mutate_irc_operator(self, client, flag):
-    if not self.is_irc_operator:
-      return False
-
-    self.is_irc_operator = flag
-    return True
-
-  @property
-  def modes(self):
-    modes = {}
-
-    if self.is_invisible:
-      modes["i"] = True
-
-    if self.is_securely_connected:
-      modes["Z"] = True
-
-    if self.is_irc_operator:
-      modes["o"] = True
-
-    return modes
-
-  MODES = {
-    "i": util.make_flag_pair(mutate_invisible),
-    "o": util.make_flag_pair(mutate_irc_operator),
-    "Z": util.make_immutable_flag_pair()
-  }
+  def get_feature_locals(self, feature_factory):
+    return self.server.features[feature_factory].user_locals[self]

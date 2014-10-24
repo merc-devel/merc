@@ -15,3 +15,8 @@ def get_version():
     return "HEAD"
   else:
     return hash + ("-dirty" if is_dirty else "")
+
+
+class Expando(object):
+  def __init__(self, **kwargs):
+    self.__dict__ = kwargs

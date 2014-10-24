@@ -6,7 +6,7 @@ from merc import util
 
 
 class ModeFeature(feature.Feature):
-  pass
+  NAME = __name__
 
 
 install = ModeFeature
@@ -17,9 +17,6 @@ def show_modes(modes):
   args = []
 
   for k, mode in sorted(modes.items(), key=operator.itemgetter(0)):
-    if mode.HIDDEN:
-      continue
-
     value = mode.get_value()
 
     if mode.TAKES_PARAM:
@@ -233,3 +230,9 @@ def send_channel_modes_on_join(client, user, channel):
   if is_new and channel.modes:
     flags, args = show_modes(channel.modes)
     user.send_reply(Mode(channel.name, flags, *args))
+
+
+@ModeFeature.hook("user_mode_change")
+def send_mode_on_user_mode_change(client, modes):
+  flags, args = show_modes(modes)
+  client.relay_to_self(Mode(client.nickname, flags, *args))

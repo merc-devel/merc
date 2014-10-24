@@ -4,7 +4,7 @@ from merc import message
 
 
 class WhoIsFeature(feature.Feature):
-  pass
+  NAME = __name__
 
 
 install = WhoIsFeature
@@ -46,18 +46,6 @@ class WhoIsOperator(message.Reply):
 
   def as_reply_params(self, client):
     return [self.nick, "is an IRC operator"]
-
-
-class WhoIsSecure(message.Reply):
-  NAME = "671"
-  FORCE_TRAILING = True
-
-  def __init__(self, nick, type):
-    self.nick = nick
-    self.type = type
-
-  def as_reply_params(self, client):
-    return [self.nick, self.type, "is using a secure connection"]
 
 
 class WhoIsIdle(message.Reply):
@@ -128,7 +116,5 @@ class WhoIs(message.Command):
         client.send_reply(WhoIsIdle(target.nickname, idle_time))
         if channels:
           client.send_reply(WhoIsChannels(target.nickname, channels))
-        if target.is_securely_connected:
-          client.send_reply(WhoIsSecure(target.nickname, "*"))
         client.server.run_hooks("after_user_whois", client, target)
         client.send_reply(WhoIsEnd(target.nickname))

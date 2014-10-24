@@ -3,7 +3,7 @@ from merc import message
 
 
 class MotdFeature(feature.Feature):
-  pass
+  NAME = __name__
 
 
 install = MotdFeature

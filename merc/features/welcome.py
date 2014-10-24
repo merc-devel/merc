@@ -13,6 +13,7 @@ NICKNAME_REGEX = regex.compile(r"^[\p{L}\p{So}_\[\]\\^{}|`][\p{L}\p{So}\p{N}_\[\
 
 
 class WelcomeFeature(feature.Feature):
+  NAME = __name__
   ISUPPORT = {
       "NICKLEN": MAX_NICKNAME_LENGTH
   }
@@ -55,14 +56,16 @@ class MyInfo(message.Reply):
   NAME = "004"
 
   def as_reply_params(self, client):
-    from merc import client as c
-    from merc import channel
-
     return [client.server.name,
             "{}-{}".format(merc.__name__, merc.__version__),
-            "".join(list(sorted(c.Client.MODES))),
-            "".join(list(sorted(channel.Channel.MODES_WITHOUT_PARAMS))),
-            "".join(list(sorted(channel.Channel.MODES_WITH_PARAMS)))]
+            "".join(list(sorted(mode.CHAR
+                                for mode in client.server.user_modes))),
+            "".join(list(sorted(mode.CHAR
+                                for mode in client.server.channel_modes
+                                if not mode.TAKES_PARAM))),
+            "".join(list(sorted(mode.CHAR
+                                for mode in client.server.channel_modes
+                                if mode.TAKES_PARAM)))]
 
 
 class ISupport(message.Reply):
@@ -75,14 +78,6 @@ class ISupport(message.Reply):
   def as_reply_params(self, client):
     return ["{}={}".format(k, v) for k, v in self.support_params.items()] + \
         ["are supported by this server"]
-
-
-class YoureOper(message.Reply):
-  NAME = "381"
-  FORCE_TRAILING = True
-
-  def as_reply_params(self, client):
-    return ["You are now an IRC operator"]
 
 
 @WelcomeFeature.register_command
@@ -159,41 +154,17 @@ class Quit(message.Command):
     return params
 
 
-@WelcomeFeature.register_command
-class Oper(message.Command):
-  NAME = "OPER"
-  MIN_ARITY = 2
-
-  def __init__(self, username, password, *args):
-    self.username = username
-    self.password = password
-
-  @message.Command.requires_registration
-  def handle_for(self, client, prefix):
-    try:
-      oper_spec = client.server.config["opers"][self.username]
-    except KeyError:
-      raise errors.PasswordMismatch
-
-    if not any(client.hostmask_matches(hostmask)
-               for hostmask in oper_spec["hostmasks"]):
-      raise errors.PasswordMismatch
-
-    if not client.server.crypt_context.verify(self.password,
-                                              oper_spec["password"]):
-      raise errors.PasswordMismatch
-
-    client.is_irc_operator = True
-    client.send_reply(YoureOper())
-    client.relay_to_self(mode.Mode(client.nickname, "+o"))
-
-
 @WelcomeFeature.hook("after_register")
-def welcome_on_register(client, server):
+def welcome_on_register(client):
   client.send_reply(Welcome())
   client.send_reply(YourHost())
   client.send_reply(Created())
   client.send_reply(MyInfo())
-  client.send_reply(ISupport(server.isupport))
+  client.send_reply(ISupport(client.server.isupport))
 
   client.server.run_hooks("after_welcome", client)
+
+
+@WelcomeFeature.hook("before_remove_client")
+def broadcast_quit_on_quit(client):
+  client.relay_to_all(Quit(client.disconnect_reason))

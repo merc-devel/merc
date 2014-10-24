@@ -5,7 +5,7 @@ from merc import util
 
 
 class WhoFeature(feature.Feature):
-  pass
+  NAME = __name__
 
 
 install = WhoFeature

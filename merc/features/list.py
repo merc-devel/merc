@@ -1,9 +1,10 @@
 from merc import feature
 from merc import message
+from merc import mode
 
 
 class ListFeature(feature.Feature):
-  pass
+  NAME = __name__
 
 
 install = ListFeature
@@ -65,3 +66,26 @@ class List(message.Command):
             channel.topic is not None and channel.topic.text or ""))
     finally:
       client.send_reply(ListEnd())
+
+
+@ListFeature.register_channel_mode
+class Secret(mode.Mode):
+  CHAR = "s"
+  TAKES_PARAM = False
+
+  def set(self, client, value):
+    if self.target.is_secret:
+      return False
+
+    self.target.is_secret = True
+    return True
+
+  def unset(self, client, value):
+    if not self.target.is_secret:
+      return False
+
+    self.target.is_secret = False
+    return True
+
+  def get(self):
+    return self.target.is_secret

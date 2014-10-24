@@ -4,7 +4,7 @@ from merc import message
 
 
 class IsOnFeature(feature.Feature):
-  pass
+  NAME = __name__
 
 
 install = IsOnFeature

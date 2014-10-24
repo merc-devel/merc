@@ -21,38 +21,6 @@ class ChannelUser(object):
     self.is_admin = False
     self.is_owner = False
 
-  def mutate_operator(self, client, value):
-    if self.is_operator == value:
-      return False
-
-    self.is_operator = value
-    return True
-
-  def mutate_voice(self, client, value):
-    if self.is_voiced == value:
-      return False
-
-    self.is_voiced = value
-    return True
-
-  @staticmethod
-  def make_role_setter_pair(mutator):
-    def setter(channel, client, param):
-      if param is None:
-        return False
-
-      user = client.server.get_client(param)
-      return mutator(channel.get_channel_user_for(user), client, True)
-
-    def unsetter(channel, client, param):
-      if param is None:
-        return False
-
-      user = client.server.get_client(param)
-      return mutator(channel.get_channel_user_for(user), client, False)
-
-    return (setter, unsetter)
-
   @property
   def sigil(self):
     if self.is_owner:
@@ -84,14 +52,14 @@ class Channel(object):
     return cls.CHANNEL_NAME_REGEX.match("".join(rest)) is not None and \
            sigil in cls.CHANNEL_CHARS
 
-  def __init__(self, name):
+  def __init__(self, server, name):
+    self.server = server
+
     if not self.is_valid_name(name):
       raise errors.NoSuchChannel(name)
 
     self.name = name
     self.creation_time = datetime.datetime.utcnow()
-
-    self.is_secret = True
 
     self.users = {}
     self.modes = {}
@@ -101,9 +69,25 @@ class Channel(object):
     return self.name[0] == "&"
 
   def set_mode(self, client, mode, param=None):
+    if mode not in self.modes:
+      try:
+        mode_factory = self.server.channel_modes[mode]
+      except KeyError:
+        raise errors.UnknownMode(mode)
+
+      self.modes[mode] = mode_factory()
+
     return self.modes[mode].set(client, param)
 
   def unset_mode(self, client, mode, param=None):
+    if mode not in self.modes:
+      try:
+        mode_factory = self.server.channel_modes[mode]
+      except KeyError:
+        raise errors.UnknownMode(mode)
+
+      self.modes[mode] = mode_factory()
+
     return self.modes[mode].unset(client, param)
 
   def get_channel_user_for(self, client):
@@ -145,13 +129,6 @@ class Channel(object):
       if not user.client.is_invisible:
         yield user
 
-  def mutate_secret(self, client, flag):
-    if self.is_secret == flag:
-      return False
-
-    self.is_secret = flag
-    return True
-
   def check_is_operator(self, client):
     try:
       channel_user = self.get_channel_user_for(client)
@@ -178,8 +155,10 @@ class Channel(object):
     if not self.has_client(client):
       raise errors.NoSuchNick(client.nickname)
 
+  def get_feature_locals(self, feature_factory):
+    return self.server.features[feature_factory].channel_locals[self]
+
   MODES = {
-    "s": util.make_flag_pair(mutate_secret),
     "o": ChannelUser.make_role_setter_pair(ChannelUser.mutate_operator),
     "v": ChannelUser.make_role_setter_pair(ChannelUser.mutate_voice),
   }

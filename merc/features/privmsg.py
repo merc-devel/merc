@@ -7,7 +7,7 @@ from merc import util
 
 
 class PrivmsgFeature(feature.Feature):
-  pass
+  NAME = __name__
 
 
 install = PrivmsgFeature
@@ -33,13 +33,13 @@ class _Privmsg(message.Command):
         except errors.NoSuchNick:
           continue
 
-        if chan.is_disallowing_external_messages:
+        if DisallowingExternalMessages.read_from(chan):
           try:
             chan.check_has_client(client)
           except errors.NoSuchNick:
             raise errors.CannotSendToChan(chan.name)
 
-        if chan.is_moderated:
+        if Moderated.read_from(chan):
           chan.check_is_voiced(client)
 
         client.relay_to_channel(chan, self.__class__(chan.name, self.text))
@@ -68,3 +68,9 @@ class DisallowingExternalMessages(mode.FlagMode):
 @PrivmsgFeature.register_channel_mode
 class Moderated(mode.FlagMode):
   CHAR = "m"
+  DEFAULT = False
+
+
+@PrivmsgFeature.hook("send_server_notice")
+def send_server_notice(client, text):
+  client.send_reply(Notice("*", text))

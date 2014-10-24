@@ -12,6 +12,7 @@ MAX_TOPIC_LENGTH = 390
 
 
 class TopicFeature(feature.Feature):
+  NAME = __name__
   ISUPPORT = {
       "TOPICLEN": MAX_TOPIC_LENGTH
   }
@@ -71,26 +72,27 @@ class Topic(message.Command):
   @message.Command.requires_registration
   def handle_for(self, client, prefix):
     channel = client.server.get_channel(self.channel_name)
+    locals = channel.get_feature_locals(TopicFeature)
 
     if self.text is None:
-      if channel.topic is not None:
-        client.send_reply(TopicReply(channel.name, channel.topic.text))
-        client.send_reply(TopicWhoTime(channel.name, channel.topic.who,
-                                       channel.topic.time))
+      if locals.topic is not None:
+        client.send_reply(TopicReply(channel.name, locals.topic.text))
+        client.send_reply(TopicWhoTime(channel.name, locals.topic.who,
+                                       locals.topic.time))
       else:
         client.send_reply(NoTopic(channel.name))
     else:
-      if channel.is_topic_locked:
+      if TopicLock.read_from(channel):
         channel.check_is_operator(client)
 
       if not self.text:
-        channel.topic = None
+        locals.topic = None
       else:
-        channel.topic = Topic(text[:MAX_TOPIC_LENGTH], client.hostmask,
+        locals.topic = Topic(text[:MAX_TOPIC_LENGTH], client.hostmask,
                               datetime.datetime.utcnow())
 
       channel.broadcast(None, client.hostmask,
-                        Topic(channel.name, channel.topic.text))
+                        Topic(channel.name, locals.topic.text))
 
   def as_params(self, client):
     params = [self.channel_name]
@@ -101,12 +103,16 @@ class Topic(message.Command):
 
 @TopicFeature.hook("after_new_channel")
 def set_initial_topic(channel):
-  channel.topic = None
+  locals = channel.get_feature_locals(TopicFeature)
+
+  locals.topic = None
 
 
 @TopicFeature.hook("after_channel_join")
-def send_names_on_join(client, user, channel):
-  if channel.topic is not None:
+def send_topic_on_join(client, user, channel):
+  locals = channel.get_feature_locals(TopicFeature)
+
+  if locals.topic is not None:
     user.on_message(user.hostmask, Topic(channel.name))
 
 

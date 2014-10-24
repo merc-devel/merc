@@ -4,7 +4,7 @@ from merc import message
 
 
 class KickFeature(feature.Feature):
-  pass
+  NAME = __name__
 
 
 install = KickFeature

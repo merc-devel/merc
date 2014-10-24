@@ -7,7 +7,7 @@ from merc import util
 
 
 class JoinFeature(feature.Feature):
-  pass
+  NAME = __name__
 
 
 install = JoinFeature

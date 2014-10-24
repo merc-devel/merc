@@ -19,7 +19,6 @@ from merc import client
 from merc import message
 from merc import net
 from merc import util
-from merc.features import welcome
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +83,7 @@ class Server(object):
 
   @property
   def isupport(self):
-    return {
+    isupport = {
       "CHANTYPES": "".join(channel.Channel.CHANNEL_CHARS),
       "NETWORK": self.network_name,
       "CASEMAPPING": "unicode",
@@ -92,6 +91,10 @@ class Server(object):
                                 channel.ChannelUser.ROLE_CHARS),
       "CHARSET": "utf-8"
     }
+
+    for feature in self.features.values():
+      isupport.update(feature.ISUPPORT)
+    return isupport
 
   def new_client(self, transport):
     c = client.Client(self, transport)
@@ -128,6 +131,7 @@ class Server(object):
       self.clients[client.normalized_nickname] = client
 
   def remove_client(self, client):
+    self.run_hooks("before_remove_client", client)
     if client.is_registered:
       del self.clients[client.normalized_nickname]
     client.on_close()
@@ -146,7 +150,7 @@ class Server(object):
       raise errors.NoSuchNick(name)
 
   def new_channel(self, name):
-    c = channel.Channel(name)
+    c = channel.Channel(self, name)
     self.channels[c.normalized_name] = c
     self.run_hooks("after_new_channel", c)
     return c
@@ -170,6 +174,30 @@ class Server(object):
 
     return (client for client in self.clients.values()
                    if client.hostmask_matches(pattern))
+
+  def run_hooks(self, hook_name, *args, **kwargs):
+    for feature in self.features.values():
+      feature.run_hooks(hook_name, *args, **kwargs)
+
+  @property
+  def user_modes(self):
+    modes = {}
+
+    for feature in self.features.values():
+      modes.update(feature.USER_MODES)
+
+    return modes
+
+  @property
+  def channel_modes(self):
+    # TODO: add secret mode
+    # TODO: add role modes
+    modes = {}
+
+    for feature in self.features.values():
+      modes.update(feature.CHANNEL_MODES)
+
+    return modes
 
   def start(self):
     logger.info("""
