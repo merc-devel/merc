@@ -27,6 +27,17 @@ class ChannelModeIs(message.Reply):
     return [self.channel_name, flags] + args
 
 
+class CreationTime(message.Reply):
+  NAME = "329"
+
+  def __init__(self, channel_name, time):
+    self.channel_name = channel_name
+    self.time = time
+
+  def as_reply_params(self, client):
+    return [self.channel_name, str(int(self.time.timestamp()))]
+
+
 class _Mode(message.Command):
   def __init__(self, target, flags=None, *args):
     self.target = target
@@ -36,77 +47,32 @@ class _Mode(message.Command):
   def as_params(self, client):
     return [self.target, self.flags] + list(self.args)
 
-  @message.Command.requires_registration
-  def handle_for(self, client, prefix):
-    flags = []
+  @staticmethod
+  def _parse_flags(flags, args, modes_with_params=None):
+    if modes_with_params is None:
+      modes_with_params = set()
+
+    args_iter = iter(args)
+
     state = "+"
-    for c in self.flags:
+
+    for c in flags:
       if c in "+-":
         state = c
         continue
-      flags.append(state + c)
 
-    args_iter = iter(self.args)
+      arg = None
 
-    applied_flags = []
+      if c in modes_with_params:
+        try:
+          arg = next(args_iter)
+        except StopIteration:
+          pass
 
-    if channel.Channel.is_valid_name(self.target):
-      try:
-        chan = client.server.get_channel(self.target)
-      except errors.NoSuchNick:
-        raise errors.NoSuchChannel(self.target)
+      yield state + c, arg
 
-      self.check_can_set_chanenl_flags(client, chan)
-
-      expanded_args = []
-
-      for flag in flags:
-        state, c = flag
-        arg = None
-
-        if c in channel.Channel.MODES_WITH_PARAMS:
-          try:
-            arg = next(args_iter)
-          except StopIteration:
-            pass
-        expanded_args.append(arg)
-
-      for flag, arg in zip(flags, expanded_args):
-        state, c = flag
-        if state == "+":
-          if chan.set_mode(client, c, arg):
-            applied_flags.append((flag, arg))
-        elif state == "-":
-          if chan.unset_mode(client, c, arg):
-            applied_flags.append((flag, arg))
-
-      if applied_flags:
-        flags, args = self._coalesce_flags(applied_flags)
-
-        chan.broadcast(None, self.get_prefix(client),
-                       Mode(chan.name, flags, *args))
-    else:
-      user = client.server.get_client(self.target)
-      self.check_can_set_user_flags(client, user)
-
-      for flag in flags:
-        # TODO: do users have parametrized flags?
-        state, c = flag
-        if state == "+":
-          if user.set_mode(self, c, None):
-            applied_flags.append((flag, None))
-        elif state == "-":
-          if user.unset_mode(self, c, None):
-            applied_flags.append((flag, None))
-
-      if applied_flags:
-        flags, args = self._coalesce_flags(applied_flags)
-
-        msg_prefix = self.get_prefix(client)
-        user.send(self.get_prefix(client),
-                  Mode(user.nickname, flags, *args))
-
-  def _coalesce_flags(self, applied_flags):
+  @staticmethod
+  def _emit_flags(applied_flags):
     flags = ""
     args = []
 
@@ -122,6 +88,55 @@ class _Mode(message.Command):
         args.append(arg)
 
     return flags, args
+
+  @message.Command.requires_registration
+  def handle_for(self, client, prefix):
+    if channel.Channel.is_valid_name(self.target):
+      try:
+        chan = client.server.get_channel(self.target)
+      except errors.NoSuchNick:
+        raise errors.NoSuchChannel(self.target)
+
+      self.check_can_set_chanenl_flags(client, chan)
+
+      applied_flags = []
+
+      for flag, arg in self._parse_flags(self.flags, self.args,
+                                         channel.Channel.MODES_WITH_PARAMS):
+        state, c = flag
+
+        if state == "+":
+          if chan.set_mode(client, c, arg):
+            applied_flags.append((flag, arg))
+        elif state == "-":
+          if chan.unset_mode(client, c, arg):
+            applied_flags.append((flag, arg))
+
+      if applied_flags:
+        flags, args = self._emit_flags(applied_flags)
+
+        chan.broadcast(None, self.get_prefix(client),
+                       Mode(chan.name, flags, *args))
+    else:
+      user = client.server.get_client(self.target)
+      self.check_can_set_user_flags(client, user)
+
+      for flag, arg in self._parse_flags(self.flags, self.args):
+        state, c = flag
+
+        if state == "+":
+          if user.set_mode(self, c, arg):
+            applied_flags.append((flag, arg))
+        elif state == "-":
+          if user.unset_mode(self, c, arg):
+            applied_flags.append((flag, arg))
+
+      if applied_flags:
+        flags, args = self._emit_flags(applied_flags)
+
+        msg_prefix = self.get_prefix(client)
+        user.send(self.get_prefix(client),
+                  Mode(user.nickname, flags, *args))
 
 
 @message.Command.register
@@ -139,7 +154,7 @@ class Mode(_Mode):
           raise errors.NoSuchChannel(self.target)
 
         client.send_reply(ChannelModeIs(chan.name, chan.modes))
-        # TODO: send creation time
+        client.send_reply(CreationTime(chan.name, chan.creation_time))
       else:
         user = client.server.get_client(self.target)
         if user is not client:

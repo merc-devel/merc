@@ -8,17 +8,6 @@ from merc.features import names
 from merc.features import topic
 
 
-class CreationTime(message.Reply):
-  NAME = "329"
-
-  def __init__(self, channel_name, time):
-    self.channel_name = channel_name
-    self.time = time
-
-  def as_reply_params(self, client):
-    return [self.channel_name, str(int(self.time.timestamp()))]
-
-
 class _Join(message.Command):
   @message.Command.requires_registration
   def handle_for(self, client, prefix):
@@ -47,7 +36,7 @@ class _Join(message.Command):
         user.on_message(user.hostmask, topic.Topic(channel.name))
 
       user.on_message(user.hostmask, names.Names(channel.name))
-      user.send_reply(CreationTime(channel.name, channel.creation_time))
+      user.send_reply(mode.CreationTime(channel.name, channel.creation_time))
 
       if is_new and channel.modes:
         flags, args = util.show_modes(channel.modes)

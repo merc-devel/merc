@@ -41,10 +41,16 @@ class ChannelUser(object):
   @staticmethod
   def make_role_setter_pair(mutator):
     def setter(channel, client, param):
+      if param is None:
+        return False
+
       user = client.server.get_client(param)
       return mutator(channel.get_channel_user_for(user), client, True)
 
     def unsetter(channel, client, param):
+      if param is None:
+        return False
+
       user = client.server.get_client(param)
       return mutator(channel.get_channel_user_for(user), client, False)
 
