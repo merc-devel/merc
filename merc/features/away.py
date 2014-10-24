@@ -1,5 +1,14 @@
 from merc import errors
+from merc import feature
 from merc import message
+
+
+class AwayFeature(feature.Feature):
+  pass
+
+
+install = AwayFeature
+
 
 class IsAway(message.Reply):
   NAME = "301"
@@ -12,11 +21,13 @@ class IsAway(message.Reply):
   def as_reply_params(self, client):
     return [self.nick, self.msg]
 
+
 class NowAway(message.Reply):
   NAME = "306"
 
   def as_reply_params(self, client):
     return ["You have been marked as being away"]
+
 
 class UnAway(message.Reply):
   NAME = "305"
@@ -25,7 +36,7 @@ class UnAway(message.Reply):
     return ["You are no longer marked as being away"]
 
 
-@message.Command.register
+@AwayFeature.register_command
 class Away(message.Command):
   NAME = "AWAY"
   MIN_ARITY = 0
@@ -40,3 +51,15 @@ class Away(message.Command):
       client.send_reply(NowAway())
     else:
       client.send_reply(UnAway())
+
+
+@AwayFeature.hook("after_new_client")
+def set_default_away_message(client):
+  client.away_message = None
+
+
+@AwayFeature.hook("after_user_privmsg")
+@AwayFeature.hook("after_user_whois")
+def send_is_away_if_away(client, user):
+  if user.is_away:
+    client.send_reply(away.IsAway(user.nickname, user.away_message))

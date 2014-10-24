@@ -1,5 +1,13 @@
 from merc import errors
+from merc import feature
 from merc import message
+
+
+class AdminFeature(feature.Feature):
+  pass
+
+
+install = AdminFeature
 
 
 class AdminInfo(message.Reply):
@@ -47,7 +55,7 @@ class AdminEmail(message.Reply):
     return [email]
 
 
-@message.Command.register
+@AdminFeature.register_command
 class Admin(message.Command):
   NAME = "ADMIN"
   MIN_ARITY = 0
@@ -66,4 +74,3 @@ class Admin(message.Command):
     client.send_reply(AdminLocation(server.admin_location))
     client.send_reply(AdminFineLocation(server.admin_location_fine))
     client.send_reply(AdminEmail(server.admin_name, server.admin_email))
-

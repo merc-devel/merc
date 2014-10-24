@@ -1,8 +1,16 @@
 from merc import channel
 from merc import errors
+from merc import feature
 from merc import message
+from merc import mode
 from merc import util
-from merc.features import away
+
+
+class PrivmsgFeature(feature.Feature):
+  pass
+
+
+install = PrivmsgFeature
 
 
 class _Privmsg(message.Command):
@@ -34,21 +42,29 @@ class _Privmsg(message.Command):
         if chan.is_moderated:
           chan.check_is_voiced(client)
 
-        client.relay_to_channel(chan,
-                                self.__class__(chan.name, self.text))
+        client.relay_to_channel(chan, self.__class__(chan.name, self.text))
       else:
         user = client.server.get_client(target)
-        if user.is_away:
-          client.send_reply(away.IsAway(user.nickname, user.away_message))
-        client.relay_to_client(user,
-                               self.__class__(user.nickname, self.text))
+        client.server.run_hooks("after_user_privmsg", client, user)
+        client.relay_to_client(user, self.__class__(user.nickname, self.text))
 
 
-@message.Command.register
+@PrivmsgFeature.register_command
 class Privmsg(_Privmsg):
   NAME = "PRIVMSG"
 
 
-@message.Command.register
+@PrivmsgFeature.register_command
 class Notice(_Privmsg):
   NAME = "NOTICE"
+
+
+@PrivmsgFeature.register_channel_mode
+class DisallowingExternalMessages(mode.FlagMode):
+  CHAR = "n"
+  DEFAULT = True
+
+
+@PrivmsgFeature.register_channel_mode
+class Moderated(mode.FlagMode):
+  CHAR = "m"

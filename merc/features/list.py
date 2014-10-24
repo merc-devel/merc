@@ -1,4 +1,12 @@
+from merc import feature
 from merc import message
+
+
+class ListFeature(feature.Feature):
+  pass
+
+
+install = ListFeature
 
 
 class ListStart(message.Reply):
@@ -30,7 +38,7 @@ class ListEnd(message.Reply):
     return ["End of /LIST"]
 
 
-@message.Command.register
+@ListFeature.register_command
 class List(message.Command):
   NAME = "LIST"
   MIN_ARITY = 0

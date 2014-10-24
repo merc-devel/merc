@@ -1,8 +1,16 @@
 from merc import errors
+from merc import feature
 from merc import message
 
 
-@message.Command.register
+class KillFeature(feature.Feature):
+  pass
+
+
+install = KillFeature
+
+
+@KillFeature.register_command
 class Kill(message.Command):
   NAME = "KILL"
   MIN_ARITY = 2

@@ -1,7 +1,36 @@
 from merc import channel
 from merc import errors
+from merc import feature
 from merc import message
 from merc import util
+
+
+class ModeFeature(feature.Feature):
+  pass
+
+
+install = ModeFeature
+
+
+def show_modes(modes):
+  flags = []
+  args = []
+
+  for k, mode in sorted(modes.items(), key=operator.itemgetter(0)):
+    if mode.HIDDEN:
+      continue
+
+    value = mode.get_value()
+
+    if mode.TAKES_PARAM:
+      if value is not None:
+        flags.append(mode.CHAR)
+        args.append(value)
+    else:
+      if value:
+        flags.append(mode.CHAR)
+
+  return "+" + "".join(flags), args
 
 
 class UmodeIs(message.Reply):
@@ -11,7 +40,7 @@ class UmodeIs(message.Reply):
     self.modes = modes
 
   def as_reply_params(self, client):
-    flags, args = util.show_modes(self.modes)
+    flags, args = show_modes(self.modes)
     return [flags] + args
 
 
@@ -23,7 +52,7 @@ class ChannelModeIs(message.Reply):
     self.modes = modes
 
   def as_reply_params(self, client):
-    flags, args = util.show_modes(self.modes)
+    flags, args = show_modes(self.modes)
     return [self.channel_name, flags] + args
 
 
@@ -139,7 +168,7 @@ class _Mode(message.Command):
                   Mode(user.nickname, flags, *args))
 
 
-@message.Command.register
+@ModeFeature.register_command
 class Mode(_Mode):
   NAME = "MODE"
   MIN_ARITY = 1
@@ -175,7 +204,7 @@ class Mode(_Mode):
     return client.hostmask
 
 
-@message.Command.register
+@ModeFeature.register_command
 class SAMode(_Mode):
   NAME = "SAMODE"
   MIN_ARITY = 2
@@ -188,3 +217,19 @@ class SAMode(_Mode):
 
   def get_prefix(self, client):
     return client.server.name
+
+
+@ModeFeature.hook("after_welcome")
+def send_modes_on_welcome(client):
+  if client.modes:
+    flags, args = show_modes(client.modes)
+    client.relay_to_self(Mode(client.nickname, flags, *args))
+
+
+@ModeFeature.hook("after_channel_join")
+def send_channel_modes_on_join(client, user, channel):
+  user.send_reply(CreationTime(channel.name, channel.creation_time))
+
+  if is_new and channel.modes:
+    flags, args = show_modes(channel.modes)
+    user.send_reply(Mode(channel.name, flags, *args))

@@ -1,4 +1,12 @@
+from merc import feature
 from merc import message
+
+
+class LUsersFeature(feature.Feature):
+  pass
+
+
+install = LUsersFeature
 
 
 class LUserClient(message.Reply):
@@ -50,7 +58,7 @@ class LUserMe(message.Reply):
         1)]
 
 
-@message.Command.register
+@LUsersFeature.register_feature
 class LUsers(message.Command):
   NAME = "LUSERS"
   MIN_ARITY = 0
@@ -63,3 +71,7 @@ class LUsers(message.Command):
     client.send_reply(LUserChannels())
     client.send_reply(LUserMe())
 
+
+@LUsersFeature.hook("after_welcome")
+def send_lusers_on_welcome(client):
+  client.on_message(client.hostmask, LUsers())

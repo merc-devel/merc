@@ -1,5 +1,13 @@
 from merc import errors
+from merc import feature
 from merc import message
+
+
+class NamesFeature(feature.Feature):
+  pass
+
+
+install = NamesFeature
 
 
 class NameReply(message.Reply):
@@ -29,7 +37,7 @@ class EndOfNames(message.Reply):
             "End of /NAMES list"]
 
 
-@message.Command.register
+@NamesFeature.register_command
 class Names(message.Command):
   NAME = "NAMES"
   MIN_ARITY = 0
@@ -96,3 +104,7 @@ class Names(message.Command):
   def as_params(self, client):
     return [",".join(self.channel_names)]
 
+
+@NamesFeature.hook("after_channel_join")
+def send_names_on_join(client, user, channel):
+    user.on_message(user.hostmask, Names(channel.name))

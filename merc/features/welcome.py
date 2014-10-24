@@ -1,11 +1,16 @@
 import merc
 
 from merc import errors
+from merc import feature
 from merc import message
 from merc import util
-from merc.features import lusers
-from merc.features import mode
-from merc.features import motd
+
+
+class WelcomeFeature(feature.Feature):
+  pass
+
+
+install = WelcomeFeature
 
 
 class Welcome(message.Reply):
@@ -72,22 +77,7 @@ class YoureOper(message.Reply):
     return ["You are now an IRC operator"]
 
 
-def welcome(client, server):
-  client.send_reply(Welcome())
-  client.send_reply(YourHost())
-  client.send_reply(Created())
-  client.send_reply(MyInfo())
-  client.send_reply(ISupport(server.isupport))
-
-  client.on_message(client.hostmask, lusers.LUsers())
-  client.on_message(client.hostmask, motd.Motd())
-
-  if client.modes:
-    flags, args = util.show_modes(client.modes)
-    client.relay_to_self(mode.Mode(client.nickname, flags, *args))
-
-
-@message.Command.register
+@WelcomeFeature.register_command
 class Nick(message.Command):
   NAME = "NICK"
   MIN_ARITY = 1
@@ -111,7 +101,7 @@ class Nick(message.Command):
         client.register()
 
 
-@message.Command.register
+@WelcomeFeature.register_command
 class User(message.Command):
   NAME = "USER"
   MIN_ARITY = 4
@@ -133,7 +123,7 @@ class User(message.Command):
       client.register()
 
 
-@message.Command.register
+@WelcomeFeature.register_command
 class Quit(message.Command):
   NAME = "QUIT"
   MIN_ARITY = 0
@@ -157,7 +147,7 @@ class Quit(message.Command):
     return params
 
 
-@message.Command.register
+@WelcomeFeature.register_command
 class Oper(message.Command):
   NAME = "OPER"
   MIN_ARITY = 2
@@ -184,3 +174,14 @@ class Oper(message.Command):
     client.is_irc_operator = True
     client.send_reply(YoureOper())
     client.relay_to_self(mode.Mode(client.nickname, "+o"))
+
+
+@WelcomeFeature.hook("after_register")
+def welcome_on_register(client, server):
+  client.send_reply(Welcome())
+  client.send_reply(YourHost())
+  client.send_reply(Created())
+  client.send_reply(MyInfo())
+  client.send_reply(ISupport(server.isupport))
+
+  client.server.run_hooks("after_welcome", client)

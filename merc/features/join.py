@@ -1,11 +1,16 @@
 import itertools
 
 from merc import errors
+from merc import feature
 from merc import message
 from merc import util
-from merc.features import mode
-from merc.features import names
-from merc.features import topic
+
+
+class JoinFeature(feature.Feature):
+  pass
+
+
+install = JoinFeature
 
 
 class _Join(message.Command):
@@ -31,19 +36,10 @@ class _Join(message.Command):
 
       channel.join(user)
       channel.broadcast(None, user.hostmask, Join(channel.name))
-
-      if channel.topic is not None:
-        user.on_message(user.hostmask, topic.Topic(channel.name))
-
-      user.on_message(user.hostmask, names.Names(channel.name))
-      user.send_reply(mode.CreationTime(channel.name, channel.creation_time))
-
-      if is_new and channel.modes:
-        flags, args = util.show_modes(channel.modes)
-        user.send_reply(mode.Mode(channel.name, flags, *args))
+      client.server.run_hooks("after_channel_join", client, user, channel)
 
 
-@message.Command.register
+@JoinFeature.register_command
 class Join(_Join):
   NAME = "JOIN"
   MIN_ARITY = 1
@@ -65,7 +61,7 @@ class Join(_Join):
     return params
 
 
-@message.Command.register
+@JoinFeature.register_command
 class SAJoin(_Join):
   NAME = "SAJOIN"
   MIN_ARITY = 2
@@ -103,7 +99,7 @@ class _Part(message.Command):
         client.server.part_channel(user, channel_name)
 
 
-@message.Command.register
+@JoinFeature.register_command
 class Part(_Part):
   NAME = "PART"
   MIN_ARITY = 1
@@ -126,7 +122,7 @@ class Part(_Part):
     return params
 
 
-@message.Command.register
+@JoinFeature.register_command
 class SAPart(_Part):
   NAME = "SAPART"
   MIN_ARITY = 2

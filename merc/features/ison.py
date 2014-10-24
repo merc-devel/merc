@@ -1,5 +1,14 @@
 from merc import errors
+from merc import feature
 from merc import message
+
+
+class IsOnFeature(feature.Feature):
+  def on_client_new(self, client):
+    client.away_message = None
+
+
+install = IsOnFeature
 
 
 class IsOnReply(message.Reply):
@@ -13,7 +22,7 @@ class IsOnReply(message.Reply):
     return [" ".join(self.nicknames)]
 
 
-@message.Command.register
+@IsOnFeature.register_command
 class IsOn(message.Command):
   NAME = "ISON"
   MIN_ARITY = 0

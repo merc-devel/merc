@@ -1,6 +1,13 @@
 from merc import errors
+from merc import feature
 from merc import message
-from merc.features import away
+
+
+class WhoIsFeature(feature.Feature):
+  pass
+
+
+install = WhoIsFeature
 
 
 class WhoIsUser(message.Reply):
@@ -16,6 +23,7 @@ class WhoIsUser(message.Reply):
   def as_reply_params(self, client):
     return [self.nick, self.user, self.host, "*", self.realname]
 
+
 class WhoIsServer(message.Reply):
   NAME = "312"
   FORCE_TRAILING = True
@@ -28,6 +36,7 @@ class WhoIsServer(message.Reply):
   def as_reply_params(self, client):
     return [self.nick, self.server, self.server_info]
 
+
 class WhoIsOperator(message.Reply):
   NAME = "313"
   FORCE_TRAILING = True
@@ -37,6 +46,7 @@ class WhoIsOperator(message.Reply):
 
   def as_reply_params(self, client):
     return [self.nick, "is an IRC operator"]
+
 
 class WhoIsSecure(message.Reply):
   NAME = "671"
@@ -49,6 +59,7 @@ class WhoIsSecure(message.Reply):
   def as_reply_params(self, client):
     return [self.nick, self.type, "is using a secure connection"]
 
+
 class WhoIsIdle(message.Reply):
   NAME = "317"
   FORCE_TRAILING = True
@@ -59,6 +70,7 @@ class WhoIsIdle(message.Reply):
 
   def as_reply_params(self, client):
     return [self.nick, str(round(self.idle_time)), "seconds idle"]
+
 
 class WhoIsEnd(message.Reply):
   NAME = "318"
@@ -82,7 +94,7 @@ class WhoIsChannels(message.Reply):
     return [self.nick, " ".join(self.channels)]
 
 
-@message.Command.register
+@WhoIsFeature.register_command
 class WhoIs(message.Command):
   NAME = "WHOIS"
   MIN_ARITY = 1
@@ -98,15 +110,19 @@ class WhoIs(message.Command):
       except errors.NoSuchNick as e:
         client.send_reply(e)
       else:
-        idle_time = (target.last_activity_time - target.creation_time).total_seconds()
+        idle_time = (target.last_activity_time - target.creation_time) \
+            .total_seconds()
+
         channels = []
         for channel in client.get_channels_visible_for(target):
           sigil = channel.get_channel_user_for(target).sigil
           name = sigil + channel.name
           channels.append(name)
 
-        client.send_reply(WhoIsUser(target.nickname, target.username, target.host, target.realname))
-        client.send_reply(WhoIsServer(target.nickname, target.server.name, target.server.network_name))
+        client.send_reply(WhoIsUser(target.nickname, target.username,
+                                    target.host, target.realname))
+        client.send_reply(WhoIsServer(target.nickname, target.server.name,
+                                      target.server.network_name))
         if target.is_irc_operator:
           client.send_reply(WhoIsOperator(target.nickname))
         client.send_reply(WhoIsIdle(target.nickname, idle_time))
@@ -114,6 +130,5 @@ class WhoIs(message.Command):
           client.send_reply(WhoIsChannels(target.nickname, channels))
         if target.is_securely_connected:
           client.send_reply(WhoIsSecure(target.nickname, "*"))
-        if target.is_away:
-          client.send_reply(away.IsAway(target.nickname, target.away_message))
+        client.server.run_hooks("after_user_whois", client, target)
         client.send_reply(WhoIsEnd(target.nickname))

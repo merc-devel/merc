@@ -1,5 +1,13 @@
 from merc import errors
+from merc import feature
 from merc import message
+
+
+class UserHostFeature(feature.Feature):
+  pass
+
+
+install = UserHostFeature
 
 
 class UserHostReply(message.Reply):
@@ -13,7 +21,7 @@ class UserHostReply(message.Reply):
     return [" ".join(self.user_hosts)]
 
 
-@message.Command.register
+@UserHostFeature.register_command
 class UserHost(message.Command):
   NAME = "USERHOST"
   MIN_ARITY = 1

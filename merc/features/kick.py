@@ -1,8 +1,16 @@
 from merc import errors
+from merc import features
 from merc import message
 
 
-@message.Command.register
+class KickFeature(feature.Feature):
+  pass
+
+
+install = KickFeature
+
+
+@KickFeature.register_command
 class Kick(message.Command):
   NAME = "KICK"
   MIN_ARITY = 2

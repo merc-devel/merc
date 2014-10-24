@@ -4,6 +4,13 @@ from merc import message
 from merc import util
 
 
+class WhoFeature(feature.Feature):
+  pass
+
+
+install = WhoFeature
+
+
 class EndOfWho(message.Reply):
   NAME = "315"
   FORCE_TRAILING = True
@@ -32,7 +39,7 @@ class WhoReply(message.Reply):
             str(self.hopcount) + " " + self.user.realname]
 
 
-@message.Command.register
+@WhoFeature.register
 class Who(message.Command):
   NAME = "WHO"
   MIN_ARITY = 1

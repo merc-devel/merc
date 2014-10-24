@@ -7,9 +7,6 @@ from merc import errors
 from merc import util
 
 
-Topic = collections.namedtuple("Topic", ["text", "who", "time"])
-
-
 class ChannelUser(object):
   ROLE_CHARS = "~&@%+"
   ROLE_MODES = "qaohv"
@@ -80,8 +77,6 @@ class Channel(object):
   CHANNEL_NAME_REGEX = regex.compile(r"^[^\x00\x07\r\n,: ]*$")
   CHANNEL_CHARS = {"#", "&"}
 
-  MAX_TOPIC_LENGTH = 390
-
   @classmethod
   def is_valid_name(cls, name):
     sigil, *rest = name
@@ -94,35 +89,22 @@ class Channel(object):
       raise errors.NoSuchChannel(name)
 
     self.name = name
-    self.topic = None
     self.creation_time = datetime.datetime.utcnow()
 
-    self.is_disallowing_external_messages = True
     self.is_secret = True
-    self.is_topic_locked = False
-    self.is_moderated = False
 
     self.users = {}
+    self.modes = {}
 
   @property
   def is_local(self):
     return self.name[0] == "&"
 
   def set_mode(self, client, mode, param=None):
-    try:
-      set, _ = self.MODES[mode]
-    except KeyError:
-      raise errors.UnknownMode(mode)
-
-    return set(self, client, param)
+    return self.modes[mode].set(client, param)
 
   def unset_mode(self, client, mode, param=None):
-    try:
-      _, unset = self.MODES[mode]
-    except KeyError:
-      raise errors.UnknownMode(mode)
-
-    return unset(self, client, param)
+    return self.modes[mode].unset(client, param)
 
   def get_channel_user_for(self, client):
     try:
@@ -152,13 +134,6 @@ class Channel(object):
     del self.users[client.id]
     del client.channels[self.normalized_name]
 
-  def set_topic(self, client, text):
-    if not text:
-      self.topic = None
-    else:
-      self.topic = Topic(text[:self.MAX_TOPIC_LENGTH],
-                         client.hostmask, datetime.datetime.utcnow())
-
   def has_client(self, client):
     return client.id in self.users
 
@@ -170,51 +145,12 @@ class Channel(object):
       if not user.client.is_invisible:
         yield user
 
-  def mutate_disallowing_external_messages(self, client, flag):
-    if self.is_disallowing_external_messages == flag:
-      return False
-
-    self.is_disallowing_external_messages = flag
-    return True
-
   def mutate_secret(self, client, flag):
     if self.is_secret == flag:
       return False
 
     self.is_secret = flag
     return True
-
-  def mutate_topic_lock(self, client, flag):
-    if self.is_topic_locked == flag:
-      return False
-
-    self.is_topic_locked = flag
-    return True
-
-  def mutate_moderated(self, client, flag):
-    if self.is_moderated == flag:
-      return False
-
-    self.is_moderated = flag
-    return True
-
-  @property
-  def modes(self):
-    modes = {}
-
-    if self.is_secret:
-      modes["s"] = True
-
-    if self.is_disallowing_external_messages:
-      modes["n"] = True
-
-    if self.is_topic_locked:
-      modes["t"] = True
-
-    if self.is_moderated:
-      modes["m"] = True
-
-    return modes
 
   def check_is_operator(self, client):
     try:
@@ -243,13 +179,7 @@ class Channel(object):
       raise errors.NoSuchNick(client.nickname)
 
   MODES = {
-    "n": util.make_flag_pair(mutate_disallowing_external_messages),
     "s": util.make_flag_pair(mutate_secret),
-    "t": util.make_flag_pair(mutate_topic_lock),
-    "m": util.make_flag_pair(mutate_moderated),
     "o": ChannelUser.make_role_setter_pair(ChannelUser.mutate_operator),
     "v": ChannelUser.make_role_setter_pair(ChannelUser.mutate_voice),
   }
-
-  MODES_WITHOUT_PARAMS = set("nstm")
-  MODES_WITH_PARAMS = set(MODES) - MODES_WITHOUT_PARAMS

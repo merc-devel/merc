@@ -1,4 +1,24 @@
+import collections
+import datetime
+
+from merc import feature
 from merc import message
+from merc import mode
+from merc import util
+
+
+Topic = collections.namedtuple("Topic", ["text", "who", "time"])
+
+
+class TopicFeature(feature.Feature):
+  MAX_TOPIC_LENGTH = 390
+
+  ISUPPORT = {
+      "TOPICLEN": MAX_TOPIC_LENGTH
+  }
+
+
+install = TopicFeature
 
 
 class NoTopic(message.Reply):
@@ -36,7 +56,7 @@ class TopicWhoTime(message.Reply):
     return [self.channel_name, self.who, str(int(self.time.timestamp()))]
 
 
-@message.Command.register
+@TopicFeature.register_command
 class Topic(message.Command):
   NAME = "TOPIC"
   MIN_ARITY = 1
@@ -64,7 +84,12 @@ class Topic(message.Command):
       if channel.is_topic_locked:
         channel.check_is_operator(client)
 
-      channel.set_topic(client, self.text)
+      if not self.text:
+        channel.topic = None
+      else:
+        channel.topic = Topic(text[:TopicFeature.MAX_TOPIC_LENGTH],
+                              client.hostmask, datetime.datetime.utcnow())
+
       channel.broadcast(None, client.hostmask,
                         Topic(channel.name, channel.topic.text))
 
@@ -73,3 +98,20 @@ class Topic(message.Command):
     if self.text is not None:
       params.append(self.text)
     return params
+
+
+@TopicFeature.hook("after_new_channel")
+def set_initial_topic(channel):
+  channel.topic = None
+
+
+@TopicFeature.hook("after_channel_join")
+def send_names_on_join(client, user, channel):
+  if channel.topic is not None:
+    user.on_message(user.hostmask, Topic(channel.name))
+
+
+@TopicFeature.register_channel_mode
+class TopicLock(mode.FlagMode):
+  CHAR = "t"
+  DEFAULT = True

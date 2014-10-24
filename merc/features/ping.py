@@ -1,8 +1,17 @@
 import datetime
+
+from merc import feature
 from merc import message
 
 
-@message.Command.register
+class PingFeature(feature.Feature):
+  pass
+
+
+install = PingFeature
+
+
+@PingFeature.register_command
 class Ping(message.Command):
   NAME = "PING"
   MIN_ARITY = 1
@@ -25,7 +34,7 @@ class Ping(message.Command):
         self.value))
 
 
-@message.Command.register
+@PingFeature.register_command
 class Pong(message.Command):
   NAME = "PONG"
   MIN_ARITY = 1

@@ -11,8 +11,6 @@ import yaml
 
 import passlib.context
 
-from IPython.extensions import autoreload
-
 import merc
 
 from merc import channel
@@ -22,9 +20,6 @@ from merc import message
 from merc import net
 from merc import util
 from merc.features import welcome
-
-# This initializes all the commands.
-from merc.features import *
 
 logger = logging.getLogger(__name__)
 
@@ -45,10 +40,11 @@ class Server(object):
 
     self.creation_time = datetime.datetime.utcnow()
 
+    self.features = {}
+
     self.clients = {}
     self.channels = {}
 
-    self.reloader = autoreload.ModuleReloader()
     self.register_signal_handlers()
 
   def rehash(self):
@@ -84,13 +80,7 @@ class Server(object):
     return self.config["admin"]["email"]
 
   def register_signal_handlers(self):
-    signal.signal(signal.SIGUSR1, lambda signum, frame: self.reload_code())
     signal.signal(signal.SIGHUP, lambda signum, frame: self.rehash())
-
-  def reload_code(self):
-    # very questionable
-    logger.warn("Reloading code (you should probably restart instead)...")
-    self.reloader.check(True)
 
   @property
   def isupport(self):
@@ -111,6 +101,7 @@ class Server(object):
     logger.info("Accepted connection from {}".format(
         transport.get_extra_info("peername")))
 
+    self.run_hooks("after_new_client", c)
     return c
 
   def register_client(self, client):
@@ -121,7 +112,7 @@ class Server(object):
     self.clients[client.normalized_nickname] = client
     client.is_registered = True
 
-    welcome.welcome(client, self)
+    self.run_hooks("after_register", client)
 
   def rename_client(self, client, new_nickname):
     normalized_new_nickname = util.to_irc_lower(new_nickname)
@@ -142,6 +133,7 @@ class Server(object):
     if client.is_registered:
       del self.clients[client.normalized_nickname]
     client.on_close()
+    self.run_hooks("after_remove_client", client)
 
   def get_client(self, name):
     try:
@@ -158,10 +150,12 @@ class Server(object):
   def new_channel(self, name):
     c = channel.Channel(name)
     self.channels[c.normalized_name] = c
+    self.run_hooks("after_new_channel", c)
     return c
 
   def remove_channel(self, channel):
     del self.channels[channel.normalized_name]
+    self.run_hooks("after_remove_channel", channel)
 
   def part_channel(self, client, name):
     channel = self.get_channel(name)

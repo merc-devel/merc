@@ -1,4 +1,12 @@
+from merc import feature
 from merc import message
+
+
+class MotdFeature(feature.Feature):
+  pass
+
+
+install = MotdFeature
 
 
 class MotdReply(message.Reply):
@@ -28,7 +36,7 @@ class EndOfMotd(message.Reply):
     return ["End of /MOTD command"]
 
 
-@message.Command.register
+@MotdFeature.register_command
 class Motd(message.Command):
   NAME = "MOTD"
   MIN_ARITY = 0
@@ -41,3 +49,8 @@ class Motd(message.Command):
       client.send_reply(MotdReply(line))
 
     client.send_reply(EndOfMotd())
+
+
+@MotdFeature.hook("after_welcome")
+def send_motd_on_welcome(client):
+  client.on_message(client.hostmask, Motd())
