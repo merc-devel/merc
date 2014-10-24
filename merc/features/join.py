@@ -66,7 +66,7 @@ class Join(_Join):
 
 
 @message.Command.register
-class SaJoin(_Join):
+class SAJoin(_Join):
   NAME = "SAJOIN"
   MIN_ARITY = 2
 
@@ -127,7 +127,7 @@ class Part(_Part):
 
 
 @message.Command.register
-class SaPart(_Part):
+class SAPart(_Part):
   NAME = "SAPART"
   MIN_ARITY = 2
 
