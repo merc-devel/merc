@@ -52,12 +52,14 @@ class WhoIsIdle(message.Reply):
   NAME = "317"
   FORCE_TRAILING = True
 
-  def __init__(self, nick, idle_time):
+  def __init__(self, nick, idle_time, signon_time):
     self.nick = nick
     self.idle_time = idle_time
+    self.signon_time = signon_time
 
   def as_reply_params(self, client):
-    return [self.nick, str(round(self.idle_time)), "seconds idle"]
+    return [self.nick, str(int(self.idle_time.total_seconds())),
+            str(int(self.signon_time.timestamp())), "seconds idle, signon time"]
 
 
 class WhoIsEnd(message.Reply):
@@ -98,9 +100,6 @@ class WhoIs(message.Command):
       except errors.NoSuchNick as e:
         client.send_reply(e)
       else:
-        idle_time = (target.last_activity_time - target.creation_time) \
-            .total_seconds()
-
         channels = []
         for channel in client.get_channels_visible_for(target):
           sigil = channel.get_channel_user_for(target).sigil
@@ -113,7 +112,10 @@ class WhoIs(message.Command):
                                       target.server.network_name))
         if target.is_irc_operator:
           client.send_reply(WhoIsOperator(target.nickname))
-        client.send_reply(WhoIsIdle(target.nickname, idle_time))
+        client.send_reply(WhoIsIdle(
+            target.nickname,
+            target.last_activity_time - target.creation_time,
+            target.creation_time))
         if channels:
           client.send_reply(WhoIsChannels(target.nickname, channels))
         client.server.run_hooks("after_user_whois", client, target)

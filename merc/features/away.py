@@ -46,20 +46,19 @@ class Away(message.Command):
 
   @message.Command.requires_registration
   def handle_for(self, client, prefix):
-    client.away_message = self.message
+    locals = client.get_feature_locals(AwayFeature)
+    locals["away"] = self.message
+
     if self.message:
       client.send_reply(NowAway())
     else:
       client.send_reply(UnAway())
 
 
-@AwayFeature.hook("after_new_client")
-def set_default_away_message(client):
-  client.away_message = None
-
-
 @AwayFeature.hook("after_user_privmsg")
 @AwayFeature.hook("after_user_whois")
 def send_is_away_if_away(client, user):
-  if user.is_away:
-    client.send_reply(away.IsAway(user.nickname, user.away_message))
+  locals = user.get_feature_locals(AwayFeature)
+
+  if "away" in locals:
+    client.send_reply(IsAway(user.nickname, locals["away"]))
