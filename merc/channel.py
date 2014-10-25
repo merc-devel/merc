@@ -20,23 +20,29 @@ class ChannelUser(object):
 
   @property
   def sigil(self):
+    # The first sigil is the highest, and thus the one we want to display.
+    return self.sigils[:1]
+
+  @property
+  def sigils(self):
+    sigils = ""
+
     if self.is_owner:
-      return "~"
+      sigils += "~"
 
     if self.is_admin:
-      return "&"
+      sigils += "&"
 
     if self.is_operator:
-      return "@"
+      sigils += "@"
 
     if self.is_halfop:
-      return "%"
+      sigils += "%"
 
     if self.is_voiced:
-      return "+"
+      sigils += "+"
 
-    return ""
-
+    return sigils
 
 class Channel(object):
   CHANNEL_NAME_REGEX = regex.compile(r"^[^\x00\x07\r\n,: ]*$")
