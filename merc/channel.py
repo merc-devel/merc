@@ -8,6 +8,8 @@ from merc import util
 
 
 BanDetail = collections.namedtuple("BanDetail", ["server", "creation_time"])
+Topic = collections.namedtuple("Topic", ["text", "who", "time"])
+
 
 class ChannelUser(object):
   def __init__(self, channel, client):
@@ -61,6 +63,7 @@ class Channel(object):
     self.creation_time = datetime.datetime.now()
     self.is_secret = True
 
+    self.topic = None
     self.users = {}
     self.bans = {}
 

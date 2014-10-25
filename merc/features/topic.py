@@ -1,13 +1,13 @@
 import collections
 import datetime
 
+from merc import channel
 from merc import feature
 from merc import message
 from merc import mode
 from merc import util
 
 
-Topic = collections.namedtuple("Topic", ["text", "who", "time"])
 MAX_TOPIC_LENGTH = 390
 
 
@@ -71,30 +71,30 @@ class Topic(message.Command):
 
   @message.Command.requires_registration
   def handle_for(self, client, prefix):
-    channel = client.server.get_channel(self.channel_name)
-
-    locals = channel.get_feature_locals(TopicFeature)
-    current_topic = locals.get("topic", None)
+    chan = client.server.get_channel(self.channel_name)
 
     if self.text is None:
-      if current_topic is not None:
-        client.send_reply(TopicReply(channel.name, current_topic.text))
-        client.send_reply(TopicWhoTime(channel.name, current_topic.who,
-                                       current_topic.time))
+      if chan.topic is not None:
+        client.send_reply(TopicReply(chan.name, chan.topic.text))
+        client.send_reply(TopicWhoTime(chan.name, chan.topic.who,
+                                       chan.topic.time))
       else:
-        client.send_reply(NoTopic(channel.name))
+        client.send_reply(NoTopic(chan.name))
     else:
-      if TopicLock.read_from(channel):
-        channel.check_is_operator(client)
+      if TopicLock.read_from(chan):
+        chan.check_is_operator(client)
 
       if not self.text:
-        locals["topic"] = None
+        chan.topic = None
       else:
-        locals["topic"] = Topic(self.text[:MAX_TOPIC_LENGTH], client.hostmask,
-                                datetime.datetime.utcnow())
+        chan.topic = channel.Topic(
+            self.text[:MAX_TOPIC_LENGTH], client.hostmask,
+            datetime.datetime.utcnow())
 
-      channel.broadcast(None, client.hostmask,
-                        Topic(channel.name, self.text[:MAX_TOPIC_LENGTH]))
+      chan.broadcast(
+          None, client.hostmask,
+          Topic(chan.name,
+                chan.topic.text if chan.topic is not None else ""))
 
   def as_params(self, client):
     params = [self.channel_name]
@@ -105,9 +105,7 @@ class Topic(message.Command):
 
 @TopicFeature.hook("after_join_channel")
 def send_topic_on_join(client, user, channel):
-  locals = channel.get_feature_locals(TopicFeature)
-
-  if "topic" in locals:
+  if channel.topic is not None:
     user.on_message(user.hostmask, Topic(channel.name))
 
 
