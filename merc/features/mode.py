@@ -258,8 +258,8 @@ class SAMode(_Mode):
 
 @ModeFeature.hook("after_welcome")
 def send_modes_on_welcome(client):
-  if client.modes:
-    flags, args = show_modes(client, client.server.user_modes)
+  flags, args = show_modes(client, client.server.user_modes)
+  if flags != "+":
     client.relay_to_self(Mode(client.nickname, flags, *args))
 
 
