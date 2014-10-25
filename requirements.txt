@@ -1,6 +1,5 @@
 coloredlogs
 regex
 aiodns
-IPython
 PyYAML
 passlib
