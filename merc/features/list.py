@@ -63,6 +63,7 @@ class List(message.Command):
 
         client.send_reply(ListReply(
             channel.name, len(channel.users),
+            # TODO: read the topic
             channel.topic is not None and channel.topic.text or ""))
     finally:
       client.send_reply(ListEnd())

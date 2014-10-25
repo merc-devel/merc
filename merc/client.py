@@ -72,22 +72,6 @@ class Client(object):
     return self.nickname is not None and self.username is not None and \
            self.host is not None
 
-  def set_mode(self, client, mode, param=None):
-    try:
-      mode_obj = self.modes[mode]
-    except KeyError:
-      raise errors.UnknownMode(mode)
-
-    return mode_obj.set(client, param)
-
-  def unset_mode(self, client, mode, param=None):
-    try:
-      mode_obj = self.modes[mode]
-    except KeyError:
-      raise errors.UnknownMode(mode)
-
-    return mode_obj.unset(client, param)
-
   def register(self):
     self.server.register_client(self)
 

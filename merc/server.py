@@ -213,6 +213,9 @@ class Server(object):
     if name[0] == ".":
       name = features.__name__ + name
 
+    if name in sys.modules:
+      del sys.modules[name]
+
     try:
       module = importlib.import_module(name)
 
@@ -236,7 +239,6 @@ class Server(object):
 
     try:
       feature = self.features[name]
-      del sys.modules[name]
     except KeyError:
       logging.warn("{} could not be loaded as it was not loaded.".format(name))
     else:

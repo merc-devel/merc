@@ -76,41 +76,46 @@ class _Mode(message.Command):
     return [self.target, self.flags] + list(self.args)
 
   @staticmethod
-  def _parse_flags(flags, args, modes_with_params=None):
-    if modes_with_params is None:
-      modes_with_params = set()
+  def _expand_flags(flags, args, modes):
+    expanded = []
 
     args_iter = iter(args)
 
-    state = "+"
+    op = "+"
 
     for c in flags:
       if c in "+-":
-        state = c
+        op = c
         continue
 
       arg = None
 
-      if c in modes_with_params:
+      try:
+        mode = modes[c]
+      except KeyError:
+        raise errors.UnknownMode(c)
+
+      if mode.TAKES_PARAM:
         try:
           arg = next(args_iter)
         except StopIteration:
           pass
 
-      yield state + c, arg
+      expanded.append((mode, op, arg))
+    return expanded
 
   @staticmethod
-  def _emit_flags(applied_flags):
+  def _coalesce_flags(applied_flags):
     flags = ""
     args = []
 
-    last_state = None
-    for flag, arg in applied_flags:
-      state, c = flag
-      if state != last_state:
-        flags += state
-        last_state = state
-      flags += c
+    last_op = None
+
+    for mode, op, arg in applied_flags:
+      if op != last_op:
+        flags += op
+        last_op = op
+      flags += mode.CHAR
 
       if arg is not None:
         args.append(arg)
@@ -127,23 +132,18 @@ class _Mode(message.Command):
       except errors.NoSuchNick:
         raise errors.NoSuchChannel(self.target)
 
-      self.check_can_set_channel_flags(client, chan)
+      expanded_flags = self._expand_flags(self.flags, self.args,
+                                          chan.modes)
 
-      for flag, arg in self._parse_flags(
-          self.flags, self.args,
-          {mode.CHAR for mode in client.server.channel_modes.values()
-                     if mode.TAKES_PARAM}):
-        state, c = flag
+      self.check_can_set_channel_modes(client, chan, expanded_flags)
 
-        if state == "+":
-          if chan.set_mode(client, c, arg):
-            applied_flags.append((flag, arg))
-        elif state == "-":
-          if chan.unset_mode(client, c, arg):
-            applied_flags.append((flag, arg))
+      for mode, op, arg in expanded_flags:
+        if (op == "+" and mode.set(client, arg)) or \
+           (op == "-" and mode.unset(client, arg)):
+          applied_flags.append((mode, op, arg))
 
       if applied_flags:
-        flags, args = self._emit_flags(applied_flags)
+        flags, args = self._coalesce_flags(applied_flags)
 
         chan.broadcast(None, self.get_prefix(client),
                        Mode(chan.name, flags, *args))
@@ -151,21 +151,19 @@ class _Mode(message.Command):
       user = client.server.get_client(self.target)
       self.check_can_set_user_flags(client, user)
 
-      for flag, arg in self._parse_flags(
-          self.flags, self.args,
-          {mode.CHAR for mode in client.server.user_modes.values()
-                     if mode.TAKES_PARAM}):
-        state, c = flag
+      try:
+        expanded_flags = self._expand_flags(self.flags, self.args,
+                                            user.modes)
+      except errors.UnknownMode as e:
+        raise errors.UmodeUnknownFlag(e.param)
 
-        if state == "+":
-          if user.set_mode(self, c, arg):
-            applied_flags.append((flag, arg))
-        elif state == "-":
-          if user.unset_mode(self, c, arg):
-            applied_flags.append((flag, arg))
+      for mode, op, args in expanded_flags:
+        if (op == "+" and mode.set(user, arg)) or \
+           (op == "-" and mode.unset(user, arg)):
+          applied_flags.append((mode, op, arg))
 
       if applied_flags:
-        flags, args = self._emit_flags(applied_flags)
+        flags, args = self._coalesce_flags(applied_flags)
 
         msg_prefix = self.get_prefix(client)
         user.send(self.get_prefix(client),
@@ -196,10 +194,15 @@ class Mode(_Mode):
     else:
         super().handle_for(client, prefix)
 
-  def check_can_set_channel_flags(self, client, channel):
-    channel.check_is_operator(client)
+  def check_can_set_channel_modes(self, client, channel, modes):
+    for mode, op, arg in modes:
+      if mode.TAKES_PARAM and arg is None:
+        continue
 
-  def check_can_set_user_flags(self, client, user):
+      channel.check_is_operator(client)
+      return
+
+  def check_can_set_user_modes(self, client, user):
     if user is not client:
       raise errors.UsersDontMatch
 
@@ -212,10 +215,10 @@ class SAMode(_Mode):
   NAME = "SAMODE"
   MIN_ARITY = 2
 
-  def check_can_set_channel_flags(self, client, channel):
+  def check_can_set_channel_modes(self, client, channel):
     client.check_is_irc_operator()
 
-  def check_can_set_user_flags(self, client, user):
+  def check_can_set_user_modes(self, client, user):
     client.check_is_irc_operator()
 
   def get_prefix(self, client):

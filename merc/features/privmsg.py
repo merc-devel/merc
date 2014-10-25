@@ -39,6 +39,8 @@ class _Privmsg(message.Command):
           except errors.NoSuchNick:
             raise errors.CannotSendToChan(chan.name)
 
+          client.server.run_hooks("check_can_message_channel", client, chan)
+
         if Moderated.read_from(chan):
           chan.check_is_voiced(client)
 

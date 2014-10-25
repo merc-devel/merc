@@ -51,7 +51,7 @@ class Join(_Join):
     self.keys = keys.split(",") if keys is not None else []
 
   def check_can_join(self, client, channel, key):
-    return
+    client.server.run_hooks("check_join_channel", client, channel, key)
 
   def get_joining_client(self, client):
     return client

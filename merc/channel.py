@@ -7,6 +7,8 @@ from merc import errors
 from merc import util
 
 
+BanDetail = collections.namedtuple("BanDetail", ["server", "creation_time"])
+
 class ChannelUser(object):
   def __init__(self, channel, client):
     self.channel = channel
@@ -60,6 +62,7 @@ class Channel(object):
     self.is_secret = True
 
     self.users = {}
+    self.bans = {}
 
   @property
   def modes(self):
@@ -73,22 +76,6 @@ class Channel(object):
   @property
   def is_local(self):
     return self.name[0] == "&"
-
-  def set_mode(self, client, mode, param=None):
-    try:
-      mode_obj = self.modes[mode]
-    except KeyError:
-      raise errors.UnknownMode(mode)
-
-    return mode_obj.set(client, param)
-
-  def unset_mode(self, client, mode, param=None):
-    try:
-      mode_obj = self.modes[mode]
-    except KeyError:
-      raise errors.UnknownMode(mode)
-
-    return mode_obj.unset(client, param)
 
   def get_channel_user_for(self, client):
     try:

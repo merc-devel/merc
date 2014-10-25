@@ -53,6 +53,7 @@ opers:
 features:
   - .admin
   - .away
+  - .ban
   - .is_secure
   - .ison
   - .join
