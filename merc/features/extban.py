@@ -24,27 +24,26 @@ CHECKERS = {
 }
 
 
-def check_ban(user, channel):
-  for mask in channel.bans:
-    mode, colon, value = mask.partition(":")
+def check_ban(user, channel, mask):
+  mode, colon, value = mask.partition(":")
 
-    if colon != ":" or len(mode) != 1:
-      continue
+  if colon != ":" or len(mode) != 1:
+    return
 
-    checker = CHECKERS.get(mode, None)
+  checker = CHECKERS.get(mode, None)
 
-    if checker is not None:
-      checker(user, channel, value)
-
-
-@ExtBanFeature.hook("check_join_channel")
-def check_channel_ban(user, channel, key):
-  check_ban(user, channel)
+  if checker is not None:
+    checker(user, channel, value)
 
 
-@ExtBanFeature.hook("check_can_message_channel")
-def check_can_message_channel(user, channel):
+@ExtBanFeature.hook("check_join_ban_mask")
+def check_join_ban_mask(user, channel, mask):
+  check_ban(user, channel, mask)
+
+
+@ExtBanFeature.hook("check_message_ban_mask")
+def check_message_ban_mask(user, channel, mask):
   try:
-    check_ban(user, channel)
+    check_ban(user, channel, mask)
   except errors.BannedFromChannel:
     channel.check_is_voiced(user)

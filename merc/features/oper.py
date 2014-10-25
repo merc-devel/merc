@@ -75,8 +75,7 @@ class Oper(message.Command):
 
     client.is_irc_operator = True
     client.send_reply(YoureOper())
-    client.server.run_hooks("user_mode_change", client, {
-        Operator.CHAR: client.modes[Operator.CHAR]})
+    client.server.run_hooks("user_mode_change", client, [(Operator, "+", None)])
 
 
 @OperFeature.hook("luser_oper")

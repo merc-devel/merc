@@ -100,7 +100,7 @@ class _Mode(message.Command):
     return [self.target, self.flags] + list(self.args)
 
   @staticmethod
-  def _expand_flags(flags, args, modes):
+  def _expand_modes(flags, args, modes):
     expanded = []
 
     args_iter = iter(args)
@@ -132,13 +132,13 @@ class _Mode(message.Command):
     return expanded
 
   @staticmethod
-  def _coalesce_flags(applied_flags):
+  def _coalesce_modes(applied):
     flags = ""
     args = []
 
     last_op = None
 
-    for mode, op, arg in applied_flags:
+    for mode, op, arg in applied:
       if op != last_op:
         flags += op
         last_op = op
@@ -151,7 +151,7 @@ class _Mode(message.Command):
 
   @message.Command.requires_registration
   def handle_for(self, client, prefix):
-    applied_flags = []
+    applied = []
 
     if channel.Channel.is_valid_name(self.target):
       try:
@@ -159,20 +159,20 @@ class _Mode(message.Command):
       except errors.NoSuchNick:
         raise errors.NoSuchChannel(self.target)
 
-      expanded_flags = self._expand_flags(self.flags, self.args,
-                                          client.server.channel_modes)
+      expanded = self._expand_modes(self.flags, self.args,
+                                    client.server.channel_modes)
 
-      self.check_can_set_channel_modes(client, chan, expanded_flags)
+      self.check_can_set_channel_modes(client, chan, expanded)
 
-      for mode_factory, op, arg in expanded_flags:
+      for mode_factory, op, arg in expanded:
         mode = mode_factory(chan)
 
         if (op == "+" and mode.set(client, arg)) or \
            (op == "-" and mode.unset(client, arg)):
-          applied_flags.append((mode_factory, op, arg))
+          applied.append((mode_factory, op, arg))
 
-      if applied_flags:
-        flags, args = self._coalesce_flags(applied_flags)
+      if applied:
+        flags, args = self._coalesce_modes(applied)
 
         chan.broadcast(None, self.get_prefix(client),
                        Mode(chan.name, flags, *args))
@@ -181,20 +181,20 @@ class _Mode(message.Command):
       self.check_can_set_user_modes(client, user)
 
       try:
-        expanded_flags = self._expand_flags(self.flags, self.args,
-                                            client.server.user_modes)
+        expanded = self._expand_modes(self.flags, self.args,
+                                      client.server.user_modes)
       except errors.UnknownMode as e:
         raise errors.UmodeUnknownFlag(e.param)
 
-      for mode_factory, op, arg in expanded_flags:
+      for mode_factory, op, arg in expanded:
         mode = mode_factory(user)
 
         if (op == "+" and mode.set(user, arg)) or \
            (op == "-" and mode.unset(user, arg)):
-          applied_flags.append((mode_factory, op, arg))
+          applied.append((mode_factory, op, arg))
 
-      if applied_flags:
-        flags, args = self._coalesce_flags(applied_flags)
+      if applied:
+        flags, args = self._coalesce_modes(applied)
 
         msg_prefix = self.get_prefix(client)
         user.send(self.get_prefix(client),
@@ -227,7 +227,7 @@ class Mode(_Mode):
 
   def check_can_set_channel_modes(self, client, channel, modes):
     for m, op, arg in modes:
-      if isinstance(m, mode.ListMode) and arg is None:
+      if issubclass(m, mode.ListMode) and arg is None:
         continue
 
       channel.check_is_operator(client)
@@ -275,7 +275,6 @@ def send_channel_modes_on_new_join(client, user, channel):
 
 
 @ModeFeature.hook("user_mode_change")
-def send_mode_on_user_mode_change(client, modes):
-  return
-  flags, args = show_modes(modes)
+def send_mode_on_user_mode_change(client, applied):
+  flags, args = Mode._coalesce_modes(applied)
   client.relay_to_self(Mode(client.nickname, flags, *args))

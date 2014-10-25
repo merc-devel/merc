@@ -60,13 +60,13 @@ class Away(message.Command):
 def send_is_away_if_away(client, user):
   locals = user.get_feature_locals(AwayFeature)
 
-  if "away" in locals:
+  if locals.get("away", None) is not None:
     client.send_reply(IsAway(user.nickname, locals["away"]))
 
 
-@AwayFeature.hook("mutate_who_reply")
-def mutate_who_reply(user, reply):
+@AwayFeature.hook("modify_who_reply")
+def modify_who_reply(user, reply):
   locals = user.get_feature_locals(AwayFeature)
 
-  if "away" in locals:
+  if locals.get("away", None) is not None:
     reply.is_away = True

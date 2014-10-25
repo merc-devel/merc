@@ -7,10 +7,6 @@ from merc import errors
 from merc import util
 
 
-BanDetail = collections.namedtuple("BanDetail", ["server", "creation_time"])
-Topic = collections.namedtuple("Topic", ["text", "who", "time"])
-
-
 class ChannelUser(object):
   def __init__(self, channel, client):
     self.channel = channel
@@ -66,11 +62,10 @@ class Channel(object):
     self.is_disallowing_external_messages = True
     self.is_moderated = False
 
-    self.modes = {}
-
-    self.topic = None
     self.users = {}
-    self.bans = {}
+
+    self.modes = {}
+    self.feature_locals = {}
 
   @property
   def is_local(self):
@@ -142,4 +137,4 @@ class Channel(object):
       raise errors.NoSuchNick(client.nickname)
 
   def get_feature_locals(self, feature):
-    return self.server.features[feature.NAME].get_channel_locals(self)
+    return self.feature_locals.setdefault(feature.NAME, {})

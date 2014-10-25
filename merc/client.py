@@ -29,6 +29,7 @@ class Client(object):
 
     self.channels = {}
     self.modes = {}
+    self.feature_locals = {}
 
     self.is_invisible = True
     self.is_irc_operator = False
@@ -38,7 +39,6 @@ class Client(object):
 
     self.ping_check_handle = None
     self.pong_check_handle = None
-
 
   @property
   def hostmask(self):
@@ -174,4 +174,4 @@ class Client(object):
       raise errors.NoPrivileges
 
   def get_feature_locals(self, feature):
-    return self.server.features[feature.NAME].get_user_locals(self)
+    return self.feature_locals.setdefault(feature.NAME, {})

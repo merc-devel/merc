@@ -61,9 +61,10 @@ class List(message.Command):
         if not client.can_see_channel(channel):
           continue
 
-        client.send_reply(ListReply(
-            channel.name, len(channel.users),
-            channel.topic is not None and channel.topic.text or ""))
+        reply = ListReply(channel.name, len(channel.users), "")
+        client.server.run_hooks("modify_list_reply", channel, reply)
+
+        client.send_reply(reply)
     finally:
       client.send_reply(ListEnd())
 

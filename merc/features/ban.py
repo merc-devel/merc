@@ -8,6 +8,9 @@ from merc import message
 from merc import mode
 
 
+BanDetail = collections.namedtuple("BanDetail", ["server", "creation_time"])
+
+
 class BanFeature(feature.Feature):
   NAME = __name__
 
@@ -45,7 +48,10 @@ class BanMask(mode.ListMode):
   CHAR = "b"
 
   def list(self, client):
-    for mask, detail in sorted(self.target.bans.items(),
+    locals = self.target.get_feature_locals(BanFeature)
+    bans = locals.get("bans", {})
+
+    for mask, detail in sorted(bans.items(),
                                key=lambda v: v[1].creation_time,
                                reverse=True):
       client.send_reply(BanList(self.target.name, mask, detail.server,
@@ -53,34 +59,43 @@ class BanMask(mode.ListMode):
     client.send_reply(EndOfBanList(self.target.name))
 
   def add(self, client, value):
-    if value in self.target.bans:
+    locals = self.target.get_feature_locals(BanFeature)
+    bans = locals.setdefault("bans", {})
+
+    if value in bans:
       return False
 
-    self.target.bans[value] = channel.BanDetail(client.server.name,
-                                                datetime.datetime.now())
+    bans[value] = BanDetail(client.server.name, datetime.datetime.now())
     return True
 
   def remove(self, client, value):
-    if value not in self.target.bans:
+    locals = self.target.get_feature_locals(BanFeature)
+    bans = locals.get("bans", {})
+
+    if value not in bans:
       return False
 
-    del self.target.bans[value]
+    del bans[value]
     return True
-
-
-def check_ban(user, channel):
-  if any(user.hostmask_matches(mask) for mask in channel.bans):
-    raise errors.BannedFromChannel(channel.name)
 
 
 @BanFeature.hook("check_join_channel")
 def check_channel_ban(user, channel, key):
-  check_ban(user, channel)
+  locals = channel.get_feature_locals(BanFeature)
+
+  for mask in locals.get("bans", {}):
+    if user.hostmask_matches(mask):
+      raise errors.BannedFromChannel(channel.name)
+
+    channel.server.run_hooks("check_join_ban_mask", user, channel, mask)
 
 
 @BanFeature.hook("check_can_message_channel")
 def check_can_message_channel(user, channel):
-  try:
-    check_ban(user, channel)
-  except errors.BannedFromChannel:
-    channel.check_is_voiced(user)
+  locals = channel.get_feature_locals(BanFeature)
+
+  for mask in locals.get("bans", {}):
+    if user.hostmask_matches(mask):
+      channel.check_is_voiced(user)
+
+    channel.server.run_hooks("check_message_ban_mask", user, channel, mask)
