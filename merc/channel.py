@@ -21,7 +21,7 @@ class ChannelUser(object):
   @property
   def sigil(self):
     # The first sigil is the highest, and thus the one we want to display.
-    return self.sigils[0]
+    return self.sigils[:1]
 
   @property
   def sigils(self):
