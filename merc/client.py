@@ -37,6 +37,9 @@ class Client(object):
     self.creation_time = datetime.datetime.now()
     self.last_activity_time = self.creation_time
 
+    self.ping_check_handle = None
+    self.pong_check_handle = None
+
   @property
   def modes(self):
     modes = {}
