@@ -1,5 +1,3 @@
-import regex
-
 import merc
 
 from merc import errors
@@ -8,18 +6,8 @@ from merc import message
 from merc import util
 
 
-MAX_NICKNAME_LENGTH = 12
-NICKNAME_REGEX = regex.compile(r"^[\p{L}\p{So}_\[\]\\^{}|`][\p{L}\p{So}\p{N}_\[\]\\^{}|`-]*$")
-
-
 class WelcomeFeature(feature.Feature):
   NAME = __name__
-
-  @property
-  def isupport(self):
-    return {
-        "NICKLEN": MAX_NICKNAME_LENGTH
-    }
 
 
 install = WelcomeFeature
@@ -81,34 +69,6 @@ class ISupport(message.Reply):
   def as_reply_params(self, client):
     return ["{}={}".format(k, v) for k, v in self.support_params.items()] + \
         ["are supported by this server"]
-
-
-@WelcomeFeature.register_command
-class Nick(message.Command):
-  NAME = "NICK"
-  MIN_ARITY = 1
-
-  def __init__(self, nickname, *args):
-    self.nickname = nickname
-
-  def as_params(self, client):
-    return [self.nickname]
-
-  def handle_for(self, client, prefix):
-    old_hostmask = client.hostmask
-
-    if NICKNAME_REGEX.match(self.nickname) is None or \
-        len(self.nickname) > MAX_NICKNAME_LENGTH:
-      raise errors.ErroneousNickname
-
-    client.server.rename_client(client, self.nickname)
-
-    if client.is_registered:
-      client.relay_to_all(Nick(self.nickname), old_hostmask)
-      client.send(old_hostmask, Nick(self.nickname))
-    else:
-      if client.is_ready_for_registration:
-        client.register()
 
 
 @WelcomeFeature.register_command
