@@ -34,4 +34,4 @@ class WhoIsSecure(message.Reply):
 @IsSecureFeataure.hook("after_user_whois")
 def send_whois_secure_if_secure(client, user):
   if user.is_securely_connected:
-    client.send_reply(WhoIsSecure(target.nickname, "*"))
+    client.send_reply(WhoIsSecure(user.nickname, "*"))
