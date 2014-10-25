@@ -65,6 +65,7 @@ features:
   - .oper
   - .ping
   - .privmsg
+  - .rehash
   - .roles
   - .topic
   - .userhost

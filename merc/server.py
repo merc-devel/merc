@@ -2,13 +2,13 @@ import aiodns
 import argparse
 import asyncio
 import datetime
-import imp
 import importlib
 import logging
 import operator
 import regex
 import signal
 import ssl
+import sys
 import yaml
 
 import passlib.context
@@ -33,6 +33,8 @@ class Server(object):
 
     self.loop = loop
 
+    self.features = {}
+
     self.config_filename = config_filename
     self.rehash()
 
@@ -42,16 +44,16 @@ class Server(object):
 
     self.creation_time = datetime.datetime.utcnow()
 
-    self.features = {}
-
     self.clients = {}
     self.channels = {}
 
     self.register_signal_handlers()
 
   def rehash(self):
+    self._unload_all_features()
     with open(self.config_filename, "r") as f:
       self.config = yaml.load(f)
+    self._load_configured_features()
 
   @property
   def name(self):
@@ -204,35 +206,43 @@ class Server(object):
 
     raise KeyError(name)
 
-  def load_feature(self, name, reload=False):
+  def load_feature(self, name):
     if name[0] == ".":
       name = features.__name__ + name
 
     try:
       module = importlib.import_module(name)
-      if reload:
-        module = imp.reload(module)
 
       try:
         install = module.install
       except AttributeError:
         logger.critical("{} does not name a merc feature!".format(name))
+        return
 
       feature = install(self)
       self.features[feature.NAME] = feature
     except Exception:
       logger.critical("{} could not be loaded.".format(name), exc_info=True)
+      return
 
-    logger.info("{} loaded.".format(name))
+    logger.info("{} loaded.".format(feature.NAME))
 
   def unload_feature(self, name):
     if name[0] == ".":
       name = features.__name__ + name
 
     try:
-      del self.features[name]
+      feature = self.features[name]
+      del sys.modules[name]
     except KeyError:
       logging.warn("{} could not be loaded as it was not loaded.".format(name))
+    else:
+      del self.features[name]
+      logger.info("{} unloaded.".format(feature.NAME))
+
+  def _unload_all_features(self):
+    for feature_name in list(self.features.keys()):
+      self.unload_feature(feature_name)
 
   def _load_configured_features(self):
     for feature_name in self.config["features"]:
@@ -244,8 +254,6 @@ class Server(object):
 
   {}\
   """.format(merc.__version__, self.name, self.network_name, self.motd))
-
-    self._load_configured_features()
 
     if "ssl" in self.config:
       ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
