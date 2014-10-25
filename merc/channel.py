@@ -56,7 +56,7 @@ class Channel(object):
       raise errors.NoSuchChannel(name)
 
     self.name = name
-    self.creation_time = datetime.datetime.utcnow()
+    self.creation_time = datetime.datetime.now()
     self.is_secret = True
 
     self.users = {}

@@ -34,7 +34,7 @@ class Client(object):
     self.is_invisible = True
     self.is_irc_operator = False
 
-    self.creation_time = datetime.datetime.utcnow()
+    self.creation_time = datetime.datetime.now()
     self.last_activity_time = self.creation_time
 
   @property
@@ -169,7 +169,7 @@ class Client(object):
         self.send_reply(e)
 
   def on_message(self, prefix, message):
-    self.last_activity_time = datetime.datetime.utcnow()
+    self.last_activity_time = datetime.datetime.now()
     message.handle_for(self, prefix)
     self.server.run_hooks("after_message", self, message, prefix)
 

@@ -42,7 +42,7 @@ class Server(object):
     self.crypt_context = passlib.context.CryptContext(
         schemes=self.config["crypto"]["hash_schemes"])
 
-    self.creation_time = datetime.datetime.utcnow()
+    self.creation_time = datetime.datetime.now()
 
     self.clients = {}
     self.channels = {}
