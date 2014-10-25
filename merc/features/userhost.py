@@ -1,6 +1,7 @@
 from merc import errors
 from merc import feature
 from merc import message
+from merc import util
 
 
 class UserHostFeature(feature.Feature):
@@ -18,7 +19,10 @@ class UserHostReply(message.Reply):
     self.user_hosts = user_hosts
 
   def as_reply_params(self, client):
-    return [" ".join(self.user_hosts)]
+    return [" ".join("{}={}{}".format(user_host.nickname,
+                                      "+" if not user_host.is_away else "-",
+                                      user_host.hostmask)
+            for user_host in self.user_hosts)]
 
 
 @UserHostFeature.register_command
@@ -38,7 +42,9 @@ class UserHost(message.Command):
       except errors.NoSuchNick:
         pass
       else:
-        user_hosts.append("{}={}{}".format(
-            nickname, "-" if user.is_away else "+", user.hostmask))
+        user_host = util.Expando(nickname=nickname, is_away=False,
+                                 hostmask=user.hostmask)
+        client.server.run_hooks("modify_userhost_entry", user, user_host)
+        user_hosts.append(user_host)
 
     client.send_reply(UserHostReply(user_hosts))
