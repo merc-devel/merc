@@ -33,7 +33,7 @@ class _Privmsg(message.Command):
         except errors.NoSuchNick:
           continue
 
-        if DisallowingExternalMessages.read_from(chan):
+        if DisallowingExternalMessages(chan).get():
           try:
             chan.check_has_client(client)
           except errors.NoSuchNick:
@@ -41,7 +41,7 @@ class _Privmsg(message.Command):
 
           client.server.run_hooks("check_can_message_channel", client, chan)
 
-        if Moderated.read_from(chan):
+        if Moderated(chan).get():
           chan.check_is_voiced(client)
 
         client.relay_to_channel(chan, self.__class__(chan.name, self.text))
@@ -70,7 +70,6 @@ class DisallowingExternalMessages(mode.FlagMode):
 @PrivmsgFeature.register_channel_mode
 class Moderated(mode.FlagMode):
   CHAR = "m"
-  DEFAULT = False
 
 
 @PrivmsgFeature.hook("send_server_notice")

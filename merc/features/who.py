@@ -27,17 +27,22 @@ class WhoReply(message.Reply):
   NAME = "352"
   FORCE_TRAILING = True
 
-  def __init__(self, channel_name, user, hopcount, server):
+  def __init__(self, channel_name, username, host, server, nickname, is_away,
+               hopcount, realname):
     self.channel_name = channel_name
-    self.user = user
-    self.hopcount = hopcount
+    self.username = username
+    self.host = host
     self.server = server
+    self.nickname = nickname
+    self.is_away = is_away
+    self.hopcount = hopcount
+    self.realname = realname
 
   def as_reply_params(self, client):
     return [self.channel_name if self.channel_name is not None else "*",
-            self.user.username, self.user.host, self.server, self.user.nickname,
-            "H", # TODO: check if AWAY
-            str(self.hopcount) + " " + self.user.realname]
+            self.username, self.host, self.server, self.nickname,
+            "H" if not self.is_away else "G",
+            str(self.hopcount) + " " + self.realname]
 
 
 @WhoFeature.register_command
@@ -85,7 +90,9 @@ class Who(message.Command):
       pass
 
     for channel_name, user in who:
-        client.send_reply(WhoReply(channel_name, user, 0,
-                                   client.server.name))
+      reply = WhoReply(channel_name, user.username, user.host, user.server.name,
+                       user.nickname, True, 0, user.realname)
+      client.server.run_hooks("mutate_who_reply", user, reply)
+      client.send_reply(reply)
 
     client.send_reply(EndOfWho(self.target))

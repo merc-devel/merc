@@ -13,9 +13,12 @@ MAX_TOPIC_LENGTH = 390
 
 class TopicFeature(feature.Feature):
   NAME = __name__
-  ISUPPORT = {
-      "TOPICLEN": MAX_TOPIC_LENGTH
-  }
+
+  @property
+  def isupport(self):
+    return {
+        "TOPICLEN": MAX_TOPIC_LENGTH
+    }
 
 
 install = TopicFeature
@@ -81,7 +84,7 @@ class Topic(message.Command):
       else:
         client.send_reply(NoTopic(chan.name))
     else:
-      if TopicLock.read_from(chan):
+      if TopicLock(chan).get():
         chan.check_is_operator(client)
 
       if not self.text:

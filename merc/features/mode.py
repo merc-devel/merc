@@ -4,6 +4,7 @@ from merc import channel
 from merc import errors
 from merc import feature
 from merc import message
+from merc import mode
 from merc import util
 
 
@@ -12,28 +13,49 @@ MAX_MODES = 4
 
 class ModeFeature(feature.Feature):
   NAME = __name__
-  ISUPPORT = {
-      "MODES": MAX_MODES
-  }
+
+  @property
+  def isupport(self):
+    list_modes = set()
+    param_modes = set()
+    set_with_param_modes = set()
+    flag_modes = set()
+
+    for m in self.server.channel_modes.values():
+      if issubclass(m, mode.ListMode):
+        list_modes.add(m.CHAR)
+      elif issubclass(m, mode.ParamMode):
+        param_modes.add(m.CHAR)
+      elif issubclass(m, mode.SetWithParamMode):
+        set_with_param_modes.add(m.CHAR)
+      elif issubclass(m, mode.FlagMode):
+        flag_modes.add(m.CHAR)
+
+    return {
+        "MODES": MAX_MODES,
+        "CHANMODES": ",".join(["".join(sorted(list_modes)),
+                               "".join(sorted(param_modes)),
+                               "".join(sorted(set_with_param_modes)),
+                               "".join(sorted(flag_modes))])
+    }
 
 
 install = ModeFeature
 
 
-def show_modes(modes):
+def show_modes(target, modes):
   flags = []
   args = []
 
-  for k, mode in sorted(modes.items(), key=operator.itemgetter(0)):
+  for k, mode_factory in sorted(modes.items(), key=operator.itemgetter(0)):
+    mode = mode_factory(target)
     value = mode.get()
 
-    if mode.TAKES_PARAM:
-      if value is not None:
-        flags.append(mode.CHAR)
+    if value:
+      flags.append(mode.CHAR)
+
+      if value is not True:
         args.append(value)
-    else:
-      if value:
-        flags.append(mode.CHAR)
 
   return "+" + "".join(flags), args
 
@@ -41,24 +63,20 @@ def show_modes(modes):
 class UmodeIs(message.Reply):
   NAME = "221"
 
-  def __init__(self, modes):
-    self.modes = modes
-
   def as_reply_params(self, client):
-    flags, args = show_modes(self.modes)
+    flags, args = show_modes(client, client.server.user_modes)
     return [flags] + args
 
 
 class ChannelModeIs(message.Reply):
   NAME = "324"
 
-  def __init__(self, channel_name, modes):
-    self.channel_name = channel_name
-    self.modes = modes
+  def __init__(self, channel):
+    self.channel = channel
 
   def as_reply_params(self, client):
-    flags, args = show_modes(self.modes)
-    return [self.channel_name, flags] + args
+    flags, args = show_modes(self.channel, client.server.channel_modes)
+    return [self.channel.name, flags] + args
 
 
 class CreationTime(message.Reply):
@@ -89,8 +107,8 @@ class _Mode(message.Command):
 
     op = "+"
 
-    for i, c in enumerate(flags):
-      if i > MAX_MODES:
+    for c in flags:
+      if len(expanded) > MAX_MODES:
         break
 
       if c in "+-":
@@ -142,14 +160,16 @@ class _Mode(message.Command):
         raise errors.NoSuchChannel(self.target)
 
       expanded_flags = self._expand_flags(self.flags, self.args,
-                                          chan.modes)
+                                          client.server.channel_modes)
 
       self.check_can_set_channel_modes(client, chan, expanded_flags)
 
-      for mode, op, arg in expanded_flags:
+      for mode_factory, op, arg in expanded_flags:
+        mode = mode_factory(chan)
+
         if (op == "+" and mode.set(client, arg)) or \
            (op == "-" and mode.unset(client, arg)):
-          applied_flags.append((mode, op, arg))
+          applied_flags.append((mode_factory, op, arg))
 
       if applied_flags:
         flags, args = self._coalesce_flags(applied_flags)
@@ -162,14 +182,16 @@ class _Mode(message.Command):
 
       try:
         expanded_flags = self._expand_flags(self.flags, self.args,
-                                            user.modes)
+                                            client.server.user_modes)
       except errors.UnknownMode as e:
         raise errors.UmodeUnknownFlag(e.param)
 
-      for mode, op, arg in expanded_flags:
+      for mode_factory, op, arg in expanded_flags:
+        mode = mode_factory(user)
+
         if (op == "+" and mode.set(user, arg)) or \
            (op == "-" and mode.unset(user, arg)):
-          applied_flags.append((mode, op, arg))
+          applied_flags.append((mode_factory, op, arg))
 
       if applied_flags:
         flags, args = self._coalesce_flags(applied_flags)
@@ -193,19 +215,19 @@ class Mode(_Mode):
         except errors.NoSuchNick:
           raise errors.NoSuchChannel(self.target)
 
-        client.send_reply(ChannelModeIs(chan.name, chan.modes))
+        client.send_reply(ChannelModeIs(chan))
       else:
         user = client.server.get_client(self.target)
         if user is not client:
           raise errors.UsersDontMatch
 
-        client.send_reply(UmodeIs(user.modes))
+        client.send_reply(UmodeIs())
     else:
         super().handle_for(client, prefix)
 
   def check_can_set_channel_modes(self, client, channel, modes):
-    for mode, op, arg in modes:
-      if mode.TAKES_PARAM and arg is None:
+    for m, op, arg in modes:
+      if isinstance(m, mode.ListMode) and arg is None:
         continue
 
       channel.check_is_operator(client)
@@ -237,7 +259,7 @@ class SAMode(_Mode):
 @ModeFeature.hook("after_welcome")
 def send_modes_on_welcome(client):
   if client.modes:
-    flags, args = show_modes(client.modes)
+    flags, args = show_modes(client, client.server.user_modes)
     client.relay_to_self(Mode(client.nickname, flags, *args))
 
 
@@ -248,11 +270,12 @@ def send_timestamp_on_join(client, user, channel):
 
 @ModeFeature.hook("after_join_new_channel")
 def send_channel_modes_on_new_join(client, user, channel):
-  flags, args = show_modes(channel.modes)
+  flags, args = show_modes(channel, client.server.channel_modes)
   user.send_reply(Mode(channel.name, flags, *args))
 
 
 @ModeFeature.hook("user_mode_change")
 def send_mode_on_user_mode_change(client, modes):
+  return
   flags, args = show_modes(modes)
   client.relay_to_self(Mode(client.nickname, flags, *args))

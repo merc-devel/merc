@@ -27,14 +27,16 @@ class UserFeatureContext(object):
 
 
 class Feature(object, metaclass=FeatureMeta):
-  ISUPPORT = {}
-
   def __init__(self, server):
     self.server = server
 
     self.user_contexts = weakref.WeakKeyDictionary()
     self.channel_contexts = weakref.WeakKeyDictionary()
     self.server_locals = {}
+
+  @property
+  def isupport(self):
+    return {}
 
   def _get_user_context(self, user):
     if user not in self.user_contexts:

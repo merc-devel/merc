@@ -61,20 +61,16 @@ class Channel(object):
 
     self.name = name
     self.creation_time = datetime.datetime.now()
+
     self.is_secret = True
+    self.is_disallowing_external_messages = True
+    self.is_moderated = False
+
+    self.modes = {}
 
     self.topic = None
     self.users = {}
     self.bans = {}
-
-  @property
-  def modes(self):
-    modes = {}
-
-    for feature in self.server.features.values():
-      modes.update(feature.get_channel_modes(self))
-
-    return modes
 
   @property
   def is_local(self):

@@ -8,9 +8,12 @@ ROLE_MODES = "qaohv"
 
 class RolesFeature(feature.Feature):
   NAME = __name__
-  ISUPPORT = {
-      "PREFIX": "({}){}".format(ROLE_MODES, ROLE_CHARS)
-  }
+
+  @property
+  def isupport(self):
+    return {
+        "PREFIX": "({}){}".format(ROLE_MODES, ROLE_CHARS)
+    }
 
 
 install = RolesFeature
@@ -19,73 +22,84 @@ install = RolesFeature
 class ChannelRoleMode(mode.Mode):
   TAKES_PARAM = True
 
-  def mutate(self, user, value):
+  def toggle_for_user(self, user):
+    raise NotImplementedError
+
+  def get_for_user(self, user):
     raise NotImplementedError
 
   def set(self, client, value):
     user = self.target.get_channel_user_for(client.server.get_client(value))
-    return self.mutate(user, True)
+
+    if self.get_for_user(user):
+      return False
+
+    self.toggle_for_user(user)
+    return True
 
   def unset(self, client, value):
     user = self.target.get_channel_user_for(client.server.get_client(value))
-    return self.mutate(user, False)
+
+    if not self.get_for_user(user):
+      return False
+
+    self.toggle_for_user(user)
+    return True
+
+  def get(self):
+    return None
 
 
 @RolesFeature.register_channel_mode
 class Owner(ChannelRoleMode):
   CHAR = "q"
 
-  def mutate(self, user, value):
-    if user.is_owner == value:
-      return False
+  def toggle_for_user(self, user):
+    user.is_owner = not user.is_owner
 
-    user.is_owner = value
-    return True
+  def get_for_user(self, user):
+    return user.is_owner
 
 
 @RolesFeature.register_channel_mode
 class Admin(ChannelRoleMode):
   CHAR = "a"
 
-  def mutate(self, user, value):
-    if user.is_admin == value:
-      return False
+  def toggle_for_user(self, user):
+    user.is_admin = not user.is_admin
 
-    user.is_admin = value
-    return True
+  def get_for_user(self, user):
+    return user.is_admin
 
 
 @RolesFeature.register_channel_mode
 class Operator(ChannelRoleMode):
   CHAR = "o"
 
-  def mutate(self, user, value):
-    if user.is_operator == value:
-      return False
+  def toggle_for_user(self, user):
+    user.is_operator = not user.is_operator
 
-    user.is_operator = value
-    return True
+  def get_for_user(self, user):
+    return user.is_operator
 
 
 @RolesFeature.register_channel_mode
 class HalfOp(ChannelRoleMode):
   CHAR = "h"
 
-  def mutate(self, user, value):
-    if user.is_halfop == value:
-      return False
+  def toggle_for_user(self, user):
+    user.is_halfop = not user.is_halfop
 
-    user.is_halfop = value
-    return True
+  def get_for_user(self, user):
+    return user.is_halfop
 
 
 @RolesFeature.register_channel_mode
 class Voiced(ChannelRoleMode):
   CHAR = "v"
 
-  def mutate(self, user, value):
-    if user.is_voiced == value:
-      return False
+  def toggle_for_user(self, user):
+    user.is_voiced = not user.is_voiced
 
-    user.is_voiced = value
-    return True
+  def get_for_user(self, user):
+    return user.is_voiced

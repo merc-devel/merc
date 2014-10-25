@@ -41,37 +41,31 @@ class EndOfBanList(message.Reply):
 
 
 @BanFeature.register_channel_mode
-class BanMask(mode.Mode):
+class BanMask(mode.ListMode):
   CHAR = "b"
-  TAKES_PARAM = True
 
-  def set(self, client, value):
-    if value is None:
-      # display all bans to the client instead
-      for mask, detail in sorted(self.target.bans.items(),
-                                 key=lambda v: v[1].creation_time,
-                                 reverse=True):
-        client.send_reply(BanList(self.target.name, mask, detail.server,
-                                  detail.creation_time))
-      client.send_reply(EndOfBanList(self.target.name))
+  def list(self, client):
+    for mask, detail in sorted(self.target.bans.items(),
+                               key=lambda v: v[1].creation_time,
+                               reverse=True):
+      client.send_reply(BanList(self.target.name, mask, detail.server,
+                                detail.creation_time))
+    client.send_reply(EndOfBanList(self.target.name))
+
+  def add(self, client, value):
+    if value in self.target.bans:
       return False
-    else:
-      if value in self.target.bans:
-        return False
-      self.target.bans[value] = channel.BanDetail(client.server.name,
-                                                  datetime.datetime.now())
+
+    self.target.bans[value] = channel.BanDetail(client.server.name,
+                                                datetime.datetime.now())
     return True
 
-  def unset(self, client, value):
-    if value is None:
-      return False
-
+  def remove(self, client, value):
     if value not in self.target.bans:
       return False
 
     del self.target.bans[value]
     return True
-
 
 
 def check_ban(user, channel):

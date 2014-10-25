@@ -1,50 +1,116 @@
+import collections
+import datetime
+
+
+ListDetail = collections.namedtuple("ListDetail", ["server", "creation_time"])
+
+
 class Mode(object):
-  TAKES_PARAM = True
   DEFAULT = None
 
   def __init__(self, target):
     self.target = target
 
   def set(self, client, value):
-    return False
+    raise NotImplementedError
 
   def unset(self, client, value):
-    return False
+    raise NotImplementedError
 
   def get(self):
-    return self.DEFAULT
-
-  @classmethod
-  def read_from(cls, target):
-    try:
-      mode = target.modes[cls.CHAR]
-    except KeyError:
-      return self.DEFAULT
-    else:
-      return mode.get()
+    return self.target.modes.get(self.CHAR, self.DEFAULT)
 
 
 class FlagMode(Mode):
   TAKES_PARAM = False
   DEFAULT = False
 
-  def __init__(self, target):
-    super().__init__(target)
-    self.value = self.DEFAULT
+  def toggle(self):
+    self.target.modes[self.CHAR] = not self.get()
+    return True
 
   def set(self, client, value):
-    if self.value:
+    if self.get():
       return False
 
-    self.value = True
-    return True
+    return self.toggle()
 
   def unset(self, client, value):
-    if not self.value:
+    if not self.get():
       return False
 
-    self.value = False
+    return self.toggle()
+
+
+class ListMode(Mode):
+  TAKES_PARAM = True
+
+  def add(self, client, value):
+    list = self.target.modes.setdefault(self.CHAR, {})
+    if value in list:
+      return False
+
+    list[value] = ListDetail(client.server.name, datetime.datetime.now())
     return True
 
+  def remove(self, client, value):
+    list = self.target.modes.get(self.CHAR, {})
+    if value not in list:
+      return False
+
+    del list[value]
+    return True
+
+  def list(self, client):
+    raise NotImplementedError
+
+  def set(self, client, value):
+    if value is None:
+      self.list(client)
+      return False
+
+    return self.add(client, value)
+
+  def unset(self, client, value):
+    if value is None:
+      return False
+
+    return self.remove(client, value)
+
   def get(self):
-    return self.value
+    return None
+
+
+class SetWithParamMode(Mode):
+  TAKES_PARAM = True
+
+  def mutate(self, value):
+    self.target.modes[self.CHAR] = value
+
+  def set(self, client, value):
+    if self.get() == value:
+      return False
+
+    return self.mutate(value)
+
+  def unset(self, client, value):
+    if value is None:
+      return False
+
+    if self.get() is None:
+      return False
+
+    return self.mutate(None)
+
+
+class ParamMode(SetWithParamMode):
+  TAKES_PARAM = True
+
+  def unset(self, client, value):
+    if value is None:
+      return False
+
+    if self.get() != value:
+      return False
+
+    return super().unset(client, value)

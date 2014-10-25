@@ -96,7 +96,7 @@ class Server(object):
     }
 
     for feature in self.features.values():
-      isupport.update(feature.ISUPPORT)
+      isupport.update(feature.isupport)
     return isupport
 
   def new_client(self, transport):

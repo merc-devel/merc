@@ -132,22 +132,11 @@ def show_luser_oper(client):
 
 
 @NamesFeature.register_user_mode
-class Invisible(mode.Mode):
+class Invisible(mode.FlagMode):
   CHAR = "i"
-  TAKES_PARAM = False
 
-  def set(self, client, value):
-    if self.target.is_invisible:
-      return False
-
-    self.target.is_invisible = True
-    return True
-
-  def unset(self, client, value):
-    if not self.target.is_invisible:
-      return False
-
-    self.target.is_invisible = False
+  def toggle(self):
+    self.target.is_invisible = not self.target.is_invisible
     return True
 
   def get(self):

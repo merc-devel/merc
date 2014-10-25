@@ -14,9 +14,12 @@ NICKNAME_REGEX = regex.compile(r"^[\p{L}\p{So}_\[\]\\^{}|`][\p{L}\p{So}\p{N}_\[\
 
 class WelcomeFeature(feature.Feature):
   NAME = __name__
-  ISUPPORT = {
-      "NICKLEN": MAX_NICKNAME_LENGTH
-  }
+
+  @property
+  def isupport(self):
+    return {
+        "NICKLEN": MAX_NICKNAME_LENGTH
+    }
 
 
 install = WelcomeFeature

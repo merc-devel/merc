@@ -69,22 +69,12 @@ class List(message.Command):
 
 
 @ListFeature.register_channel_mode
-class Secret(mode.Mode):
+class Secret(mode.FlagMode):
   CHAR = "s"
   TAKES_PARAM = False
 
-  def set(self, client, value):
-    if self.target.is_secret:
-      return False
-
-    self.target.is_secret = True
-    return True
-
-  def unset(self, client, value):
-    if not self.target.is_secret:
-      return False
-
-    self.target.is_secret = False
+  def toggle(self):
+    self.target.is_secret = not self.target.is_secret
     return True
 
   def get(self):

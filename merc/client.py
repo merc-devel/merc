@@ -30,6 +30,7 @@ class Client(object):
     self.disconnect_reason = None
 
     self.channels = {}
+    self.modes = {}
 
     self.is_invisible = True
     self.is_irc_operator = False
@@ -40,14 +41,6 @@ class Client(object):
     self.ping_check_handle = None
     self.pong_check_handle = None
 
-  @property
-  def modes(self):
-    modes = {}
-
-    for feature in self.server.features.values():
-      modes.update(feature.get_user_modes(self))
-
-    return modes
 
   @property
   def hostmask(self):

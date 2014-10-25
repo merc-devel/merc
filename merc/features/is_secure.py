@@ -11,9 +11,11 @@ install = IsSecureFeataure
 
 
 @IsSecureFeataure.register_user_mode
-class SecurelyConnected(mode.Mode):
+class SecurelyConnected(mode.FlagMode):
   CHAR = "Z"
-  TAKES_PARAM = False
+
+  def toggle(self):
+    return False
 
   def get(self):
     return self.target.is_securely_connected
