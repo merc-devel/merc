@@ -1,3 +1,5 @@
+import datetime
+
 from merc import errors
 from merc import feature
 from merc import message
@@ -114,7 +116,7 @@ class WhoIs(message.Command):
           client.send_reply(WhoIsOperator(target.nickname))
         client.send_reply(WhoIsIdle(
             target.nickname,
-            target.last_activity_time - target.creation_time,
+            datetime.datetime.now() - target.last_activity_time,
             target.creation_time))
         if channels:
           client.send_reply(WhoIsChannels(target.nickname, channels))
