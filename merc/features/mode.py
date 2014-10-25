@@ -149,7 +149,7 @@ class _Mode(message.Command):
                        Mode(chan.name, flags, *args))
     else:
       user = client.server.get_client(self.target)
-      self.check_can_set_user_flags(client, user)
+      self.check_can_set_user_modes(client, user)
 
       try:
         expanded_flags = self._expand_flags(self.flags, self.args,
