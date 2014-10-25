@@ -66,5 +66,7 @@ def send_is_away_if_away(client, user):
 
 @AwayFeature.hook("mutate_who_reply")
 def mutate_who_reply(user, reply):
-  if user.is_away:
+  locals = user.get_feature_locals(AwayFeature)
+
+  if "away" in locals:
     reply.is_away = True

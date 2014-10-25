@@ -91,7 +91,7 @@ class Who(message.Command):
 
     for channel_name, user in who:
       reply = WhoReply(channel_name, user.username, user.host, user.server.name,
-                       user.nickname, True, 0, user.realname)
+                       user.nickname, False, 0, user.realname)
       client.server.run_hooks("mutate_who_reply", user, reply)
       client.send_reply(reply)
 

@@ -24,8 +24,6 @@ class Client(object):
     self.host = None
     self.realname = None
 
-    self.away_message = None
-
     self.is_registered = False
     self.disconnect_reason = None
 
