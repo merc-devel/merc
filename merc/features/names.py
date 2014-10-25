@@ -69,6 +69,8 @@ class Names(message.Command):
 
       for chan in client.server.channels.values():
         if client.is_in_channel(chan):
+          seen_nicknames.update(cu.client.normalized_nickname
+                                for cu in chan.get_visible_users_for(client))
           client.send_reply(NameReply(
                 "@", chan.name, chan.get_visible_users_for(client)))
           continue
@@ -93,6 +95,7 @@ class Names(message.Command):
           continue
 
         if user.normalized_nickname not in seen_nicknames:
+          seen_nicknames.add(user.normalized_nickname)
           visible_users.append(channel.ChannelUser(None, user))
 
       if visible_users:
@@ -116,9 +119,6 @@ class Names(message.Command):
               chan.name,
               chan.get_visible_users_for(client)))
         client.send_reply(EndOfNames(channel_name))
-
-  def as_params(self, client):
-    return [",".join(self.channel_names)]
 
 
 @NamesFeature.hook("after_join_channel")

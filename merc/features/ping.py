@@ -77,7 +77,7 @@ def reschedule_ping_check(client):
     locals["pong_check_handle"].cancel()
 
   def ping_check():
-    client.send(None, ping.Ping(client.server.name))
+    client.send(None, Ping(client.server.name))
     locals["pong_check_handle"] = client.server.loop.call_later(
         PONG_TIMEOUT.total_seconds(), pong_check)
 
