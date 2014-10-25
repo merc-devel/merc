@@ -73,18 +73,20 @@ class BanMask(mode.Mode):
     return True
 
 
-class BannedFromChannel(errors.ParametrizedError):
-  NAME = "474"
-  REASON = "You are banned from the channel"
+
+def check_ban(user, channel):
+  if any(user.hostmask_matches(mask) for mask in channel.bans):
+    raise errors.BannedFromChannel(channel.name)
 
 
 @BanFeature.hook("check_join_channel")
 def check_channel_ban(user, channel, key):
-  if any(user.hostmask_matches(mask) for mask in channel.bans):
-    raise BannedFromChannel(channel.name)
+  check_ban(user, channel)
 
 
 @BanFeature.hook("check_can_message_channel")
 def check_can_message_channel(user, channel):
-  if any(user.hostmask_matches(mask) for mask in channel.bans):
+  try:
+    check_ban(user, channel)
+  except errors.BannedFromChannel:
     channel.check_is_voiced(user)

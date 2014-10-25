@@ -107,3 +107,8 @@ class PasswordMismatch(SimpleError):
 class NoPrivileges(SimpleError):
   NAME = "481"
   REASON = "You're not an IRC operator"
+
+
+class BannedFromChannel(ParametrizedError):
+  NAME = "474"
+  REASON = "You are banned from the channel"
