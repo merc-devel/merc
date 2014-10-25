@@ -48,18 +48,3 @@ class FlagMode(Mode):
 
   def get(self):
     return self.value
-
-
-class ChannelRoleMode(Mode):
-  TAKES_PARAM = True
-
-  def mutate(self, user, value):
-    raise NotImplementedError
-
-  def set(self, client, value):
-    user = self.target.get_channel_user_for(client.server.get_client(value))
-    return self.mutate(user, True)
-
-  def unset(self, client, value):
-    user = self.target.get_channel_user_for(client.server.get_client(value))
-    return self.mutate(user, False)

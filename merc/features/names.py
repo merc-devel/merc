@@ -1,3 +1,4 @@
+from merc import channel
 from merc import errors
 from merc import feature
 from merc import message
@@ -77,10 +78,10 @@ class Names(message.Command):
 
         channel_users = []
 
-        for user in chan.users.values():
-          if not user.client.is_invisible:
-            seen_nicknames.add(user.client.normalized_nickname)
-            channel_users.append(user)
+        for cu in chan.users.values():
+          if not cu.client.is_invisible:
+            seen_nicknames.add(cu.client.normalized_nickname)
+            channel_users.append(cu)
 
         if channel_users:
           client.send_reply(NameReply("=", chan.name, channel_users))
