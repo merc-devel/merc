@@ -206,6 +206,9 @@ class Server(object):
 
     raise KeyError(name)
 
+  def get_feature_locals(self, feature):
+    return self.features[feature.NAME].server_locals
+
   def load_feature(self, name):
     if name[0] == ".":
       name = features.__name__ + name

@@ -9,6 +9,14 @@ class RehashFeature(feature.Feature):
 install = RehashFeature
 
 
+class Rehashing(message.Reply):
+  NAME = "382"
+  FORCE_TRAILING = True
+
+  def as_reply_params(self, client):
+    return [client.server.config_filename, "Rehashing configuration"]
+
+
 @RehashFeature.register_command
 class Rehash(message.Command):
   NAME = "REHASH"
@@ -16,8 +24,5 @@ class Rehash(message.Command):
 
   def handle_for(self, client, prefix):
     client.check_is_irc_operator()
-    client.server.run_hooks("send_server_notice", client,
-                            "*** Rehashing configuration.")
+    client.send_reply(Rehashing())
     client.server.rehash()
-    client.server.run_hooks("send_server_notice", client,
-                            "*** Rehash complete.")
