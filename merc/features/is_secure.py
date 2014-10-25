@@ -3,14 +3,14 @@ from merc import message
 from merc import mode
 
 
-class IsSecureFeataure(feature.Feature):
+class IsSecureFeature(feature.Feature):
   NAME = __name__
 
 
-install = IsSecureFeataure
+install = IsSecureFeature
 
 
-@IsSecureFeataure.register_user_mode
+@IsSecureFeature.register_user_mode
 class SecurelyConnected(mode.FlagMode):
   CHAR = "Z"
 
@@ -33,7 +33,7 @@ class WhoIsSecure(message.Reply):
     return [self.nick, self.type, "is using a secure connection"]
 
 
-@IsSecureFeataure.hook("after_user_whois")
+@IsSecureFeature.hook("after_user_whois")
 def send_whois_secure_if_secure(client, user):
   if user.is_securely_connected:
     client.send_reply(WhoIsSecure(user.nickname, "*"))
