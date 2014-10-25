@@ -7,8 +7,14 @@ from merc import message
 from merc import util
 
 
+MAX_MODES = 4
+
+
 class ModeFeature(feature.Feature):
   NAME = __name__
+  ISUPPORT = {
+      "MODES": MAX_MODES
+  }
 
 
 install = ModeFeature
@@ -83,7 +89,10 @@ class _Mode(message.Command):
 
     op = "+"
 
-    for c in flags:
+    for i, c in enumerate(flags):
+      if i > MAX_MODES:
+        break
+
       if c in "+-":
         op = c
         continue
