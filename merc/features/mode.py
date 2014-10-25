@@ -157,7 +157,7 @@ class _Mode(message.Command):
       except errors.UnknownMode as e:
         raise errors.UmodeUnknownFlag(e.param)
 
-      for mode, op, args in expanded_flags:
+      for mode, op, arg in expanded_flags:
         if (op == "+" and mode.set(user, arg)) or \
            (op == "-" and mode.unset(user, arg)):
           applied_flags.append((mode, op, arg))
