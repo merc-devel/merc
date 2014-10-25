@@ -11,7 +11,7 @@ from merc import util
 MAX_TOPIC_LENGTH = 390
 
 
-Topic = collections.namedtuple("Topic", ["text", "who", "time"])
+TopicDetail = collections.namedtuple("TopicDetail", ["text", "who", "time"])
 
 
 class TopicFeature(feature.Feature):
@@ -96,7 +96,7 @@ class Topic(message.Command):
       if not self.text:
         locals["topic"] = None
       else:
-        locals["topic"] = channel.Topic(
+        locals["topic"] = TopicDetail(
             self.text[:MAX_TOPIC_LENGTH], client.hostmask,
             datetime.datetime.utcnow())
 
