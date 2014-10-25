@@ -86,12 +86,5 @@ def check_channel_ban(user, channel, key):
 
 @BanFeature.hook("check_can_message_channel")
 def check_can_message_channel(user, channel):
-  try:
-    channel.check_is_operator(user)
-  except errors.ChanOpPrivsNeeded:
-    pass
-  else:
-    return
-
   if any(user.hostmask_matches(mask) for mask in channel.bans):
-    raise errors.CannotSendToChan(channel.name)
+    channel.check_is_voiced(user)

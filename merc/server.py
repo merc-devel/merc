@@ -2,13 +2,13 @@ import aiodns
 import argparse
 import asyncio
 import datetime
+import imp
 import importlib
 import logging
 import operator
 import regex
 import signal
 import ssl
-import sys
 import yaml
 
 import passlib.context
@@ -213,11 +213,8 @@ class Server(object):
     if name[0] == ".":
       name = features.__name__ + name
 
-    if name in sys.modules:
-      del sys.modules[name]
-
     try:
-      module = importlib.import_module(name)
+      module = imp.reload(importlib.import_module(name))
 
       try:
         install = module.install
