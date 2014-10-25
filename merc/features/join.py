@@ -15,8 +15,8 @@ install = JoinFeature
 
 class _Join(message.Command):
   @message.Command.requires_registration
-  def handle_for(self, client, prefix):
-    user = self.get_joining_client(client)
+  def handle_for(self, user, prefix):
+    target = self.get_target(user)
 
     for channel_name, key in itertools.zip_longest(self.channel_names,
                                                    self.keys,
@@ -24,21 +24,21 @@ class _Join(message.Command):
       is_new = False
 
       try:
-        channel = client.server.get_channel(channel_name)
+        channel = user.server.get_channel(channel_name)
       except errors.NoSuchNick:
-        channel = client.server.new_channel(channel_name)
+        channel = user.server.new_channel(channel_name)
         is_new = True
 
-      if channel.has_client(user):
+      if channel.has_user(target):
         continue
 
-      self.check_can_join(user, channel, key)
+      self.check_can_join(target, channel, key)
 
-      channel.join(user)
-      channel.broadcast(None, user.hostmask, Join(channel.name))
-      client.server.run_hooks("after_join_channel", client, user, channel)
+      channel.join(target)
+      channel.broadcast(None, target.hostmask, Join(channel.name))
+      user.server.run_hooks("after_join_channel", user, target, channel)
       if is_new:
-        client.server.run_hooks("after_join_new_channel", client, user, channel)
+        user.server.run_hooks("after_join_new_channel", user, target, channel)
 
 
 @JoinFeature.register_command
@@ -50,13 +50,13 @@ class Join(_Join):
     self.channel_names = channel_names.split(",")
     self.keys = keys.split(",") if keys is not None else []
 
-  def check_can_join(self, client, channel, key):
-    client.server.run_hooks("check_join_channel", client, channel, key)
+  def check_can_join(self, user, channel, key):
+    user.server.run_hooks("check_join_channel", user, channel, key)
 
-  def get_joining_client(self, client):
-    return client
+  def get_target(self, user):
+    return user
 
-  def as_params(self, client):
+  def as_params(self, user):
     params = [",".join(self.channel_names)]
     if self.keys:
       params.append(",".join(self.keys))
@@ -73,32 +73,32 @@ class SAJoin(_Join):
     self.channel_names = channel_names.split(",")
     self.keys = []
 
-  def check_can_join(self, client, channel, key):
+  def check_can_join(self, user, channel, key):
     return
 
-  def get_joining_client(self, client):
-    return client.server.get_client(self.nickname)
+  def get_target(self, user):
+    return user.server.get_user(self.nickname)
 
   @message.Command.requires_registration
-  def handle_for(self, client, prefix):
-    client.check_is_irc_operator()
-    super().handle_for(client, prefix)
+  def handle_for(self, user, prefix):
+    user.check_is_irc_operator()
+    super().handle_for(user, prefix)
 
 
 class _Part(message.Command):
   @message.Command.requires_registration
-  def handle_for(self, client, prefix):
-    user = self.get_parting_client(client)
+  def handle_for(self, user, prefix):
+    target = self.get_target(user)
 
     for channel_name in self.channel_names:
       try:
-        channel = client.server.get_channel(channel_name)
+        channel = user.server.get_channel(channel_name)
       except errors.NoSuchNick:
         raise errors.NoSuchChannel(channel_name)
       else:
-        channel.broadcast(None, user.hostmask,
+        channel.broadcast(None, target.hostmask,
                           Part(channel.name, self.reason))
-        client.server.part_channel(user, channel_name)
+        user.server.part_channel(target, channel_name)
 
 
 @JoinFeature.register_command
@@ -114,10 +114,10 @@ class Part(_Part):
   def FORCE_TRAILING(self):
     return self.reason is not None
 
-  def get_parting_client(self, client):
-    return client
+  def get_target(self, user):
+    return user
 
-  def as_params(self, client):
+  def as_params(self, user):
     params = [",".join(self.channel_names)]
     if self.reason is not None:
       params.append(self.reason)
@@ -134,10 +134,10 @@ class SAPart(_Part):
     self.channel_names = channel_names.split(",")
     self.reason = reason
 
-  def get_parting_client(self, client):
-    return client.server.get_client(self.nickname)
+  def get_target(self, user):
+    return user.server.get_user(self.nickname)
 
   @message.Command.requires_registration
-  def handle_for(self, client, prefix):
-    client.check_is_irc_operator()
-    super().handle_for(client, prefix)
+  def handle_for(self, user, prefix):
+    user.check_is_irc_operator()
+    super().handle_for(user, prefix)

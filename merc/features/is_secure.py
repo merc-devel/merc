@@ -29,11 +29,11 @@ class WhoIsSecure(message.Reply):
     self.nick = nick
     self.type = type
 
-  def as_reply_params(self, client):
+  def as_reply_params(self, user):
     return [self.nick, self.type, "is using a secure connection"]
 
 
 @IsSecureFeature.hook("after_user_whois")
-def send_whois_secure_if_secure(client, user):
-  if user.is_securely_connected:
-    client.send_reply(WhoIsSecure(user.nickname, "*"))
+def send_whois_secure_if_secure(user, target):
+  if target.is_securely_connected:
+    user.send_reply(WhoIsSecure(target.nickname, "*"))

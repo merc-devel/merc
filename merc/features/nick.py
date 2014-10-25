@@ -23,15 +23,15 @@ install = NickFeature
 
 
 class _Nick(message.Command):
-  def handle_for(self, client, prefix):
-    target = self.get_target(client)
+  def handle_for(self, user, prefix):
+    target = self.get_target(user)
     old_hostmask = target.hostmask
 
     if NICKNAME_REGEX.match(self.nickname) is None or \
         len(self.nickname) > MAX_NICKNAME_LENGTH:
       raise errors.ErroneousNickname
 
-    target.server.rename_client(target, self.nickname)
+    target.server.rename_user(target, self.nickname)
 
     if target.is_registered:
       target.relay_to_all(Nick(self.nickname), old_hostmask)
@@ -49,11 +49,11 @@ class Nick(_Nick):
   def __init__(self, nickname, *args):
     self.nickname = nickname
 
-  def as_params(self, client):
+  def as_params(self, user):
     return [self.nickname]
 
-  def get_target(self, client):
-    return client
+  def get_target(self, user):
+    return user
 
 
 @NickFeature.register_command
@@ -65,10 +65,10 @@ class SANick(_Nick):
     self.target = target
     self.nickname = nickname
 
-  def get_target(self, client):
-    return client.server.get_client(self.target)
+  def get_target(self, user):
+    return user.server.get_user(self.target)
 
   @message.Command.requires_registration
-  def handle_for(self, client, prefix):
-    client.check_is_irc_operator()
-    super().handle_for(client, prefix)
+  def handle_for(self, user, prefix):
+    user.check_is_irc_operator()
+    super().handle_for(user, prefix)

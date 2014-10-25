@@ -16,7 +16,7 @@ class AdminInfo(message.Reply):
   def __init__(self, server):
     self.server = server
 
-  def as_reply_params(self, client):
+  def as_reply_params(self, user):
     return [self.server, "Administrative info"]
 
 class AdminLocation(message.Reply):
@@ -26,7 +26,7 @@ class AdminLocation(message.Reply):
   def __init__(self, location):
     self.location = location
 
-  def as_reply_params(self, client):
+  def as_reply_params(self, user):
     return [self.location]
 
 class AdminFineLocation(message.Reply):
@@ -36,7 +36,7 @@ class AdminFineLocation(message.Reply):
   def __init__(self, location):
     self.location = location
 
-  def as_reply_params(self, client):
+  def as_reply_params(self, user):
     return [self.location]
 
 class AdminEmail(message.Reply):
@@ -47,7 +47,7 @@ class AdminEmail(message.Reply):
     self.name = name
     self.email = email
 
-  def as_reply_params(self, client):
+  def as_reply_params(self, user):
     if self.name:
       email = '{} <{}>'.format(self.name, self.email)
     else:
@@ -64,13 +64,13 @@ class Admin(message.Command):
     self.server = server
 
   @message.Command.requires_registration
-  def handle_for(self, client, prefix):
-    if self.server and self.server != client.server.name:
+  def handle_for(self, user, prefix):
+    if self.server and self.server != user.server.name:
       raise errors.NoSuchServer(self.server)
     else:
-      server = client.server
+      server = user.server
 
-    client.send_reply(AdminInfo(server.name))
-    client.send_reply(AdminLocation(server.admin_location))
-    client.send_reply(AdminFineLocation(server.admin_location_fine))
-    client.send_reply(AdminEmail(server.admin_name, server.admin_email))
+    user.send_reply(AdminInfo(server.name))
+    user.send_reply(AdminLocation(server.admin_location))
+    user.send_reply(AdminFineLocation(server.admin_location_fine))
+    user.send_reply(AdminEmail(server.admin_name, server.admin_email))

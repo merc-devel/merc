@@ -28,8 +28,8 @@ class ChannelRoleMode(mode.Mode):
   def get_for_user(self, user):
     raise NotImplementedError
 
-  def set(self, client, value):
-    user = self.target.get_channel_user_for(client.server.get_client(value))
+  def set(self, user, value):
+    user = self.target.get_channel_user_for(user.server.get_user(value))
 
     if self.get_for_user(user):
       return False
@@ -37,8 +37,8 @@ class ChannelRoleMode(mode.Mode):
     self.toggle_for_user(user)
     return True
 
-  def unset(self, client, value):
-    user = self.target.get_channel_user_for(client.server.get_client(value))
+  def unset(self, user, value):
+    user = self.target.get_channel_user_for(user.server.get_user(value))
 
     if not self.get_for_user(user):
       return False

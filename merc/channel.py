@@ -8,9 +8,9 @@ from merc import util
 
 
 class ChannelUser(object):
-  def __init__(self, channel, client):
+  def __init__(self, channel, user):
     self.channel = channel
-    self.client = client
+    self.user = user
 
     self.is_voiced = False
     self.is_halfop = False
@@ -21,7 +21,7 @@ class ChannelUser(object):
   @property
   def sigil(self):
     # The first sigil is the highest, and thus the one we want to display.
-    return self.sigils[:1]
+    return self.sigils[0]
 
   @property
   def sigils(self):
@@ -77,9 +77,9 @@ class Channel(object):
   def is_local(self):
     return self.name[0] == "&"
 
-  def get_channel_user_for(self, client):
+  def get_channel_user_for(self, user):
     try:
-      return self.users[client.id]
+      return self.users[user.id]
     except KeyError:
       raise errors.NoSuchNick(self.name)
 
@@ -87,38 +87,38 @@ class Channel(object):
   def normalized_name(self):
     return util.to_irc_lower(self.name)
 
-  def broadcast(self, client, prefix, message):
-    for user in list(self.users.values()):
-      if user.client is not client:
-        user.client.send(prefix, message)
+  def broadcast(self, user, prefix, message):
+    for channel_user in list(self.users.values()):
+      if channel_user.user is not user:
+        channel_user.user.send(prefix, message)
 
-  def join(self, client, key=None):
-    cu = ChannelUser(self, client)
+  def join(self, user, key=None):
+    channel_user = ChannelUser(self, user)
 
     if not self.users:
-      cu.is_operator = True
+      channel_user.is_operator = True
 
-    self.users[client.id] = cu
-    client.channels[self.normalized_name] = self
+    self.users[user.id] = channel_user
+    user.channels[self.normalized_name] = self
 
-  def part(self, client):
-    del self.users[client.id]
-    del client.channels[self.normalized_name]
+  def part(self, user):
+    del self.users[user.id]
+    del user.channels[self.normalized_name]
 
-  def has_client(self, client):
-    return client.id in self.users
+  def has_user(self, user):
+    return user.id in self.users
 
-  def get_visible_users_for(self, client):
-    if client.is_in_channel(self):
+  def get_visible_users_for(self, user):
+    if user.is_in_channel(self):
       yield from self.users.values()
 
-    for user in self.users.values():
-      if not user.client.is_invisible:
-        yield user
+    for channel_user in self.users.values():
+      if not channel_user.user.is_invisible:
+        yield channel_user
 
-  def check_is_operator(self, client):
+  def check_is_operator(self, user):
     try:
-      channel_user = self.get_channel_user_for(client)
+      channel_user = self.get_channel_user_for(user)
     except errors.NoSuchNick:
       raise errors.ChanOpPrivsNeeded(self.name)
 
@@ -126,21 +126,21 @@ class Channel(object):
        not channel_user.is_owner:
       raise errors.ChanOpPrivsNeeded(self.name)
 
-  def check_is_voiced(self, client):
+  def check_is_voiced(self, user):
     try:
-      channel_user = self.get_channel_user_for(client)
+      channel_user = self.get_channel_user_for(user)
     except errors.NoSuchNick:
       raise errors.CannotSendToChan(self.name)
 
     if not channel_user.is_voiced and not channel_user.is_halfop:
       try:
-        self.check_is_operator(client)
+        self.check_is_operator(user)
       except errors.ChanOpPrivsNeeded:
         raise errors.CannotSendToChan(self.name)
 
-  def check_has_client(self, client):
-    if not self.has_client(client):
-      raise errors.NoSuchNick(client.nickname)
+  def check_has_user(self, user):
+    if not self.has_user(user):
+      raise errors.NoSuchNick(user.nickname)
 
   def get_feature_locals(self, feature):
     return self.feature_locals.setdefault(feature.NAME, {})

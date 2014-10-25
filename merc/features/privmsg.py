@@ -21,34 +21,34 @@ class _Privmsg(message.Command):
     self.targets = targets.split(",")
     self.text = text
 
-  def as_params(self, client):
+  def as_params(self, user):
     return [",".join(self.targets), self.text]
 
   @message.Command.requires_registration
-  def handle_for(self, client, prefix):
-    for target in self.targets:
-      if channel.Channel.is_valid_name(target):
+  def handle_for(self, user, prefix):
+    for target_name in self.targets:
+      if channel.Channel.is_valid_name(target_name):
         try:
-          chan = client.server.get_channel(target)
+          chan = user.server.get_channel(target_name)
         except errors.NoSuchNick:
           continue
 
         if DisallowingExternalMessages(chan).get():
           try:
-            chan.check_has_client(client)
+            chan.check_has_user(user)
           except errors.NoSuchNick:
             raise errors.CannotSendToChan(chan.name)
 
-          client.server.run_hooks("check_can_message_channel", client, chan)
+          user.server.run_hooks("check_can_message_channel", user, chan)
 
         if Moderated(chan).get():
-          chan.check_is_voiced(client)
+          chan.check_is_voiced(user)
 
-        client.relay_to_channel(chan, self.__class__(chan.name, self.text))
+        user.relay_to_channel(chan, self.__class__(chan.name, self.text))
       else:
-        user = client.server.get_client(target)
-        client.server.run_hooks("after_user_privmsg", client, user)
-        client.relay_to_client(user, self.__class__(user.nickname, self.text))
+        target = user.server.get_user(target_name)
+        user.server.run_hooks("after_user_privmsg", user, target)
+        user.relay_to_user(target, self.__class__(target.nickname, self.text))
 
 
 @PrivmsgFeature.register_command
@@ -73,5 +73,5 @@ class Moderated(mode.FlagMode):
 
 
 @PrivmsgFeature.hook("send_server_notice")
-def send_server_notice(client, text):
-  client.send_reply(Notice("*", text))
+def send_server_notice(user, text):
+  user.send_reply(Notice("*", text))

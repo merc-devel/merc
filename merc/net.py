@@ -15,8 +15,8 @@ class Protocol(asyncio.Protocol):
     self.buffer = b""
 
   def connection_made(self, transport):
-    self.client = self.server.new_client(transport)
-    self.client.on_connect()
+    self.user = self.server.new_user(transport)
+    self.user.on_connect()
 
   def data_received(self, data):
     self.buffer += data
@@ -26,7 +26,7 @@ class Protocol(asyncio.Protocol):
       self.handle_line(line.rstrip(b"\r")[:message.Message.MAX_LENGTH])
 
   def connection_lost(self, exc):
-    self.server.remove_client(self.client)
+    self.server.remove_user(self.user)
 
   def handle_line(self, line):
     try:
@@ -34,4 +34,4 @@ class Protocol(asyncio.Protocol):
     except parser.ParseError:
       return
 
-    self.client.on_raw_message(prefix, command, params)
+    self.user.on_raw_message(prefix, command, params)

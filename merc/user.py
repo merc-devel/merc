@@ -12,7 +12,7 @@ from merc import message
 from merc import util
 
 
-class Client(object):
+class User(object):
   def __init__(self, server, transport):
     self.id = id(self)
 
@@ -66,9 +66,6 @@ class Client(object):
     return self.nickname is not None and self.username is not None and \
            self.host is not None
 
-  def register(self):
-    self.server.register_client(self)
-
   def send(self, prefix, msg):
     raw = msg.emit(self, prefix).encode("utf-8")[:message.Message.MAX_LENGTH] \
         .decode("utf-8", "ignore")
@@ -77,8 +74,8 @@ class Client(object):
   def send_reply(self, message):
     self.send(self.server.name, message)
 
-  def relay_to_client(self, client, message, prefix=None):
-    client.send(self.hostmask if prefix is None else prefix, message)
+  def relay_to_user(self, user, message, prefix=None):
+    user.send(self.hostmask if prefix is None else prefix, message)
 
   def relay_to_self(self, message, prefix=None):
     self.send(self.hostmask if prefix is None else prefix, message)
@@ -126,7 +123,7 @@ class Client(object):
       self.host = host
 
     if self.is_ready_for_registration:
-      self.register()
+      self.server.register_user(self)
 
   def on_connect(self):
     asyncio.async(self.resolve_hostname_coro(), loop=self.server.loop)

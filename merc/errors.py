@@ -12,21 +12,21 @@ class Error(BaseError):
   def __init__(self, reason):
     self.reason = reason
 
-  def as_params(self, client):
+  def as_params(self, user):
     return [self.reason]
 
 
 class SimpleError(BaseError):
-  def as_params(self, client):
-    return [client.displayed_nickname, self.REASON]
+  def as_params(self, user):
+    return [user.displayed_nickname, self.REASON]
 
 
 class ParametrizedError(BaseError):
   def __init__(self, param):
     self.param = param
 
-  def as_params(self, client):
-    return [client.displayed_nickname, self.param, self.REASON]
+  def as_params(self, user):
+    return [user.displayed_nickname, self.param, self.REASON]
 
 
 class NoSuchNick(ParametrizedError):

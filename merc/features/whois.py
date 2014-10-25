@@ -22,7 +22,7 @@ class WhoIsUser(message.Reply):
     self.host = host
     self.realname = realname
 
-  def as_reply_params(self, client):
+  def as_reply_params(self, user):
     return [self.nick, self.user, self.host, "*", self.realname]
 
 
@@ -35,7 +35,7 @@ class WhoIsServer(message.Reply):
     self.server = server
     self.server_info = server_info
 
-  def as_reply_params(self, client):
+  def as_reply_params(self, user):
     return [self.nick, self.server, self.server_info]
 
 
@@ -46,7 +46,7 @@ class WhoIsOperator(message.Reply):
   def __init__(self, nick):
     self.nick = nick
 
-  def as_reply_params(self, client):
+  def as_reply_params(self, user):
     return [self.nick, "is an IRC operator"]
 
 
@@ -59,7 +59,7 @@ class WhoIsIdle(message.Reply):
     self.idle_time = idle_time
     self.signon_time = signon_time
 
-  def as_reply_params(self, client):
+  def as_reply_params(self, user):
     return [self.nick, str(int(self.idle_time.total_seconds())),
             str(int(self.signon_time.timestamp())), "seconds idle, signon time"]
 
@@ -71,7 +71,7 @@ class WhoIsEnd(message.Reply):
   def __init__(self, nick):
     self.nick = nick
 
-  def as_reply_params(self, client):
+  def as_reply_params(self, user):
     return [self.nick, "End of /WHOIS list"]
 
 class WhoIsChannels(message.Reply):
@@ -82,7 +82,7 @@ class WhoIsChannels(message.Reply):
     self.nick = nick
     self.channels = channels
 
-  def as_reply_params(self, client):
+  def as_reply_params(self, user):
     return [self.nick, " ".join(self.channels)]
 
 
@@ -95,30 +95,30 @@ class WhoIs(message.Command):
     self.nicknames = nicknames.split(",")
 
   @message.Command.requires_registration
-  def handle_for(self, client, prefix):
+  def handle_for(self, user, prefix):
     for nickname in self.nicknames:
       try:
-        target = client.server.get_client(nickname)
+        target = user.server.get_user(nickname)
       except errors.NoSuchNick as e:
-        client.send_reply(e)
+        user.send_reply(e)
       else:
         channels = []
-        for channel in client.get_channels_visible_for(target):
+        for channel in user.get_channels_visible_for(target):
           sigils = channel.get_channel_user_for(target).sigils
           name = sigils + channel.name
           channels.append(name)
 
-        client.send_reply(WhoIsUser(target.nickname, target.username,
+        user.send_reply(WhoIsUser(target.nickname, target.username,
                                     target.host, target.realname))
-        client.send_reply(WhoIsServer(target.nickname, target.server.name,
+        user.send_reply(WhoIsServer(target.nickname, target.server.name,
                                       target.server.network_name))
         if target.is_irc_operator:
-          client.send_reply(WhoIsOperator(target.nickname))
-        client.send_reply(WhoIsIdle(
+          user.send_reply(WhoIsOperator(target.nickname))
+        user.send_reply(WhoIsIdle(
             target.nickname,
             datetime.datetime.now() - target.last_activity_time,
             target.creation_time))
         if channels:
-          client.send_reply(WhoIsChannels(target.nickname, channels))
-        client.server.run_hooks("after_user_whois", client, target)
-        client.send_reply(WhoIsEnd(target.nickname))
+          user.send_reply(WhoIsChannels(target.nickname, channels))
+        user.server.run_hooks("after_user_whois", user, target)
+        user.send_reply(WhoIsEnd(target.nickname))

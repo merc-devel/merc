@@ -11,10 +11,10 @@ class Mode(object):
   def __init__(self, target):
     self.target = target
 
-  def set(self, client, value):
+  def set(self, user, value):
     raise NotImplementedError
 
-  def unset(self, client, value):
+  def unset(self, user, value):
     raise NotImplementedError
 
   def get(self):
@@ -29,13 +29,13 @@ class FlagMode(Mode):
     self.target.modes[self.CHAR] = not self.get()
     return True
 
-  def set(self, client, value):
+  def set(self, user, value):
     if self.get():
       return False
 
     return self.toggle()
 
-  def unset(self, client, value):
+  def unset(self, user, value):
     if not self.get():
       return False
 
@@ -45,15 +45,15 @@ class FlagMode(Mode):
 class ListMode(Mode):
   TAKES_PARAM = True
 
-  def add(self, client, value):
+  def add(self, user, value):
     list = self.target.modes.setdefault(self.CHAR, {})
     if value in list:
       return False
 
-    list[value] = ListDetail(client.server.name, datetime.datetime.now())
+    list[value] = ListDetail(user.server.name, datetime.datetime.now())
     return True
 
-  def remove(self, client, value):
+  def remove(self, user, value):
     list = self.target.modes.get(self.CHAR, {})
     if value not in list:
       return False
@@ -61,21 +61,21 @@ class ListMode(Mode):
     del list[value]
     return True
 
-  def list(self, client):
+  def list(self, user):
     raise NotImplementedError
 
-  def set(self, client, value):
+  def set(self, user, value):
     if value is None:
-      self.list(client)
+      self.list(user)
       return False
 
-    return self.add(client, value)
+    return self.add(user, value)
 
-  def unset(self, client, value):
+  def unset(self, user, value):
     if value is None:
       return False
 
-    return self.remove(client, value)
+    return self.remove(user, value)
 
   def get(self):
     return None
@@ -87,13 +87,13 @@ class SetWithParamMode(Mode):
   def mutate(self, value):
     self.target.modes[self.CHAR] = value
 
-  def set(self, client, value):
+  def set(self, user, value):
     if self.get() == value:
       return False
 
     return self.mutate(value)
 
-  def unset(self, client, value):
+  def unset(self, user, value):
     if value is None:
       return False
 
@@ -106,11 +106,11 @@ class SetWithParamMode(Mode):
 class ParamMode(SetWithParamMode):
   TAKES_PARAM = True
 
-  def unset(self, client, value):
+  def unset(self, user, value):
     if value is None:
       return False
 
     if self.get() != value:
       return False
 
-    return super().unset(client, value)
+    return super().unset(user, value)

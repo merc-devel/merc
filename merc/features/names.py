@@ -16,12 +16,12 @@ class LUserClient(message.Reply):
   NAME = "251"
   FORCE_TRAILING = True
 
-  def as_reply_params(self, client):
+  def as_reply_params(self, user):
     num_invisible = sum(
-        client.is_invisible for client in client.server.clients.values())
+        user.is_invisible for user in user.server.users.values())
 
     return ["There are {} users and {} invisible on {} servers".format(
-        len(client.server.clients) - num_invisible,
+        len(user.server.users) - num_invisible,
         num_invisible,
         1)]
 
@@ -35,10 +35,10 @@ class NameReply(message.Reply):
     self.channel_name = channel_name
     self.users = users
 
-  def as_reply_params(self, client):
+  def as_reply_params(self, user):
     return [self.type,
             self.channel_name if self.channel_name is not None else "*",
-            " ".join(user.sigil + user.client.nickname for user in self.users)]
+            " ".join(target.sigil + target.user.nickname for target in self.users)]
 
 
 class EndOfNames(message.Reply):
@@ -48,7 +48,7 @@ class EndOfNames(message.Reply):
   def __init__(self, channel_name=None):
     self.channel_name = channel_name
 
-  def as_reply_params(self, client):
+  def as_reply_params(self, user):
     return [self.channel_name if self.channel_name is not None else "*",
             "End of /NAMES list"]
 
@@ -63,16 +63,16 @@ class Names(message.Command):
                                                   else None
 
   @message.Command.requires_registration
-  def handle_for(self, client, prefix):
+  def handle_for(self, user, prefix):
     if self.channel_names is None:
       seen_nicknames = set()
 
-      for chan in client.server.channels.values():
-        if client.is_in_channel(chan):
-          seen_nicknames.update(cu.client.normalized_nickname
-                                for cu in chan.get_visible_users_for(client))
-          client.send_reply(NameReply(
-                "@", chan.name, chan.get_visible_users_for(client)))
+      for chan in user.server.channels.values():
+        if user.is_in_channel(chan):
+          seen_nicknames.update(cu.user.normalized_nickname
+                                for cu in chan.get_visible_users_for(user))
+          user.send_reply(NameReply(
+                "@", chan.name, chan.get_visible_users_for(user)))
           continue
 
         if chan.is_secret:
@@ -81,54 +81,54 @@ class Names(message.Command):
         channel_users = []
 
         for cu in chan.users.values():
-          if not cu.client.is_invisible:
-            seen_nicknames.add(cu.client.normalized_nickname)
+          if not cu.user.is_invisible:
+            seen_nicknames.add(cu.user.normalized_nickname)
             channel_users.append(cu)
 
         if channel_users:
-          client.send_reply(NameReply("=", chan.name, channel_users))
+          user.send_reply(NameReply("=", chan.name, channel_users))
 
       visible_users = []
 
-      for user in client.server.clients.values():
-        if user.is_invisible and user is not client:
+      for target in user.server.users.values():
+        if target.is_invisible and target is not user:
           continue
 
-        if user.normalized_nickname not in seen_nicknames:
-          seen_nicknames.add(user.normalized_nickname)
-          visible_users.append(channel.ChannelUser(None, user))
+        if target.normalized_nickname not in seen_nicknames:
+          seen_nicknames.add(target.normalized_nickname)
+          visible_users.append(channel.ChannelUser(None, target))
 
       if visible_users:
-        client.send_reply(NameReply("*", None, visible_users))
+        user.send_reply(NameReply("*", None, visible_users))
 
-      client.send_reply(EndOfNames(None))
+      user.send_reply(EndOfNames(None))
     else:
       for channel_name in self.channel_names:
         try:
-          chan = client.server.get_channel(channel_name)
+          chan = user.server.get_channel(channel_name)
         except errors.NoSuchNick:
           pass
         else:
-          if not client.can_see_channel(chan):
+          if not user.can_see_channel(chan):
             continue
 
           channel_name = chan.name
 
-          client.send_reply(NameReply(
-              "@" if client.is_in_channel(chan) else "*",
+          user.send_reply(NameReply(
+              "@" if user.is_in_channel(chan) else "*",
               chan.name,
-              chan.get_visible_users_for(client)))
-        client.send_reply(EndOfNames(channel_name))
+              chan.get_visible_users_for(user)))
+        user.send_reply(EndOfNames(channel_name))
 
 
 @NamesFeature.hook("after_join_channel")
-def send_names_on_join(client, user, channel):
-    user.on_message(user.hostmask, Names(channel.name))
+def send_names_on_join(user, target, channel):
+    target.on_message(target.hostmask, Names(channel.name))
 
 
-@NamesFeature.hook("luser_client")
-def show_luser_oper(client):
-  client.send_reply(LUserClient())
+@NamesFeature.hook("luser_user")
+def show_luser_oper(user):
+  user.send_reply(LUserClient())
 
 
 @NamesFeature.register_user_mode

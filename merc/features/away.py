@@ -18,21 +18,21 @@ class IsAway(message.Reply):
     self.nick = nick
     self.msg = msg
 
-  def as_reply_params(self, client):
+  def as_reply_params(self, user):
     return [self.nick, self.msg]
 
 
 class NowAway(message.Reply):
   NAME = "306"
 
-  def as_reply_params(self, client):
+  def as_reply_params(self, user):
     return ["You have been marked as being away"]
 
 
 class UnAway(message.Reply):
   NAME = "305"
 
-  def as_reply_params(self, client):
+  def as_reply_params(self, user):
     return ["You are no longer marked as being away"]
 
 
@@ -45,32 +45,32 @@ class Away(message.Command):
     self.message = message
 
   @message.Command.requires_registration
-  def handle_for(self, client, prefix):
-    locals = client.get_feature_locals(AwayFeature)
+  def handle_for(self, user, prefix):
+    locals = user.get_feature_locals(AwayFeature)
     locals["away"] = self.message
 
     if self.message:
-      client.send_reply(NowAway())
+      user.send_reply(NowAway())
     else:
-      client.send_reply(UnAway())
+      user.send_reply(UnAway())
 
 
 @AwayFeature.hook("after_user_privmsg")
 @AwayFeature.hook("after_user_whois")
-def send_is_away_if_away(client, user):
-  locals = user.get_feature_locals(AwayFeature)
+def send_is_away_if_away(user, target):
+  locals = target.get_feature_locals(AwayFeature)
 
   if locals.get("away", None) is not None:
-    client.send_reply(IsAway(user.nickname, locals["away"]))
+    user.send_reply(IsAway(target.nickname, locals["away"]))
 
 
 @AwayFeature.hook("modify_who_reply")
-def modify_who_reply(user, reply):
-  locals = user.get_feature_locals(AwayFeature)
+def modify_who_reply(target, reply):
+  locals = target.get_feature_locals(AwayFeature)
   reply.is_away = locals.get("away", None) is not None
 
 
 @AwayFeature.hook("modify_userhost_entry")
-def modify_who_reply(user, entry):
-  locals = user.get_feature_locals(AwayFeature)
+def modify_who_reply(target, entry):
+  locals = target.get_feature_locals(AwayFeature)
   entry.is_away = locals.get("away", None) is not None

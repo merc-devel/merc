@@ -16,11 +16,11 @@ import passlib.context
 import merc
 
 from merc import channel
-from merc import client
 from merc import errors
 from merc import features
 from merc import message
 from merc import net
+from merc import user
 from merc import util
 
 logger = logging.getLogger(__name__)
@@ -44,7 +44,7 @@ class Server(object):
 
     self.creation_time = datetime.datetime.now()
 
-    self.clients = {}
+    self.users = {}
     self.channels = {}
 
     self.register_signal_handlers()
@@ -99,50 +99,50 @@ class Server(object):
       isupport.update(feature.isupport)
     return isupport
 
-  def new_client(self, transport):
-    c = client.Client(self, transport)
+  def new_user(self, transport):
+    u = user.User(self, transport)
 
     logger.info("Accepted connection from {}".format(
         transport.get_extra_info("peername")))
 
-    self.run_hooks("after_new_client", c)
-    return c
+    self.run_hooks("after_new_user", u)
+    return u
 
-  def register_client(self, client):
-    if client.normalized_nickname in self.clients:
-      host, *_ = client.transport.get_extra_info("peername")
+  def register_user(self, user):
+    if user.normalized_nickname in self.users:
+      host, *_ = user.transport.get_extra_info("peername")
       raise errors.Error("Closing Link: {} (Overridden)".format(host))
 
-    self.clients[client.normalized_nickname] = client
-    client.is_registered = True
+    self.users[user.normalized_nickname] = user
+    user.is_registered = True
 
-    self.run_hooks("after_register", client)
+    self.run_hooks("after_register", user)
 
-  def rename_client(self, client, new_nickname):
+  def rename_user(self, user, new_nickname):
     normalized_new_nickname = util.to_irc_lower(new_nickname)
 
-    if normalized_new_nickname in self.clients and \
-       self.clients[normalized_new_nickname] is not client:
+    if normalized_new_nickname in self.users and \
+       self.users[normalized_new_nickname] is not user:
       raise errors.NicknameInUse(new_nickname)
 
-    if client.is_registered:
-      del self.clients[client.normalized_nickname]
+    if user.is_registered:
+      del self.users[user.normalized_nickname]
 
-    client.nickname = new_nickname
+    user.nickname = new_nickname
 
-    if client.is_registered:
-      self.clients[client.normalized_nickname] = client
+    if user.is_registered:
+      self.users[user.normalized_nickname] = user
 
-  def remove_client(self, client):
-    self.run_hooks("before_remove_client", client)
-    if client.is_registered:
-      del self.clients[client.normalized_nickname]
-    client.on_close()
-    self.run_hooks("after_remove_client", client)
+  def remove_user(self, user):
+    self.run_hooks("before_remove_user", user)
+    if user.is_registered:
+      del self.users[user.normalized_nickname]
+    user.on_close()
+    self.run_hooks("after_remove_user", user)
 
-  def get_client(self, name):
+  def get_user(self, name):
     try:
-      return self.clients[util.to_irc_lower(name)]
+      return self.users[util.to_irc_lower(name)]
     except KeyError:
       raise errors.NoSuchNick(name)
 
@@ -161,21 +161,21 @@ class Server(object):
     del self.channels[channel.normalized_name]
     self.run_hooks("after_remove_channel", channel)
 
-  def part_channel(self, client, name):
+  def part_channel(self, user, name):
     channel = self.get_channel(name)
-    channel.part(client)
+    channel.part(user)
 
     if not channel.users:
       self.remove_channel(channel)
 
     return channel
 
-  def query_clients(self, pattern):
+  def query_users(self, pattern):
     if "!" not in pattern:
       pattern += "!*@*"
 
-    return (client for client in self.clients.values()
-                   if client.hostmask_matches(pattern))
+    return (user for user in self.users.values()
+                   if user.hostmask_matches(pattern))
 
   def run_hooks(self, hook_name, *args, **kwargs):
     for feature in self.features.values():

@@ -16,7 +16,7 @@ class MotdReply(message.Reply):
   def __init__(self, line):
     self.line = line
 
-  def as_reply_params(self, client):
+  def as_reply_params(self, user):
     return ["- {}".format(self.line)]
 
 
@@ -24,15 +24,15 @@ class MotdStart(message.Reply):
   NAME = "375"
   FORCE_TRAILING = True
 
-  def as_reply_params(self, client):
-    return ["- {} Message of the Day".format(client.server.name)]
+  def as_reply_params(self, user):
+    return ["- {} Message of the Day".format(user.server.name)]
 
 
 class EndOfMotd(message.Reply):
   NAME = "376"
   FORCE_TRAILING = True
 
-  def as_reply_params(self, client):
+  def as_reply_params(self, user):
     return ["End of /MOTD command"]
 
 
@@ -42,15 +42,15 @@ class Motd(message.Command):
   MIN_ARITY = 0
 
   @message.Command.requires_registration
-  def handle_for(self, client, prefix):
-    client.send_reply(MotdStart())
+  def handle_for(self, user, prefix):
+    user.send_reply(MotdStart())
 
-    for line in client.server.motd.split("\n"):
-      client.send_reply(MotdReply(line))
+    for line in user.server.motd.split("\n"):
+      user.send_reply(MotdReply(line))
 
-    client.send_reply(EndOfMotd())
+    user.send_reply(EndOfMotd())
 
 
 @MotdFeature.hook("after_welcome")
-def send_motd_on_welcome(client):
-  client.on_message(client.hostmask, Motd())
+def send_motd_on_welcome(user):
+  user.on_message(user.hostmask, Motd())

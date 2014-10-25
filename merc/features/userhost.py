@@ -18,7 +18,7 @@ class UserHostReply(message.Reply):
   def __init__(self, user_hosts):
     self.user_hosts = user_hosts
 
-  def as_reply_params(self, client):
+  def as_reply_params(self, user):
     return [" ".join("{}={}{}".format(user_host.nickname,
                                       "+" if not user_host.is_away else "-",
                                       user_host.hostmask)
@@ -34,17 +34,17 @@ class UserHost(message.Command):
     self.nicknames = nicknames[:5]
 
   @message.Command.requires_registration
-  def handle_for(self, client, prefix):
+  def handle_for(self, user, prefix):
     user_hosts = []
     for nickname in self.nicknames:
       try:
-        user = client.server.get_client(nickname)
+        user = user.server.get_user(nickname)
       except errors.NoSuchNick:
         pass
       else:
         user_host = util.Expando(nickname=nickname, is_away=False,
                                  hostmask=user.hostmask)
-        client.server.run_hooks("modify_userhost_entry", user, user_host)
+        user.server.run_hooks("modify_userhost_entry", user, user_host)
         user_hosts.append(user_host)
 
-    client.send_reply(UserHostReply(user_hosts))
+    user.send_reply(UserHostReply(user_hosts))

@@ -19,7 +19,7 @@ class EndOfWho(message.Reply):
   def __init__(self, target):
     self.target = target
 
-  def as_reply_params(self, client):
+  def as_reply_params(self, user):
     return [self.target, "End of /WHO command"]
 
 
@@ -38,7 +38,7 @@ class WhoReply(message.Reply):
     self.hopcount = hopcount
     self.realname = realname
 
-  def as_reply_params(self, client):
+  def as_reply_params(self, user):
     return [self.channel_name if self.channel_name is not None else "*",
             self.username, self.host, self.server, self.nickname,
             "H" if not self.is_away else "G",
@@ -54,29 +54,29 @@ class Who(message.Command):
     self.target = target
     self.query_type = query_type
 
-  def client_matches_query_type(self, user):
+  def user_matches_query_type(self, target):
     if self.query_type == "o":
-      return user.is_irc_operator
+      return target.is_irc_operator
     return True
 
   @message.Command.requires_registration
-  def handle_for(self, client, prefix):
+  def handle_for(self, user, prefix):
     who = []
 
     try:
       if channel.Channel.is_valid_name(self.target):
-        chan = client.server.get_channel(self.target)
+        chan = user.server.get_channel(self.target)
 
-        if client.can_see_channel(chan):
-          who = [(chan.name, user.client)
-                 for user in chan.get_visible_users_for(client)
-                 if self.client_matches_query_type(user.client)]
+        if user.can_see_channel(chan):
+          who = [(chan.name, target.user)
+                 for target in chan.get_visible_users_for(user)
+                 if self.user_matches_query_type(target.user)]
       else:
-        for user in client.server.query_clients(self.target):
-          if not self.client_matches_query_type(user):
+        for target in user.server.query_users(self.target):
+          if not self.user_matches_query_type(target):
             continue
 
-          visible_it = iter(client.get_channels_visible_for(user))
+          visible_it = iter(user.get_channels_visible_for(target))
 
           try:
             visible_channel = next(visible_it)
@@ -85,14 +85,15 @@ class Who(message.Command):
           else:
             visible_channel_name = visible_channel.name
 
-          who.append((visible_channel_name, user))
+          who.append((visible_channel_name, target))
     except errors.NoSuchNick:
       pass
 
-    for channel_name, user in who:
-      reply = WhoReply(channel_name, user.username, user.host, user.server.name,
-                       user.nickname, False, 0, user.realname)
-      client.server.run_hooks("modify_who_reply", user, reply)
-      client.send_reply(reply)
+    for channel_name, target in who:
+      reply = WhoReply(channel_name, target.username, target.host,
+                       target.server.name, target.nickname, False, 0,
+                       target.realname)
+      user.server.run_hooks("modify_who_reply", target, reply)
+      user.send_reply(reply)
 
-    client.send_reply(EndOfWho(self.target))
+    user.send_reply(EndOfWho(self.target))

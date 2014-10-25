@@ -34,7 +34,7 @@ class NoTopic(message.Reply):
   def __init__(self, channel_name):
     self.channel_name = channel_name
 
-  def as_reply_params(self, client):
+  def as_reply_params(self, user):
     return [self.channel_name, "No topic set"]
 
 
@@ -46,7 +46,7 @@ class TopicReply(message.Reply):
     self.channel_name = channel_name
     self.text = text
 
-  def as_reply_params(self, client):
+  def as_reply_params(self, user):
     return [self.channel_name, self.text]
 
 
@@ -58,7 +58,7 @@ class TopicWhoTime(message.Reply):
     self.who = who
     self.time = time
 
-  def as_reply_params(self, client):
+  def as_reply_params(self, user):
     return [self.channel_name, self.who, str(int(self.time.timestamp()))]
 
 
@@ -76,36 +76,36 @@ class Topic(message.Command):
     return self.text is not None
 
   @message.Command.requires_registration
-  def handle_for(self, client, prefix):
-    chan = client.server.get_channel(self.channel_name)
+  def handle_for(self, user, prefix):
+    chan = user.server.get_channel(self.channel_name)
     locals = chan.get_feature_locals(TopicFeature)
 
     current_topic = locals.get("topic", None)
 
     if self.text is None:
       if current_topic is not None:
-        client.send_reply(TopicReply(chan.name, current_topic.text))
-        client.send_reply(TopicWhoTime(chan.name, current_topic.who,
+        user.send_reply(TopicReply(chan.name, current_topic.text))
+        user.send_reply(TopicWhoTime(chan.name, current_topic.who,
                                        current_topic.time))
       else:
-        client.send_reply(NoTopic(chan.name))
+        user.send_reply(NoTopic(chan.name))
     else:
       if TopicLock(chan).get():
-        chan.check_is_operator(client)
+        chan.check_is_operator(user)
 
       if not self.text:
         locals["topic"] = None
       else:
         locals["topic"] = TopicDetail(
-            self.text[:MAX_TOPIC_LENGTH], client.hostmask,
+            self.text[:MAX_TOPIC_LENGTH], user.hostmask,
             datetime.datetime.utcnow())
 
       chan.broadcast(
-          None, client.hostmask,
+          None, user.hostmask,
           Topic(chan.name,
                 locals["topic"].text if locals["topic"] is not None else ""))
 
-  def as_params(self, client):
+  def as_params(self, user):
     params = [self.channel_name]
     if self.text is not None:
       params.append(self.text)
@@ -113,12 +113,12 @@ class Topic(message.Command):
 
 
 @TopicFeature.hook("after_join_channel")
-def send_topic_on_join(client, user, channel):
+def send_topic_on_join(user, target, channel):
   locals = channel.get_feature_locals(TopicFeature)
   current_topic = locals.get("topic", None)
 
   if current_topic is not None:
-    user.on_message(user.hostmask, Topic(channel.name))
+    target.on_message(target.hostmask, Topic(channel.name))
 
 
 @TopicFeature.register_channel_mode

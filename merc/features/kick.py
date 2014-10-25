@@ -26,24 +26,24 @@ class Kick(message.Command):
     return self.reason is not None
 
   @message.Command.requires_registration
-  def handle_for(self, client, prefix):
+  def handle_for(self, user, prefix):
     try:
-      channel = client.server.get_channel(self.channel_name)
+      channel = user.server.get_channel(self.channel_name)
     except errors.NoSuchNick:
       raise errors.NoSuchChannel(self.channel_name)
 
-    user = client.server.get_client(self.nickname)
+    target = channel.server.get_user(self.nickname)
 
-    channel.check_has_client(client)
-    channel.check_has_client(user)
-    channel.check_is_operator(client)
+    channel.check_has_user(user)
+    channel.check_has_user(target)
+    channel.check_is_operator(user)
 
-    channel.broadcast(None, client.hostmask,
+    channel.broadcast(None, user.hostmask,
                       Kick(self.channel_name, self.nickname, self.reason))
-    client.server.part_channel(user, channel.name)
+    channel.server.part_channel(target, channel.name)
 
 
-  def as_params(self, client):
+  def as_params(self, user):
     params = [self.channel_name, self.nickname]
     if self.reason is not None:
       params.append(self.reason)
