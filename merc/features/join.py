@@ -36,7 +36,9 @@ class _Join(message.Command):
 
       channel.join(user)
       channel.broadcast(None, user.hostmask, Join(channel.name))
-      client.server.run_hooks("after_channel_join", client, user, channel)
+      client.server.run_hooks("after_join_channel", client, user, channel)
+      if is_new:
+        client.server.run_hooks("after_join_new_channel", client, user, channel)
 
 
 @JoinFeature.register_command

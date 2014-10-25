@@ -59,12 +59,12 @@ class MyInfo(message.Reply):
     return [client.server.name,
             "{}-{}".format(merc.__name__, merc.__version__),
             "".join(list(sorted(mode.CHAR
-                                for mode in client.server.user_modes))),
+                                for mode in client.server.user_modes.values()))),
             "".join(list(sorted(mode.CHAR
-                                for mode in client.server.channel_modes
+                                for mode in client.server.channel_modes.values()
                                 if not mode.TAKES_PARAM))),
             "".join(list(sorted(mode.CHAR
-                                for mode in client.server.channel_modes
+                                for mode in client.server.channel_modes.values()
                                 if mode.TAKES_PARAM)))]
 
 

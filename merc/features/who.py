@@ -1,5 +1,6 @@
 from merc import channel
 from merc import errors
+from merc import feature
 from merc import message
 from merc import util
 
@@ -39,7 +40,7 @@ class WhoReply(message.Reply):
             str(self.hopcount) + " " + self.user.realname]
 
 
-@WhoFeature.register
+@WhoFeature.register_command
 class Who(message.Command):
   NAME = "WHO"
   MIN_ARITY = 1

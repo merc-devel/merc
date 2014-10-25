@@ -63,32 +63,32 @@ class Pong(message.Command):
     pass
 
 
-@WelcomeFeature.hook("after_register")
+@PingFeature.hook("after_register")
 def reschedule_ping_check(client):
-  if not client.registered:
+  if not client.is_registered:
     return
 
   locals = client.get_feature_locals(PingFeature)
 
-  if locals.ping_check_handle is not None:
-    locals.ping_check_handle.cancel()
+  if "ping_check_handle" in locals:
+    locals["ping_check_handle"].cancel()
 
-  if locals.pong_check_handle is not None:
-    locals.pong_check_handle.cancel()
+  if "pong_check_handle" in locals:
+    locals["pong_check_handle"].cancel()
 
   def ping_check():
     client.send(None, ping.Ping(client.server.name))
-    locals.pong_check_handle = client.server.loop.call_later(
+    locals["pong_check_handle"] = client.server.loop.call_later(
         PONG_TIMEOUT.total_seconds(), pong_check)
 
   def pong_check():
     client.close("Ping timeout: {} seconds".format(
         int(PING_TIMEOUT.total_seconds())))
 
-  locals.ping_check_handle = client.server.loop.call_later(
+  locals["ping_check_handle"] = client.server.loop.call_later(
       PING_TIMEOUT.total_seconds(), ping_check)
 
 
-@WelcomeFeature.hook("after_message")
+@PingFeature.hook("after_message")
 def reschedule_ping_check_after_message(client, message, prefix):
   reschedule_ping_check(client)

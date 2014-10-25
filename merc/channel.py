@@ -8,9 +8,6 @@ from merc import util
 
 
 class ChannelUser(object):
-  ROLE_CHARS = "~&@%+"
-  ROLE_MODES = "qaohv"
-
   def __init__(self, channel, client):
     self.channel = channel
     self.client = client
@@ -60,35 +57,38 @@ class Channel(object):
 
     self.name = name
     self.creation_time = datetime.datetime.utcnow()
+    self.is_secret = True
 
     self.users = {}
-    self.modes = {}
+
+  @property
+  def modes(self):
+    modes = {}
+
+    for feature in self.server.features.values():
+      modes.update(feature.get_channel_modes(self))
+
+    return modes
 
   @property
   def is_local(self):
     return self.name[0] == "&"
 
   def set_mode(self, client, mode, param=None):
-    if mode not in self.modes:
-      try:
-        mode_factory = self.server.channel_modes[mode]
-      except KeyError:
-        raise errors.UnknownMode(mode)
+    try:
+      mode_obj = self.modes[mode]
+    except KeyError:
+      raise errors.UnknownMode(mode)
 
-      self.modes[mode] = mode_factory()
-
-    return self.modes[mode].set(client, param)
+    return mode_obj.set(client, param)
 
   def unset_mode(self, client, mode, param=None):
-    if mode not in self.modes:
-      try:
-        mode_factory = self.server.channel_modes[mode]
-      except KeyError:
-        raise errors.UnknownMode(mode)
+    try:
+      mode_obj = self.modes[mode]
+    except KeyError:
+      raise errors.UnknownMode(mode)
 
-      self.modes[mode] = mode_factory()
-
-    return self.modes[mode].unset(client, param)
+    return mode_obj.unset(client, param)
 
   def get_channel_user_for(self, client):
     try:
@@ -155,10 +155,5 @@ class Channel(object):
     if not self.has_client(client):
       raise errors.NoSuchNick(client.nickname)
 
-  def get_feature_locals(self, feature_factory):
-    return self.server.features[feature_factory].channel_locals[self]
-
-  MODES = {
-    "o": ChannelUser.make_role_setter_pair(ChannelUser.mutate_operator),
-    "v": ChannelUser.make_role_setter_pair(ChannelUser.mutate_voice),
-  }
+  def get_feature_locals(self, feature):
+    return self.server.features[feature.NAME].get_channel_locals(self)

@@ -1,3 +1,5 @@
+import operator
+
 from merc import channel
 from merc import errors
 from merc import feature
@@ -17,7 +19,7 @@ def show_modes(modes):
   args = []
 
   for k, mode in sorted(modes.items(), key=operator.itemgetter(0)):
-    value = mode.get_value()
+    value = mode.get()
 
     if mode.TAKES_PARAM:
       if value is not None:
@@ -117,18 +119,20 @@ class _Mode(message.Command):
 
   @message.Command.requires_registration
   def handle_for(self, client, prefix):
+    applied_flags = []
+
     if channel.Channel.is_valid_name(self.target):
       try:
         chan = client.server.get_channel(self.target)
       except errors.NoSuchNick:
         raise errors.NoSuchChannel(self.target)
 
-      self.check_can_set_chanenl_flags(client, chan)
+      self.check_can_set_channel_flags(client, chan)
 
-      applied_flags = []
-
-      for flag, arg in self._parse_flags(self.flags, self.args,
-                                         channel.Channel.MODES_WITH_PARAMS):
+      for flag, arg in self._parse_flags(
+          self.flags, self.args,
+          {mode.CHAR for mode in client.server.channel_modes.values()
+                     if mode.TAKES_PARAM}):
         state, c = flag
 
         if state == "+":
@@ -147,7 +151,10 @@ class _Mode(message.Command):
       user = client.server.get_client(self.target)
       self.check_can_set_user_flags(client, user)
 
-      for flag, arg in self._parse_flags(self.flags, self.args):
+      for flag, arg in self._parse_flags(
+          self.flags, self.args,
+          {mode.CHAR for mode in client.server.user_modes.values()
+                     if mode.TAKES_PARAM}):
         state, c = flag
 
         if state == "+":
@@ -180,7 +187,6 @@ class Mode(_Mode):
           raise errors.NoSuchChannel(self.target)
 
         client.send_reply(ChannelModeIs(chan.name, chan.modes))
-        client.send_reply(CreationTime(chan.name, chan.creation_time))
       else:
         user = client.server.get_client(self.target)
         if user is not client:
@@ -190,7 +196,7 @@ class Mode(_Mode):
     else:
         super().handle_for(client, prefix)
 
-  def check_can_set_chanenl_flags(self, client, channel):
+  def check_can_set_channel_flags(self, client, channel):
     channel.check_is_operator(client)
 
   def check_can_set_user_flags(self, client, user):
@@ -206,7 +212,7 @@ class SAMode(_Mode):
   NAME = "SAMODE"
   MIN_ARITY = 2
 
-  def check_can_set_chanenl_flags(self, client, channel):
+  def check_can_set_channel_flags(self, client, channel):
     client.check_is_irc_operator()
 
   def check_can_set_user_flags(self, client, user):
@@ -223,13 +229,15 @@ def send_modes_on_welcome(client):
     client.relay_to_self(Mode(client.nickname, flags, *args))
 
 
-@ModeFeature.hook("after_channel_join")
-def send_channel_modes_on_join(client, user, channel):
+@ModeFeature.hook("after_join_channel")
+def send_timestamp_on_join(client, user, channel):
   user.send_reply(CreationTime(channel.name, channel.creation_time))
 
-  if is_new and channel.modes:
-    flags, args = show_modes(channel.modes)
-    user.send_reply(Mode(channel.name, flags, *args))
+
+@ModeFeature.hook("after_join_new_channel")
+def send_channel_modes_on_new_join(client, user, channel):
+  flags, args = show_modes(channel.modes)
+  user.send_reply(Mode(channel.name, flags, *args))
 
 
 @ModeFeature.hook("user_mode_change")

@@ -35,7 +35,7 @@ class LUserMe(message.Reply):
         1)]
 
 
-@LUsersFeature.register_feature
+@LUsersFeature.register_command
 class LUsers(message.Command):
   NAME = "LUSERS"
   MIN_ARITY = 0

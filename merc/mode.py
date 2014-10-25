@@ -17,7 +17,7 @@ class Mode(object):
   @classmethod
   def read_from(cls, target):
     try:
-      mode = target[cls.CHAR]
+      mode = target.modes[cls.CHAR]
     except KeyError:
       return self.DEFAULT
     else:

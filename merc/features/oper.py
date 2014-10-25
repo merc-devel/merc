@@ -80,13 +80,14 @@ class Oper(message.Command):
 
 
 @OperFeature.hook("luser_oper")
-def show_luser_oper(self, client):
+def show_luser_oper(client):
   client.send_reply(LUserOp())
 
 
 @OperFeature.register_user_mode
 class Operator(mode.Mode):
   CHAR = "o"
+  TAKES_PARAM = False
 
   def set(self):
     return False

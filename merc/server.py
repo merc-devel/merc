@@ -2,6 +2,8 @@ import aiodns
 import argparse
 import asyncio
 import datetime
+import imp
+import importlib
 import logging
 import operator
 import regex
@@ -14,8 +16,9 @@ import passlib.context
 import merc
 
 from merc import channel
-from merc import errors
 from merc import client
+from merc import errors
+from merc import features
 from merc import message
 from merc import net
 from merc import util
@@ -87,8 +90,6 @@ class Server(object):
       "CHANTYPES": "".join(channel.Channel.CHANNEL_CHARS),
       "NETWORK": self.network_name,
       "CASEMAPPING": "unicode",
-      "PREFIX": "({}){}".format(channel.ChannelUser.ROLE_MODES,
-                                channel.ChannelUser.ROLE_CHARS),
       "CHARSET": "utf-8"
     }
 
@@ -152,7 +153,6 @@ class Server(object):
   def new_channel(self, name):
     c = channel.Channel(self, name)
     self.channels[c.normalized_name] = c
-    self.run_hooks("after_new_channel", c)
     return c
 
   def remove_channel(self, channel):
@@ -190,8 +190,6 @@ class Server(object):
 
   @property
   def channel_modes(self):
-    # TODO: add secret mode
-    # TODO: add role modes
     modes = {}
 
     for feature in self.features.values():
@@ -199,12 +197,55 @@ class Server(object):
 
     return modes
 
+  def get_command(self, name):
+    for feature in self.features.values():
+      if name in feature.COMMANDS:
+        return feature.COMMANDS[name]
+
+    raise KeyError(name)
+
+  def load_feature(self, name, reload=False):
+    if name[0] == ".":
+      name = features.__name__ + name
+
+    try:
+      module = importlib.import_module(name)
+      if reload:
+        module = imp.reload(module)
+
+      try:
+        install = module.install
+      except AttributeError:
+        logger.critical("{} does not name a merc feature!".format(name))
+
+      feature = install(self)
+      self.features[feature.NAME] = feature
+    except Exception:
+      logger.critical("{} could not be loaded.".format(name), exc_info=True)
+
+    logger.info("{} loaded.".format(name))
+
+  def unload_feature(self, name):
+    if name[0] == ".":
+      name = features.__name__ + name
+
+    try:
+      del self.features[name]
+    except KeyError:
+      logging.warn("{} could not be loaded as it was not loaded.".format(name))
+
+  def _load_configured_features(self):
+    for feature_name in self.config["features"]:
+      self.load_feature(feature_name)
+
   def start(self):
     logger.info("""
   Welcome to merc-{}, running for {} on network {}.
 
   {}\
   """.format(merc.__version__, self.name, self.network_name, self.motd))
+
+    self._load_configured_features()
 
     if "ssl" in self.config:
       ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)

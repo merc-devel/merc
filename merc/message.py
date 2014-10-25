@@ -24,13 +24,6 @@ class Reply(Message):
 
 
 class Command(Message):
-  REGISTRY = {}
-
-  @classmethod
-  def register(cls, type):
-    cls.REGISTRY[type.NAME] = type
-    return type
-
   def __init__(self, *args):
     pass
 

@@ -120,13 +120,13 @@ class Names(message.Command):
     return [",".join(self.channel_names)]
 
 
-@NamesFeature.hook("after_channel_join")
+@NamesFeature.hook("after_join_channel")
 def send_names_on_join(client, user, channel):
     user.on_message(user.hostmask, Names(channel.name))
 
 
-@OperFeature.hook("luser_client")
-def show_luser_oper(self, client):
+@NamesFeature.hook("luser_client")
+def show_luser_oper(client):
   client.send_reply(LUserClient())
 
 

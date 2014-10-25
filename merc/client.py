@@ -30,12 +30,21 @@ class Client(object):
     self.disconnect_reason = None
 
     self.channels = {}
-    self.modes = {}
 
+    self.is_invisible = True
     self.is_irc_operator = False
 
     self.creation_time = datetime.datetime.utcnow()
     self.last_activity_time = self.creation_time
+
+  @property
+  def modes(self):
+    modes = {}
+
+    for feature in self.server.features.values():
+      modes.update(feature.get_user_modes(self))
+
+    return modes
 
   @property
   def hostmask(self):
@@ -67,28 +76,21 @@ class Client(object):
     return self.nickname is not None and self.username is not None and \
            self.host is not None
 
-
   def set_mode(self, client, mode, param=None):
-    if mode not in self.modes:
-      try:
-        mode_factory = self.server.user_modes[mode]
-      except KeyError:
-        raise errors.UnknownMode(mode)
+    try:
+      mode_obj = self.modes[mode]
+    except KeyError:
+      raise errors.UnknownMode(mode)
 
-      self.modes[mode] = mode_factory()
-
-    return self.modes[mode].set(client, param)
+    return mode_obj.set(client, param)
 
   def unset_mode(self, client, mode, param=None):
-    if mode not in self.modes:
-      try:
-        mode_factory = self.server.user_modes[mode]
-      except KeyError:
-        raise errors.UnknownMode(mode)
+    try:
+      mode_obj = self.modes[mode]
+    except KeyError:
+      raise errors.UnknownMode(mode)
 
-      self.modes[mode] = mode_factory()
-
-    return self.modes[mode].unset(client, param)
+    return mode_obj.unset(client, param)
 
   def register(self):
     self.server.register_client(self)
@@ -118,8 +120,9 @@ class Client(object):
   @asyncio.coroutine
   def resolve_hostname_coro(self):
     host, *_ = self.transport.get_extra_info("peername")
+    host, _, _ = host.partition("%")
 
-    self.server.run_hooks("send_server_notice",
+    self.server.run_hooks("send_server_notice", self,
                           "*** Looking up your hostname...")
     ip = ipaddress.ip_address(host)
 
@@ -137,14 +140,14 @@ class Client(object):
           forward, "AAAA" if not is_ipv4 else "A")
 
       if ip == ipaddress.ip_address(backward):
-        self.server.run_hooks("send_server_notice",
+        self.server.run_hooks("send_server_notice", self,
                               "*** Found your hostname ({})".format(forward))
         self.host = forward
       else:
-        self.server.run_hooks("send_server_notice",
+        self.server.run_hooks("send_server_notice", self,
                               "*** Hostname does not resolve correctly")
     except aiodns.error.DNSError:
-      self.server.run_hooks("send_server_notice",
+      self.server.run_hooks("send_server_notice", self,
                             "*** Couldn't look up your hostname")
       self.host = host
 
@@ -156,7 +159,7 @@ class Client(object):
 
   def on_raw_message(self, prefix, command, params):
     try:
-      command_type = message.Command.REGISTRY[command]
+      command_type = self.server.get_command(command)
     except KeyError:
       if self.is_registered:
         self.send_reply(errors.UnknownCommand(command))
@@ -196,5 +199,5 @@ class Client(object):
     if not self.is_irc_operator:
       raise errors.NoPrivileges
 
-  def get_feature_locals(self, feature_factory):
-    return self.server.features[feature_factory].user_locals[self]
+  def get_feature_locals(self, feature):
+    return self.server.features[feature.NAME].get_user_locals(self)
