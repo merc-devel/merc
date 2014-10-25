@@ -215,7 +215,7 @@ class SAMode(_Mode):
   NAME = "SAMODE"
   MIN_ARITY = 2
 
-  def check_can_set_channel_modes(self, client, channel):
+  def check_can_set_channel_modes(self, client, channel, modes):
     client.check_is_irc_operator()
 
   def check_can_set_user_modes(self, client, user):
