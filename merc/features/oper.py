@@ -89,10 +89,10 @@ class Operator(mode.Mode):
   CHAR = "o"
   TAKES_PARAM = False
 
-  def set(self):
+  def set(self, client, param):
     return False
 
-  def unset(self):
+  def unset(self, client, param):
     if not self.target.is_irc_operator:
       return False
 
