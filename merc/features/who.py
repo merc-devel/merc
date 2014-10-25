@@ -36,7 +36,7 @@ class WhoReply(message.Reply):
   def as_reply_params(self, client):
     return [self.channel_name if self.channel_name is not None else "*",
             self.user.username, self.user.host, self.server, self.user.nickname,
-            "H" if not self.user.is_away else "G",
+            "H", # TODO: check if AWAY
             str(self.hopcount) + " " + self.user.realname]
 
 

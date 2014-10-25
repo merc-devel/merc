@@ -59,10 +59,6 @@ class Client(object):
     return self.nickname if self.is_registered else "*"
 
   @property
-  def is_away(self):
-    return self.away_message is not None
-
-  @property
   def is_securely_connected(self):
     return self.transport.get_extra_info("sslcontext") is not None
 
