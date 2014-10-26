@@ -107,8 +107,8 @@ class WhoIs(message.Command):
       else:
         channels = []
         for channel in user.get_channels_visible_for(target):
-          sigils = channel.get_channel_user_for(target).sigils
-          name = sigils + channel.name
+          sigil = channel.get_channel_user_for(target).sigil
+          name = sigil + channel.name
           channels.append(name)
 
         user.send_reply(WhoIsUser(target.nickname, target.username,
