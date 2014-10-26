@@ -52,7 +52,7 @@ opers:
 
 features:
   - .rfc1459
-  - .ircv3
+  - .ircv31
   - .ts6
   - .extban
   - .extrole
