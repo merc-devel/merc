@@ -262,3 +262,13 @@ class UserStore(object):
       modes.update(feature.USER_MODES)
 
     return modes
+
+
+  @property
+  def capabilities(self):
+    capabilities = {}
+
+    for feature in self.server.features.values():
+      capabilities.update(feature.CAPABILITIES)
+
+    return capabilities

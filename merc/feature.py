@@ -8,6 +8,7 @@ class FeatureMeta(type):
     c.COMMANDS = {}
     c.USER_MODES = {}
     c.CHANNEL_MODES = {}
+    c.CAPABILITIES = {}
     c.HOOKS = collections.defaultdict(list)
     return c
 
@@ -34,6 +35,11 @@ class Feature(object, metaclass=FeatureMeta):
   def register_user_mode(cls, mode):
     cls.USER_MODES[mode.CHAR] = mode
     return mode
+
+  @classmethod
+  def register_capability(cls, capability):
+    cls.CAPABILITIES[capability.NAME] = capability
+    return capability
 
   @classmethod
   def hook(cls, name):

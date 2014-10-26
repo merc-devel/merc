@@ -27,9 +27,10 @@ class WhoReply(message.Reply):
   NAME = "352"
   FORCE_TRAILING = True
 
-  def __init__(self, target, is_away):
+  def __init__(self, target, is_away, multi_prefix):
     self.target = target
     self.is_away = is_away
+    self.multi_prefix = multi_prefix
 
   def as_reply_params(self, user):
     return [self.target.channel.name if self.target.channel is not None
@@ -37,7 +38,7 @@ class WhoReply(message.Reply):
             self.target.user.username, self.target.user.host,
             self.target.user.server.name, self.target.user.nickname,
             ("H" if not self.is_away else "G") +
-                (self.target.sigils if "multi-prefix" in user.capabilities
+                (self.target.sigils if self.multi_prefix
                                     else self.target.sigil),
             str(0) + " " + self.target.user.realname]
 
@@ -85,7 +86,7 @@ class Who(message.Command):
       pass
 
     for cu in who:
-      reply = WhoReply(cu, False)
+      reply = WhoReply(cu, False, False)
       user.server.run_hooks("modify_who_reply", cu, reply)
       user.send_reply(reply)
 

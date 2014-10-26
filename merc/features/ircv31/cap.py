@@ -31,32 +31,36 @@ class Cap(message.Command):
     self.subcommand = subcommand
     self.arg = arg
 
-  def get_supported_caps(self, server):
-    caps = set()
-    server.run_hooks("modify_caps", server, caps)
-    return caps
-
   def ls(self, user):
     user.is_negotiating_cap = True
     user.send_reply(CapReply("LS",
-                             " ".join(self.get_supported_caps(user.server))))
+                             " ".join(user.server.users.capabilities.keys())))
 
   def list(self, user):
     user.send_reply(CapReply("LIST", " ".join(user.capabilities)))
 
   def req(self, user, caps):
-    supported_caps = self.get_supported_caps(user.server)
+    capabilities = user.server.users.capabilities
 
-    if not (set(caps) - supported_caps):
-      user.capabilities.update(caps)
+    if not (set(caps) - set(capabilities.keys())):
+      for cap in caps:
+        capabilities[cap](user).set()
       user.send_reply(CapReply("ACK", " ".join(caps)))
     else:
       user.send_reply(CapReply("NAK", " ".join(caps)))
 
   def clear(self, user):
+    cleared_caps = []
+
+    for capability_factory in user.server.users.capabilities.values():
+      capability = capability_factory(user)
+
+      if capability.get():
+        capability.unset()
+        cleared_caps.append(capability.NAME)
+
     user.send_reply(CapReply("ACK",
-                              " ".join("-" + cap for cap in user.capabilities)))
-    user.capabilities.clear()
+                              " ".join("-" + cap for cap in cleared_caps)))
 
   def end(self, user):
     user.is_negotiating_cap = False

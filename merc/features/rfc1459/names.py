@@ -33,17 +33,19 @@ class NameReply(message.Reply):
   NAME = "353"
   FORCE_TRAILING = True
 
-  def __init__(self, type, channel_name, users):
+  def __init__(self, type, channel_name, users, multi_prefix, uhnames):
     self.type = type
     self.channel_name = channel_name
     self.users = users
+    self.multi_prefix = False
+    self.uhnames = False
 
   def as_reply_params(self, user):
     return [self.type,
             self.channel_name if self.channel_name is not None else "*",
-            " ".join((target.sigils if "multi-prefix" in user.capabilities
+            " ".join((target.sigils if self.multi_prefix
                                     else target.sigil) +
-                     (target.user.hostmask if "uhnames" in user.capabilities
+                     (target.user.hostmask if self.uhnames
                                            else target.user.nickname)
                      for target in self.users)]
 
@@ -69,6 +71,11 @@ class Names(message.Command):
     self.channel_names = channel_names.split(",") if channel_names is not None \
                                                   else None
 
+  def make_name_reply(self, user, type, channel_name, users):
+    reply = NameReply(type, channel_name, users, False, False)
+    user.server.run_hooks("modify_name_reply", user, reply)
+    return reply
+
   @message.Command.requires_registration
   def handle_for(self, user, prefix):
     if self.channel_names is None:
@@ -78,8 +85,8 @@ class Names(message.Command):
         if user.is_in_channel(chan):
           seen_nicknames.update(cu.user.normalized_nickname
                                 for cu in chan.get_visible_users_for(user))
-          user.send_reply(NameReply(
-                "@", chan.name, chan.get_visible_users_for(user)))
+          user.send_reply(self.make_name_reply(
+              user, "@", chan.name, chan.get_visible_users_for(user)))
           continue
 
         if chan.is_secret:
@@ -93,7 +100,8 @@ class Names(message.Command):
             channel_users.append(cu)
 
         if channel_users:
-          user.send_reply(NameReply("=", chan.name, channel_users))
+          user.send_reply(self.make_name_reply(user, "=", chan.name,
+                                               channel_users))
 
       visible_users = []
 
@@ -106,7 +114,7 @@ class Names(message.Command):
           visible_users.append(channel.ChannelUser(None, target))
 
       if visible_users:
-        user.send_reply(NameReply("*", None, visible_users))
+        user.send_reply(self.make_name_reply(user, "*", None, visible_users))
 
       user.send_reply(EndOfNames(None))
     else:
@@ -121,7 +129,8 @@ class Names(message.Command):
 
           channel_name = chan.name
 
-          user.send_reply(NameReply(
+          user.send_reply(self.make_name_reply(
+              user,
               "@" if user.is_in_channel(chan) else "*",
               chan.name,
               chan.get_visible_users_for(user)))
@@ -131,12 +140,6 @@ class Names(message.Command):
 @NamesFeature.hook("modify_targmax")
 def modify_targmax(targmax):
   targmax["NAMES"] = MAX_TARGETS
-
-
-@NamesFeature.hook("modify_caps")
-def modify_cap(server, caps):
-  caps.add("uhnames")
-  caps.add("multi-prefix")
 
 
 @NamesFeature.hook("after_join_channel")
