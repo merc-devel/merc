@@ -54,6 +54,7 @@ features:
   - .admin
   - .away
   - .ban
+  - .cap
   - .extban
   - .is_secure
   - .ison
