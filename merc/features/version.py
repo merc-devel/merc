@@ -1,4 +1,4 @@
-from merc import util
+from merc import errors
 from merc import feature
 from merc import message
 from merc.features import welcome
@@ -29,9 +29,16 @@ class Version(message.Command):
   NAME = "VERSION"
   MIN_ARITY = 0
 
+  def __init__(self, server=None):
+    self.server = server
+
   @message.Command.requires_registration
   def handle_for(self, user, prefix):
-    version = 'merc-{}'.format(util.get_version())
+    if self.server and self.server != user.server.name:
+        raise errors.NoSuchServer(self.server)
+    else:
+        server = user.server
 
-    user.send_reply(VersionReply(version, user.server.name, "..."))
-    user.send_reply(welcome.ISupport(user.server.isupport))
+    version = 'merc-{}'.format(server.version)
+    user.send_reply(VersionReply(version, server.name, "..."))
+    user.send_reply(welcome.ISupport(server.isupport))

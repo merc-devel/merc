@@ -60,6 +60,10 @@ class Server(object):
     return self.config["server_name"]
 
   @property
+  def version(self):
+    return util.get_version()
+
+  @property
   def network_name(self):
     return self.config["network_name"]
 
