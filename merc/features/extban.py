@@ -11,7 +11,7 @@ install = ExtBanFeature.install
 
 def join_ban_checker(target, channel, value):
   try:
-    origin_channel = target.server.get_channel(value)
+    origin_channel = target.server.channels.get(value)
   except errors.NoSuchNick:
     return
 

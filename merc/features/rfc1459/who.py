@@ -62,13 +62,13 @@ class Who(message.Command):
 
     try:
       if channel.Channel.is_channel_name(self.target):
-        chan = user.server.get_channel(self.target)
+        chan = user.server.channels.get(self.target)
 
         if user.can_see_channel(chan):
           who = [target for target in chan.get_visible_users_for(user)
                         if self.user_matches_query_type(target.user)]
       else:
-        for target in user.server.query_users(self.target):
+        for target in user.server.users.query(self.target):
           if not self.user_matches_query_type(target):
             continue
 

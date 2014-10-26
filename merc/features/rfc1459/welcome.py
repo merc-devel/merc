@@ -78,7 +78,7 @@ class User(message.Command):
     user.realname = self.realname
 
     if user.is_ready_for_registration:
-      user.server.register_user(user)
+      user.register()
 
 
 @WelcomeFeature.register_command

@@ -149,11 +149,11 @@ class ChannelRoleMode(Mode):
     self.target.check_is_operator(user)
 
   def check(self, user, value):
-    target = self.target.get_channel_user_for(user.server.get_user(value))
+    target = self.target.get_channel_user_for(user.server.users.get(value))
     self.check_for_target(user, target)
 
   def set(self, user, value):
-    target = self.target.get_channel_user_for(user.server.get_user(value))
+    target = self.target.get_channel_user_for(user.server.users.get(value))
 
     if self.get_for_target(target):
       return False
@@ -162,7 +162,7 @@ class ChannelRoleMode(Mode):
     return True
 
   def unset(self, user, value):
-    target = self.target.get_channel_user_for(user.server.get_user(value))
+    target = self.target.get_channel_user_for(user.server.users.get(value))
 
     if not self.get_for_target(target):
       return False

@@ -34,7 +34,7 @@ class IsOn(message.Command):
     is_on = []
     for nickname in self.nicknames:
       try:
-        user.server.get_user(nickname)
+        user.server.users.get(nickname)
       except errors.NoSuchNick:
         pass
       else:

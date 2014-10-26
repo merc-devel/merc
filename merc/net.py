@@ -17,7 +17,7 @@ class Protocol(asyncio.Protocol):
     self.buffer = b""
 
   def connection_made(self, transport):
-    self.user = self.server.new_local_user(transport)
+    self.user = self.server.users.local_new(transport)
     logger.info("Accepted connection from {}".format(
         self.user.transport.get_extra_info("peername")))
     self.user.on_connect()
@@ -40,7 +40,7 @@ class Protocol(asyncio.Protocol):
     if self.user.disconnect_reason is None:
       self.user.disconnect_reason = "Remote host closed connection"
 
-    self.server.remove_user(self.user)
+    self.server.users.remove(self.user)
 
     logger.info("Lost connection from {}: {}".format(
         self.user.transport.get_extra_info("peername"),

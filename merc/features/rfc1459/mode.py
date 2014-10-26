@@ -129,7 +129,7 @@ class _Mode(message.Command):
 
     if channel.Channel.is_channel_name(self.target):
       try:
-        chan = user.server.get_channel(self.target)
+        chan = user.server.channels.get(self.target)
       except errors.NoSuchNick:
         raise errors.NoSuchChannel(self.target)
 
@@ -151,7 +151,7 @@ class _Mode(message.Command):
         chan.broadcast(None, self.get_prefix(user),
                        Mode(chan.name, flags, *args))
     else:
-      target = user.server.get_user(self.target)
+      target = user.server.users.get(self.target)
 
       try:
         expanded = self._expand_modes(self.flags, self.args,
@@ -186,13 +186,13 @@ class Mode(_Mode):
     if self.flags is None:
       if channel.Channel.is_channel_name(self.target):
         try:
-          chan = user.server.get_channel(self.target)
+          chan = user.server.channels.get(self.target)
         except errors.NoSuchNick:
           raise errors.NoSuchChannel(self.target)
 
         user.send_reply(ChannelModeIs(chan))
       else:
-        target = user.server.get_user(self.target)
+        target = user.server.users.get(self.target)
         if target is not user:
           raise errors.UsersDontMatch
 

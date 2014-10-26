@@ -136,7 +136,7 @@ class LocalUser(User):
 
   def on_remove(self):
     for channel_name in list(self.channels):
-      self.server.part_channel(self, channel_name)
+      self.server.channels.get(channel_name).part(self)
     self.transport.close()
 
   @asyncio.coroutine
@@ -174,7 +174,16 @@ class LocalUser(User):
       self.host = host
 
     if self.is_ready_for_registration:
-      self.server.register_user(self)
+      self.register()
+
+  def register(self):
+    if self.server.users.has(self.nickname):
+      host, *_ = self.transport.get_extra_info("peername")
+      raise errors.Error("Closing Link: {} (Overridden)".format(host))
+
+    self.server.users.add(self)
+    self.is_registered = True
+    self.server.run_hooks("after_register", self)
 
   def close(self, reason=None):
     self.disconnect_reason = reason
@@ -188,3 +197,59 @@ class RemoteUser(User):
 
   def send(self, prefix, msg):
     self.server.run_hooks("send_remote", self, prefix, message)
+
+
+class UserStore(object):
+  def __init__(self, server):
+    self.server = server
+    self.users = {}
+
+  def local_new(self, transport):
+    return LocalUser(self.server, transport)
+
+  def add(self, user):
+    self.users[user.normalized_nickname] = user
+
+  def rename(self, user, new_nickname):
+    normalized_new_nickname = util.to_irc_lower(new_nickname)
+
+    if normalized_new_nickname in self.users and \
+       self.users[normalized_new_nickname] is not user:
+      raise errors.NicknameInUse(new_nickname)
+
+    if user.is_registered:
+      del self.users[user.normalized_nickname]
+
+    user.nickname = new_nickname
+
+    if user.is_registered:
+      self.users[user.normalized_nickname] = user
+
+  def remove(self, user):
+    self.server.run_hooks("before_remove_user", user)
+    if user.is_registered:
+      del self.users[user.normalized_nickname]
+    user.on_remove()
+    self.server.run_hooks("after_remove_user", user)
+
+  def get(self, name):
+    try:
+      return self.users[util.to_irc_lower(name)]
+    except KeyError:
+      raise errors.NoSuchNick(name)
+
+  def has(self, name):
+    return util.to_irc_lower(name) in self.users
+
+  def query(self, pattern):
+    if "!" not in pattern:
+      pattern += "!*@*"
+
+    return (user for user in self.users.values()
+                 if user.hostmask_matches(pattern))
+
+  def all(self):
+    return self.users.values()
+
+  def count(self):
+    return len(self.users)

@@ -22,7 +22,7 @@ class LUserChannels(message.Reply):
   FORCE_TRAILING = True
 
   def as_reply_params(self, user):
-    return [str(len(user.server.channels)), "channels formed"]
+    return [str(user.server.channels.count()), "channels formed"]
 
 
 class LUserMe(message.Reply):
@@ -31,8 +31,7 @@ class LUserMe(message.Reply):
 
   def as_reply_params(self, user):
     return ["I have {} clients and {} servers".format(
-        len(user.server.users),
-        1)]
+        user.server.users.count(), 1)]
 
 
 @LUsersFeature.register_command

@@ -71,7 +71,7 @@ class Topic(message.Command):
 
   @message.Command.requires_registration
   def handle_for(self, user, prefix):
-    chan = user.server.get_channel(self.channel_name)
+    chan = user.server.channels.get(self.channel_name)
     locals = chan.get_feature_locals(TopicFeature)
 
     current_topic = locals.get("topic", None)

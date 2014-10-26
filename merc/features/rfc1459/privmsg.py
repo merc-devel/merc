@@ -32,7 +32,7 @@ class _Privmsg(message.Command):
     for target_name in self.targets[:MAX_TARGETS]:
       if channel.Channel.is_channel_name(target_name):
         try:
-          chan = user.server.get_channel(target_name)
+          chan = user.server.channels.get(target_name)
         except errors.NoSuchNick:
           continue
 
@@ -50,7 +50,7 @@ class _Privmsg(message.Command):
         user.server.run_hooks("after_channel_privmsg", user, chan)
         user.relay_to_channel(chan, self.__class__(chan.name, self.text))
       else:
-        target = user.server.get_user(target_name)
+        target = user.server.users.get(target_name)
         user.server.run_hooks("after_user_privmsg", user, target)
         user.relay_to_user(target, self.__class__(target.nickname, self.text))
 

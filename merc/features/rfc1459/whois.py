@@ -101,7 +101,7 @@ class WhoIs(message.Command):
   def handle_for(self, user, prefix):
     for nickname in self.nicknames[:MAX_TARGETS]:
       try:
-        target = user.server.get_user(nickname)
+        target = user.server.users.get(nickname)
       except errors.NoSuchNick as e:
         user.send_reply(e)
       else:

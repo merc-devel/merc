@@ -17,7 +17,7 @@ class LUserOp(message.Reply):
 
   def as_reply_params(self, user):
     return [str(sum(user.is_irc_operator
-                    for user in user.server.users.values())),
+                    for user in user.server.users.all())),
             "IRC operators online"]
 
 
@@ -41,7 +41,7 @@ class Kill(message.Command):
   @message.Command.requires_registration
   def handle_for(self, user, prefix):
     user.check_is_irc_operator()
-    target = user.server.get_user(self.nickname)
+    target = user.server.users.get(self.nickname)
 
     disconnect_reason = "Killed by {}: {}".format(user.nickname, self.reason)
 

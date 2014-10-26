@@ -44,8 +44,8 @@ class Server(object):
 
     self.creation_time = datetime.datetime.now()
 
-    self.users = {}
-    self.channels = {}
+    self.users = user.UserStore(self)
+    self.channels = channel.ChannelStore(self)
 
     self.register_signal_handlers()
 
@@ -89,82 +89,6 @@ class Server(object):
 
   def register_signal_handlers(self):
     signal.signal(signal.SIGHUP, lambda signum, frame: self.rehash())
-
-  def new_local_user(self, transport):
-    return user.LocalUser(self, transport)
-
-  def register_user(self, user):
-    if user.normalized_nickname in self.users:
-      host, *_ = user.transport.get_extra_info("peername")
-      raise errors.Error("Closing Link: {} (Overridden)".format(host))
-
-    self.users[user.normalized_nickname] = user
-    user.is_registered = True
-
-    self.run_hooks("after_register", user)
-
-  def rename_user(self, user, new_nickname):
-    normalized_new_nickname = util.to_irc_lower(new_nickname)
-
-    if normalized_new_nickname in self.users and \
-       self.users[normalized_new_nickname] is not user:
-      raise errors.NicknameInUse(new_nickname)
-
-    if user.is_registered:
-      del self.users[user.normalized_nickname]
-
-    user.nickname = new_nickname
-
-    if user.is_registered:
-      self.users[user.normalized_nickname] = user
-
-  def remove_user(self, user):
-    self.run_hooks("before_remove_user", user)
-    if user.is_registered:
-      del self.users[user.normalized_nickname]
-    user.on_remove()
-    self.run_hooks("after_remove_user", user)
-
-  def get_user(self, name):
-    try:
-      return self.users[util.to_irc_lower(name)]
-    except KeyError:
-      raise errors.NoSuchNick(name)
-
-  def get_channel(self, name):
-    try:
-      return self.channels[util.to_irc_lower(name)]
-    except KeyError:
-      raise errors.NoSuchNick(name)
-
-  def new_channel(self, name):
-    c = channel.Channel(self, name)
-    self.channels[c.normalized_name] = c
-    return c
-
-  def remove_channel(self, channel):
-    del self.channels[channel.normalized_name]
-    self.run_hooks("after_remove_channel", channel)
-
-  def part_channel(self, user, name):
-    channel = self.get_channel(name)
-    channel.part(user)
-
-    if not channel.users:
-      self.remove_channel(channel)
-
-    return channel
-
-  def query_users(self, pattern):
-    if "!" not in pattern:
-      pattern += "!*@*"
-
-    return (user for user in self.users.values()
-                 if user.hostmask_matches(pattern))
-
-  def query_channels(self, pattern):
-    return (channel for channel in self.channels.values()
-                    if channel.name_matches(pattern))
 
   def run_hooks(self, hook_name, *args, **kwargs):
     for feature in self.features.values():

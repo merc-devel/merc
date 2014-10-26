@@ -39,7 +39,7 @@ class UserHost(message.Command):
     user_hosts = []
     for nickname in self.nicknames:
       try:
-        target = user.server.get_user(nickname)
+        target = user.server.users.get(nickname)
       except errors.NoSuchNick:
         pass
       else:

@@ -124,6 +124,9 @@ class Channel(object):
     del self.users[user.id]
     del user.channels[self.normalized_name]
 
+    if not self.users:
+      self.server.channels.remove(self)
+
   def has_user(self, user):
     return user.id in self.users
 
@@ -186,3 +189,37 @@ class Channel(object):
 
   def get_feature_locals(self, feature):
     return self.feature_locals.setdefault(feature.NAME, {})
+
+
+class ChannelStore(object):
+  def __init__(self, server):
+    self.server = server
+    self.channels = {}
+
+  def get(self, name):
+    try:
+      return self.channels[util.to_irc_lower(name)]
+    except KeyError:
+      raise errors.NoSuchNick(name)
+
+  def has(self, name):
+    return util.to_irc_lower(name) in self.channels
+
+  def new(self, name):
+    c = Channel(self.server, name)
+    self.channels[c.normalized_name] = c
+    return c
+
+  def remove(self, channel):
+    del self.channels[channel.normalized_name]
+    self.server.run_hooks("after_remove_channel", channel)
+
+  def query(self, pattern):
+    return (channel for channel in self.channels.values()
+                    if channel.name_matches(pattern))
+
+  def all(self):
+    return self.channels.values()
+
+  def count(self):
+    return len(self.channels)

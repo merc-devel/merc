@@ -61,7 +61,7 @@ class Cap(message.Command):
   def end(self, user):
     user.is_negotiating_cap = False
     if user.is_ready_for_registration:
-      user.server.register_user(user)
+      user.register()
 
   def handle_for(self, user, prefix):
     subcommand = self.subcommand.upper()

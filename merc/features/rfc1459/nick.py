@@ -25,14 +25,14 @@ class _Nick(message.Command):
         len(self.nickname) > MAX_NICKNAME_LENGTH:
       raise errors.ErroneousNickname
 
-    target.server.rename_user(target, self.nickname)
+    target.server.users.rename(target, self.nickname)
 
     if target.is_registered:
       target.relay_to_all(Nick(self.nickname), old_hostmask)
       target.send(old_hostmask, Nick(self.nickname))
     else:
       if target.is_ready_for_registration:
-        target.server.register_user(target)
+        target.register()
 
 
 @NickFeature.register_command
@@ -60,7 +60,7 @@ class SANick(_Nick):
     self.nickname = nickname
 
   def get_target(self, user):
-    return user.server.get_user(self.target)
+    return user.server.users.get(self.target)
 
   @message.Command.requires_registration
   def handle_for(self, user, prefix):

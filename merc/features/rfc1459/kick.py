@@ -31,11 +31,11 @@ class Kick(message.Command):
   @message.Command.requires_registration
   def handle_for(self, user, prefix):
     try:
-      channel = user.server.get_channel(self.channel_name)
+      channel = user.server.channels.get(self.channel_name)
     except errors.NoSuchNick:
       raise errors.NoSuchChannel(self.channel_name)
 
-    target = channel.server.get_user(self.nickname)
+    target = channel.server.users.get(self.nickname)
 
     channel.check_has_user(user)
     channel.check_has_user(target)
@@ -43,7 +43,7 @@ class Kick(message.Command):
 
     channel.broadcast(None, user.hostmask,
                       Kick(self.channel_name, self.nickname, self.reason))
-    channel.server.part_channel(target, channel.name)
+    channel.part(target)
 
 
   def as_params(self, user):

@@ -35,9 +35,9 @@ class _Join(message.Command):
         raise errors.NoSuchChannel(channel_name)
 
       try:
-        channel = user.server.get_channel(channel_name)
+        channel = user.server.channels.get(channel_name)
       except errors.NoSuchNick:
-        channel = user.server.new_channel(channel_name)
+        channel = user.server.channels.new(channel_name)
         is_new = True
 
       if channel.has_user(target):
@@ -88,7 +88,7 @@ class SAJoin(_Join):
     return
 
   def get_target(self, user):
-    return user.server.get_user(self.nickname)
+    return user.server.users.get(self.nickname)
 
   @message.Command.requires_registration
   def handle_for(self, user, prefix):
@@ -103,13 +103,13 @@ class _Part(message.Command):
 
     for channel_name in self.channel_names:
       try:
-        channel = user.server.get_channel(channel_name)
+        channel = user.server.channels.get(channel_name)
       except errors.NoSuchNick:
         raise errors.NoSuchChannel(channel_name)
       else:
         channel.broadcast(None, target.hostmask,
                           Part(channel.name, self.reason))
-        user.server.part_channel(target, channel_name)
+        channel.part(user)
 
 
 @JoinFeature.register_command
@@ -146,7 +146,7 @@ class SAPart(_Part):
     self.reason = reason
 
   def get_target(self, user):
-    return user.server.get_user(self.nickname)
+    return user.server.users.get(self.nickname)
 
   @message.Command.requires_registration
   def handle_for(self, user, prefix):

@@ -21,10 +21,10 @@ class LUserClient(message.Reply):
 
   def as_reply_params(self, user):
     num_invisible = sum(
-        user.is_invisible for user in user.server.users.values())
+        user.is_invisible for user in user.server.users.all())
 
     return ["There are {} users and {} invisible on {} servers".format(
-        len(user.server.users) - num_invisible,
+        user.server.users.count() - num_invisible,
         num_invisible,
         1)]
 
@@ -74,7 +74,7 @@ class Names(message.Command):
     if self.channel_names is None:
       seen_nicknames = set()
 
-      for chan in user.server.channels.values():
+      for chan in user.server.channels.all():
         if user.is_in_channel(chan):
           seen_nicknames.update(cu.user.normalized_nickname
                                 for cu in chan.get_visible_users_for(user))
@@ -97,7 +97,7 @@ class Names(message.Command):
 
       visible_users = []
 
-      for target in user.server.users.values():
+      for target in user.server.users.all():
         if target.is_invisible and target is not user:
           continue
 
@@ -112,7 +112,7 @@ class Names(message.Command):
     else:
       for channel_name in self.channel_names[:MAX_TARGETS]:
         try:
-          chan = user.server.get_channel(channel_name)
+          chan = user.server.channels.get(channel_name)
         except errors.NoSuchNick:
           pass
         else:
