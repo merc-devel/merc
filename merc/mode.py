@@ -21,6 +21,17 @@ class Mode(object):
     return self.target.modes.get(self.CHAR, self.DEFAULT)
 
 
+class ChanModeMixin(object):
+  def check(self, user, arg):
+    self.target.check_is_operator(user)
+
+
+class UModeMixin(object):
+  def check(self, user, arg):
+    if self.target is not user:
+      raise errors.UsersDontMatch
+
+
 class FlagMode(Mode):
   TAKES_PARAM = False
   DEFAULT = False
@@ -44,6 +55,10 @@ class FlagMode(Mode):
 
 class ListMode(Mode):
   TAKES_PARAM = True
+
+  def check(self, user, arg):
+    if arg is not None:
+      super().check(user, arg)
 
   def add(self, user, value):
     list = self.target.modes.setdefault(self.CHAR, {})

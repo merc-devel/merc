@@ -84,7 +84,7 @@ def show_luser_oper(user):
 
 
 @OperFeature.register_user_mode
-class Operator(mode.Mode):
+class Operator(mode.Mode, mode.UModeMixin):
   CHAR = "o"
   TAKES_PARAM = False
 

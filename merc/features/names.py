@@ -132,7 +132,7 @@ def show_luser_oper(user):
 
 
 @NamesFeature.register_user_mode
-class Invisible(mode.FlagMode):
+class Invisible(mode.FlagMode, mode.UModeMixin):
   CHAR = "i"
 
   def toggle(self):

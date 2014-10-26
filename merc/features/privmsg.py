@@ -62,13 +62,13 @@ class Notice(_Privmsg):
 
 
 @PrivmsgFeature.register_channel_mode
-class DisallowingExternalMessages(mode.FlagMode):
+class DisallowingExternalMessages(mode.FlagMode, mode.ChanModeMixin):
   CHAR = "n"
   DEFAULT = True
 
 
 @PrivmsgFeature.register_channel_mode
-class Moderated(mode.FlagMode):
+class Moderated(mode.FlagMode, mode.ChanModeMixin):
   CHAR = "m"
 
 

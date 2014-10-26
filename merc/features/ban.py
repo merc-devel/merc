@@ -44,7 +44,7 @@ class EndOfBanList(message.Reply):
 
 
 @BanFeature.register_channel_mode
-class BanMask(mode.ListMode):
+class BanMask(mode.ListMode, mode.ChanModeMixin):
   CHAR = "b"
 
   def list(self, user):

@@ -44,6 +44,27 @@ class ChannelUser(object):
 
     return sigils
 
+  @property
+  def is_voiced_equivalent(self):
+    return self.is_voiced or self.is_halfop_equivalent
+
+  @property
+  def is_halfop_equivalent(self):
+    return self.is_halfop or self.is_operator_equivalent
+
+  @property
+  def is_operator_equivalent(self):
+    return self.is_operator or self.is_admin
+
+  @property
+  def is_admin_equivalent(self):
+    return self.is_admin or self.is_owner_equivalent
+
+  @property
+  def is_owner_equivalent(self):
+    return self.is_owner
+
+
 class Channel(object):
   CHANNEL_NAME_REGEX = regex.compile(r"^[^\x00\x07\r\n,: ]*$")
   CHANNEL_CHARS = {"#", "&"}
@@ -116,14 +137,40 @@ class Channel(object):
       if not channel_user.user.is_invisible:
         yield channel_user
 
+  def check_is_owner(self, user):
+    try:
+      channel_user = self.get_channel_user_for(user)
+    except errors.NoSuchNick:
+      raise errors.ChanOpPrivsNeeded(self.name)
+
+    if not channel_user.is_owner_equivalent:
+      raise errors.ChanOpPrivsNeeded(self.name)
+
+  def check_is_admin(self, user):
+    try:
+      channel_user = self.get_channel_user_for(user)
+    except errors.NoSuchNick:
+      raise errors.ChanOpPrivsNeeded(self.name)
+
+    if not channel_user.is_admin_equivalent:
+      raise errors.ChanOpPrivsNeeded(self.name)
+
   def check_is_operator(self, user):
     try:
       channel_user = self.get_channel_user_for(user)
     except errors.NoSuchNick:
       raise errors.ChanOpPrivsNeeded(self.name)
 
-    if not channel_user.is_operator and not channel_user.is_admin and \
-       not channel_user.is_owner:
+    if not channel_user.is_operator_equivalent:
+      raise errors.ChanOpPrivsNeeded(self.name)
+
+  def check_is_halfop(self, user):
+    try:
+      channel_user = self.get_channel_user_for(user)
+    except errors.NoSuchNick:
+      raise errors.ChanOpPrivsNeeded(self.name)
+
+    if not channel_user.is_halfop_equivalent:
       raise errors.ChanOpPrivsNeeded(self.name)
 
   def check_is_voiced(self, user):
@@ -132,11 +179,8 @@ class Channel(object):
     except errors.NoSuchNick:
       raise errors.CannotSendToChan(self.name)
 
-    if not channel_user.is_voiced and not channel_user.is_halfop:
-      try:
-        self.check_is_operator(user)
-      except errors.ChanOpPrivsNeeded:
-        raise errors.CannotSendToChan(self.name)
+    if not channel_user.is_voiced_equivalent:
+      raise errors.CannotSendToChan(self.name)
 
   def check_has_user(self, user):
     if not self.has_user(user):

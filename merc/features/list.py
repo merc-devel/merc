@@ -70,7 +70,7 @@ class List(message.Command):
 
 
 @ListFeature.register_channel_mode
-class Secret(mode.FlagMode):
+class Secret(mode.FlagMode, mode.ChanModeMixin):
   CHAR = "s"
   TAKES_PARAM = False
 

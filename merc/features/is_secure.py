@@ -11,7 +11,7 @@ install = IsSecureFeature
 
 
 @IsSecureFeature.register_user_mode
-class SecurelyConnected(mode.FlagMode):
+class SecurelyConnected(mode.FlagMode, mode.UModeMixin):
   CHAR = "Z"
 
   def toggle(self):

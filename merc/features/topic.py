@@ -122,7 +122,7 @@ def send_topic_on_join(user, target, channel):
 
 
 @TopicFeature.register_channel_mode
-class TopicLock(mode.FlagMode):
+class TopicLock(mode.FlagMode, mode.ChanModeMixin):
   CHAR = "t"
   DEFAULT = True
 

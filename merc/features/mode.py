@@ -178,13 +178,14 @@ class _Mode(message.Command):
                        Mode(chan.name, flags, *args))
     else:
       target = user.server.get_user(self.target)
-      self.check_can_set_user_modes(user, target)
 
       try:
         expanded = self._expand_modes(self.flags, self.args,
                                       user.server.user_modes)
       except errors.UnknownMode as e:
         raise errors.UmodeUnknownFlag(e.param)
+
+      self.check_can_set_user_modes(user, target, expanded)
 
       for mode_factory, op, arg in expanded:
         mode = mode_factory(target)
@@ -230,12 +231,16 @@ class Mode(_Mode):
       if issubclass(m, mode.ListMode) and arg is None:
         continue
 
-      channel.check_is_operator(user)
+      m(channel).check(user, arg)
       return
 
-  def check_can_set_user_modes(self, user, target):
-    if target is not user:
-      raise errors.UsersDontMatch
+  def check_can_set_user_modes(self, user, target, modes):
+    for m, op, arg in modes:
+      if issubclass(m, mode.ListMode) and arg is None:
+        continue
+
+      m(target).check(user, arg)
+      return
 
   def get_prefix(self, user):
     return user.hostmask
@@ -249,7 +254,7 @@ class SAMode(_Mode):
   def check_can_set_channel_modes(self, user, channel, modes):
     user.check_is_irc_operator()
 
-  def check_can_set_user_modes(self, user, target):
+  def check_can_set_user_modes(self, user, target, modes):
     user.check_is_irc_operator()
 
   def get_prefix(self, user):

@@ -36,7 +36,7 @@ class Kick(message.Command):
 
     channel.check_has_user(user)
     channel.check_has_user(target)
-    channel.check_is_operator(user)
+    channel.check_is_halfop(user)
 
     channel.broadcast(None, user.hostmask,
                       Kick(self.channel_name, self.nickname, self.reason))
