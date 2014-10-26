@@ -38,7 +38,7 @@ class _Nick(message.Command):
       target.send(old_hostmask, Nick(self.nickname))
     else:
       if target.is_ready_for_registration:
-        target.register()
+        target.server.register_user(target)
 
 
 @NickFeature.register_command
