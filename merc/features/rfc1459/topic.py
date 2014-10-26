@@ -18,7 +18,7 @@ class TopicFeature(feature.Feature):
   NAME = __name__
 
 
-install = TopicFeature
+install = TopicFeature.install
 
 
 class NoTopic(message.Reply):

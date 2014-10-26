@@ -9,7 +9,7 @@ class WhoFeature(feature.Feature):
   NAME = __name__
 
 
-install = WhoFeature
+install = WhoFeature.install
 
 
 class EndOfWho(message.Reply):

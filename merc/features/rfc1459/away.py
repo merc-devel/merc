@@ -7,7 +7,7 @@ class AwayFeature(feature.Feature):
   NAME = __name__
 
 
-install = AwayFeature
+install = AwayFeature.install
 
 
 class IsAway(message.Reply):

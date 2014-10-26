@@ -8,7 +8,7 @@ class UserHostFeature(feature.Feature):
   NAME = __name__
 
 
-install = UserHostFeature
+install = UserHostFeature.install
 
 
 class UserHostReply(message.Reply):

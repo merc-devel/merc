@@ -12,7 +12,7 @@ class JoinFeature(feature.Feature):
   NAME = __name__
 
 
-install = JoinFeature
+install = JoinFeature.install
 
 
 MAX_CHANNEL_NAME_LENGTH = 50

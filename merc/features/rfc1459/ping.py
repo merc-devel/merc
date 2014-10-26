@@ -12,7 +12,7 @@ class PingFeature(feature.Feature):
   NAME = __name__
 
 
-install = PingFeature
+install = PingFeature.install
 
 
 @PingFeature.register_command

@@ -8,7 +8,7 @@ class KeyFeature(feature.Feature):
   NAME = __name__
 
 
-install = KeyFeature
+install = KeyFeature.install
 
 
 class KeySet(errors.ParametrizedError):

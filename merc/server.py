@@ -211,13 +211,14 @@ class Server(object):
         logger.critical("{} does not name a merc feature!".format(name))
         return
 
-      feature = install(self)
-      self.features[feature.NAME] = feature
+      install(self)
     except Exception:
       logger.critical("{} could not be loaded.".format(name), exc_info=True)
       return
 
-    logger.info("{} loaded.".format(feature.NAME))
+  def install_feature(self, feature):
+    self.features[feature.NAME] = feature
+    logger.info("{} installed.".format(feature.NAME))
 
   def unload_feature(self, name):
     if name[0] == ".":

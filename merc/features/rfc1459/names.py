@@ -9,7 +9,7 @@ class NamesFeature(feature.Feature):
   NAME = __name__
 
 
-install = NamesFeature
+install = NamesFeature.install
 
 
 MAX_TARGETS = 1

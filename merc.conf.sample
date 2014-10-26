@@ -11,7 +11,7 @@ motd: |
 
     The Modern Ethereal Relay Chat daemon.
 
-    Join us on #merc-devel @ irc.freenode.net (ironic, I know)!
+    Join us on #merc @ irc.merc-devel.com!
 
 admin:
   name: operator
@@ -51,32 +51,11 @@ opers:
       - "*!*@*"
 
 features:
-  - .admin
-  - .away
-  - .ban
-  - .cap
+  - .rfc1459
+  - .ircv3
+  - .ts6
   - .extban
+  - .extrole
+  - .flood
   - .is_secure
-  - .ison
   - .isupport
-  - .join
-  - .key
-  - .kick
-  - .limit
-  - .list
-  - .lusers
-  - .mode
-  - .motd
-  - .names
-  - .nick
-  - .oper
-  - .ping
-  - .privmsg
-  - .rehash
-  - .roles
-  - .topic
-  - .userhost
-  - .version
-  - .welcome
-  - .who
-  - .whois

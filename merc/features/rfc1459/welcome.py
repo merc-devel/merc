@@ -10,7 +10,7 @@ class WelcomeFeature(feature.Feature):
   NAME = __name__
 
 
-install = WelcomeFeature
+install = WelcomeFeature.install
 
 
 class Welcome(message.Reply):

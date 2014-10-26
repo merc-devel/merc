@@ -6,7 +6,7 @@ class RehashFeature(feature.Feature):
   NAME = __name__
 
 
-install = RehashFeature
+install = RehashFeature.install
 
 
 class Rehashing(message.Reply):

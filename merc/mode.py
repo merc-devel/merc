@@ -134,3 +134,41 @@ class ParamMode(SetWithParamMode):
       return False
 
     return super().unset(user, value)
+
+
+class ChannelRoleMode(Mode):
+  TAKES_PARAM = True
+
+  def toggle_for_target(self, target):
+    raise NotImplementedError
+
+  def get_for_target(self, target):
+    raise NotImplementedError
+
+  def check_for_target(self, user, target):
+    self.target.check_is_operator(user)
+
+  def check(self, user, value):
+    target = self.target.get_channel_user_for(user.server.get_user(value))
+    self.check_for_target(user, target)
+
+  def set(self, user, value):
+    target = self.target.get_channel_user_for(user.server.get_user(value))
+
+    if self.get_for_target(target):
+      return False
+
+    self.toggle_for_target(target)
+    return True
+
+  def unset(self, user, value):
+    target = self.target.get_channel_user_for(user.server.get_user(value))
+
+    if not self.get_for_target(target):
+      return False
+
+    self.toggle_for_target(target)
+    return True
+
+  def get(self):
+    return None

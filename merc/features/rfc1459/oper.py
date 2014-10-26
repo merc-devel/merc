@@ -8,7 +8,7 @@ class OperFeature(feature.Feature):
   NAME = __name__
 
 
-install = OperFeature
+install = OperFeature.install
 
 
 class LUserOp(message.Reply):
