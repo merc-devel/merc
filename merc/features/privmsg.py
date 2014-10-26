@@ -47,6 +47,7 @@ class _Privmsg(message.Command):
         if Moderated(chan).get():
           chan.check_is_voiced(user)
 
+        user.server.run_hooks("after_channel_privmsg", user, chan)
         user.relay_to_channel(chan, self.__class__(chan.name, self.text))
       else:
         target = user.server.get_user(target_name)
