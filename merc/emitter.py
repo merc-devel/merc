@@ -27,4 +27,4 @@ def emit_message(prefix, command, params, force_trailing=False):
     else:
       buf.extend(params)
 
-  return " ".join(buf)
+  return " ".join(buf).encode("utf-8")

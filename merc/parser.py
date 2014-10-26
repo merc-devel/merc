@@ -12,6 +12,8 @@ def parse_hostmask(s):
 
 
 def parse_message(s):
+  s = s.decode("utf-8")
+
   if not s:
     raise ParseError("malformed message")
 

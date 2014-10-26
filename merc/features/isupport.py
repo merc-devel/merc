@@ -35,4 +35,17 @@ def send_isupport(user):
   }
   user.server.run_hooks("modify_isupport", user.server, isupport)
 
-  user.send_reply(ISupport(isupport))
+  reply = ISupport({})
+
+  for k, v in isupport.items():
+    reply.support_params[k] = v
+
+    try:
+      reply.emit(user, user.server.name)
+    except message.MessageTooLongError:
+      del reply.support_params[k]
+      user.send_reply(reply)
+      reply.support_params = {}
+
+  if reply.support_params:
+    user.send_reply(reply)

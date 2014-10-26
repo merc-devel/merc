@@ -107,9 +107,7 @@ class LocalUser(User):
         self.transport.get_extra_info("sslcontext") is not None
 
   def send(self, prefix, msg):
-    raw = msg.emit(self, prefix).encode("utf-8")[:message.Message.MAX_LENGTH] \
-        .decode("utf-8", "ignore")
-    self.transport.write(raw.encode("utf-8") + b"\r\n")
+    self.transport.write(msg.emit(self, prefix) + b"\r\n")
 
   def on_connect(self):
     asyncio.async(self.resolve_hostname_coro(), loop=self.server.loop)

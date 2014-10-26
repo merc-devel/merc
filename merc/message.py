@@ -3,6 +3,10 @@ import functools
 from merc import emitter
 
 
+class MessageTooLongError(Exception):
+  pass
+
+
 class Message(object):
   MAX_LENGTH = 510
   FORCE_TRAILING = False
@@ -11,8 +15,13 @@ class Message(object):
     raise NotImplementedError
 
   def emit(self, user, prefix):
-    return emitter.emit_message(prefix, self.NAME, self.as_params(user),
-                                force_trailing=self.FORCE_TRAILING)
+    emitted = emitter.emit_message(prefix, self.NAME, self.as_params(user),
+                                   force_trailing=self.FORCE_TRAILING)
+
+    if len(emitted) > self.MAX_LENGTH:
+      raise MessageTooLongError
+
+    return emitted
 
 
 class Reply(Message):

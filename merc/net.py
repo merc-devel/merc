@@ -30,7 +30,7 @@ class Protocol(asyncio.Protocol):
 
   def handle_line(self, line):
     try:
-      prefix, command, params = parser.parse_message(line.decode("utf-8"))
+      prefix, command, params = parser.parse_message(line)
     except parser.ParseError:
       return
 
