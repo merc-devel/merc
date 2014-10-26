@@ -55,7 +55,7 @@ def show_modes(target, modes):
       flags.append(mode.CHAR)
 
       if value is not True:
-        args.append(value)
+        args.append(str(value))
 
   return "+" + "".join(flags), args
 
@@ -145,7 +145,7 @@ class _Mode(message.Command):
       flags += mode.CHAR
 
       if arg is not None:
-        args.append(arg)
+        args.append(str(arg))
 
     return flags, args
 

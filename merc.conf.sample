@@ -59,7 +59,9 @@ features:
   - .ison
   - .isupport
   - .join
+  - .key
   - .kick
+  - .limit
   - .list
   - .lusers
   - .mode

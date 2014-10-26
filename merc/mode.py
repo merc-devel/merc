@@ -99,14 +99,14 @@ class ListMode(Mode):
 class SetWithParamMode(Mode):
   TAKES_PARAM = True
 
-  def mutate(self, value):
+  def mutate(self, user, value):
     self.target.modes[self.CHAR] = value
 
   def set(self, user, value):
     if self.get() == value:
       return False
 
-    return self.mutate(value)
+    return self.mutate(user, value)
 
   def unset(self, user, value):
     if value is None:
@@ -115,7 +115,7 @@ class SetWithParamMode(Mode):
     if self.get() is None:
       return False
 
-    return self.mutate(None)
+    return self.mutate(user, None)
 
 
 class ParamMode(SetWithParamMode):
