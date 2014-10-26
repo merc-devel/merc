@@ -281,3 +281,5 @@ def modify_isupport(server, isupport):
                                     "".join(sorted(param_modes)),
                                     "".join(sorted(set_with_param_modes)),
                                     "".join(sorted(flag_modes))])
+  isupport["MAXLIST"] = "{}:{}".format("".join(sorted(list_modes)),
+                                       mode.ListMode.MAX_ITEMS)

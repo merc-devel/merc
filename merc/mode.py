@@ -55,6 +55,7 @@ class FlagMode(Mode):
 
 class ListMode(Mode):
   TAKES_PARAM = True
+  MAX_ITEMS = 100
 
   def check(self, user, arg):
     if arg is not None:
@@ -62,7 +63,11 @@ class ListMode(Mode):
 
   def add(self, user, value):
     list = self.target.modes.setdefault(self.CHAR, {})
+
     if value in list:
+      return False
+
+    if len(list) >= MAX_ITEMS:
       return False
 
     list[value] = ListDetail(user.server.name, datetime.datetime.now())
