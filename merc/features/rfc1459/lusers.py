@@ -6,7 +6,7 @@ class LUsersFeature(feature.Feature):
   NAME = __name__
 
 
-install = LUsersFeature
+install = LUsersFeature.install
 
 
 class LUserUnknown(message.Reply):

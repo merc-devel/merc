@@ -7,7 +7,7 @@ class ListFeature(feature.Feature):
   NAME = __name__
 
 
-install = ListFeature
+install = ListFeature.install
 
 
 MAX_TARGETS = 1

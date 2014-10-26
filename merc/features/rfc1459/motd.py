@@ -6,7 +6,7 @@ class MotdFeature(feature.Feature):
   NAME = __name__
 
 
-install = MotdFeature
+install = MotdFeature.install
 
 
 class MotdReply(message.Reply):

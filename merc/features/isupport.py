@@ -6,7 +6,8 @@ from merc import message
 class ISupportFeature(feature.Feature):
   NAME = __name__
 
-install = ISupportFeature
+
+install = ISupportFeature.install
 
 
 class ISupport(message.Reply):

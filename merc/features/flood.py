@@ -10,7 +10,7 @@ class FloodFeature(feature.Feature):
   NAME = __name__
 
 
-install = FloodFeature
+install = FloodFeature.install
 
 
 DETECT_LINES = 5

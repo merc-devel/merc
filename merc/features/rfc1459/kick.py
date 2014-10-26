@@ -7,7 +7,7 @@ class KickFeature(feature.Feature):
   NAME = __name__
 
 
-install = KickFeature
+install = KickFeature.install
 
 
 MAX_TARGETS = 1

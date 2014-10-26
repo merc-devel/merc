@@ -9,7 +9,7 @@ class WhoIsFeature(feature.Feature):
   NAME = __name__
 
 
-install = WhoIsFeature
+install = WhoIsFeature.install
 
 
 MAX_TARGETS = 1

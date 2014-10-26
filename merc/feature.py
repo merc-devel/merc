@@ -17,6 +17,10 @@ class Feature(object, metaclass=FeatureMeta):
     self.server = server
 
   @classmethod
+  def install(cls, server):
+    server.install_feature(cls(server))
+
+  @classmethod
   def register_command(cls, command):
     cls.COMMANDS[command.NAME] = command
     return command

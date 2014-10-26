@@ -8,7 +8,7 @@ class LimitFeature(feature.Feature):
   NAME = __name__
 
 
-install = LimitFeature
+install = LimitFeature.install
 
 
 class ChannelIsFull(errors.ParametrizedError):

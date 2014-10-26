@@ -52,7 +52,7 @@ class Server(object):
   def rehash(self):
     self._unload_all_features()
     with open(self.config_filename, "r") as f:
-      self.config = yaml.load(f)
+      self.config = yaml.safe_load(f)
     self._load_configured_features()
 
   @property
@@ -211,13 +211,14 @@ class Server(object):
         logger.critical("{} does not name a merc feature!".format(name))
         return
 
-      feature = install(self)
-      self.features[feature.NAME] = feature
+      install(self)
     except Exception:
       logger.critical("{} could not be loaded.".format(name), exc_info=True)
       return
 
-    logger.info("{} loaded.".format(feature.NAME))
+  def install_feature(self, feature):
+    self.features[feature.NAME] = feature
+    logger.info("{} installed.".format(feature.NAME))
 
   def unload_feature(self, name):
     if name[0] == ".":

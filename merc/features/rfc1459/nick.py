@@ -13,7 +13,7 @@ class NickFeature(feature.Feature):
   NAME = __name__
 
 
-install = NickFeature
+install = NickFeature.install
 
 
 class _Nick(message.Command):

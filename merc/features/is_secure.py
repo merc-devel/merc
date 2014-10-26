@@ -8,7 +8,7 @@ class IsSecureFeature(feature.Feature):
   NAME = __name__
 
 
-install = IsSecureFeature
+install = IsSecureFeature.install
 
 
 class SecureOnlyChannel(errors.ParametrizedError):

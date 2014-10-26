@@ -15,7 +15,7 @@ class BanFeature(feature.Feature):
   NAME = __name__
 
 
-install = BanFeature
+install = BanFeature.install
 
 
 class BanList(message.Reply):

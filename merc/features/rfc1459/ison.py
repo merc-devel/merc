@@ -7,7 +7,7 @@ class IsOnFeature(feature.Feature):
   NAME = __name__
 
 
-install = IsOnFeature
+install = IsOnFeature.install
 
 
 class IsOnReply(message.Reply):

@@ -7,7 +7,7 @@ class VersionFeature(feature.Feature):
   NAME = __name__
 
 
-install = VersionFeature
+install = VersionFeature.install
 
 
 class VersionReply(message.Reply):

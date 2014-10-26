@@ -14,7 +14,7 @@ MAX_MODES = 4
 class ModeFeature(feature.Feature):
   NAME = __name__
 
-install = ModeFeature
+install = ModeFeature.install
 
 
 def show_modes(target, modes):

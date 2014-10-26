@@ -9,7 +9,7 @@ class WhoFeature(feature.Feature):
   NAME = __name__
 
 
-install = WhoFeature
+install = WhoFeature.install
 
 
 class EndOfWho(message.Reply):
@@ -27,22 +27,19 @@ class WhoReply(message.Reply):
   NAME = "352"
   FORCE_TRAILING = True
 
-  def __init__(self, channel_name, username, host, server, nickname, is_away,
-               hopcount, realname):
-    self.channel_name = channel_name
-    self.username = username
-    self.host = host
-    self.server = server
-    self.nickname = nickname
+  def __init__(self, target, is_away):
+    self.target = target
     self.is_away = is_away
-    self.hopcount = hopcount
-    self.realname = realname
 
   def as_reply_params(self, user):
-    return [self.channel_name if self.channel_name is not None else "*",
-            self.username, self.host, self.server, self.nickname,
-            "H" if not self.is_away else "G",
-            str(self.hopcount) + " " + self.realname]
+    return [self.target.channel.name if self.target.channel is not None
+                                     else "*",
+            self.target.user.username, self.target.user.host,
+            self.target.user.server.name, self.target.user.nickname,
+            ("H" if not self.is_away else "G") +
+                (self.target.sigils if "multi-prefix" in user.capabilities
+                                    else self.target.sigil),
+            str(0) + " " + self.target.user.realname]
 
 
 @WhoFeature.register_command
@@ -68,32 +65,28 @@ class Who(message.Command):
         chan = user.server.get_channel(self.target)
 
         if user.can_see_channel(chan):
-          who = [(chan.name, target.user)
-                 for target in chan.get_visible_users_for(user)
-                 if self.user_matches_query_type(target.user)]
+          who = [target for target in chan.get_visible_users_for(user)
+                        if self.user_matches_query_type(target.user)]
       else:
         for target in user.server.query_users(self.target):
           if not self.user_matches_query_type(target):
             continue
 
-          visible_it = iter(user.get_channels_visible_for(target))
-
           try:
-            visible_channel = next(visible_it)
+            visible_channel = next(iter(user.get_channels_visible_for(target)))
           except StopIteration:
-            visible_channel_name = None
-          else:
-            visible_channel_name = visible_channel.name
+            visible_channel = None
 
-          who.append((visible_channel_name, target))
+          if visible_channel is None:
+            who.append(channel.ChannelUser(None, target))
+          else:
+            who.append(visible_channel.get_channel_user_for(target))
     except errors.NoSuchNick:
       pass
 
-    for channel_name, target in who:
-      reply = WhoReply(channel_name, target.username, target.host,
-                       target.server.name, target.nickname, False, 0,
-                       target.realname)
-      user.server.run_hooks("modify_who_reply", target, reply)
+    for cu in who:
+      reply = WhoReply(cu, False)
+      user.server.run_hooks("modify_who_reply", cu, reply)
       user.send_reply(reply)
 
     user.send_reply(EndOfWho(self.target))

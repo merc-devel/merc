@@ -7,7 +7,7 @@ class AdminFeature(feature.Feature):
   NAME = __name__
 
 
-install = AdminFeature
+install = AdminFeature.install
 
 
 class AdminInfo(message.Reply):

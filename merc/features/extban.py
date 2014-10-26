@@ -6,7 +6,7 @@ class ExtBanFeature(feature.Feature):
   NAME = __name__
 
 
-install = ExtBanFeature
+install = ExtBanFeature.install
 
 
 def join_ban_checker(target, channel, value):

@@ -7,7 +7,7 @@ class CapFeature(feature.Feature):
   NAME = __name__
 
 
-install = CapFeature
+install = CapFeature.install
 
 
 class CapReply(message.Reply):

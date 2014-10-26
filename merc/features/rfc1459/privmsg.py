@@ -10,7 +10,7 @@ class PrivmsgFeature(feature.Feature):
   NAME = __name__
 
 
-install = PrivmsgFeature
+install = PrivmsgFeature.install
 
 
 MAX_TARGETS = 4
