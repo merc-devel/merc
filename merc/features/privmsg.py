@@ -30,7 +30,7 @@ class _Privmsg(message.Command):
   @message.Command.requires_registration
   def handle_for(self, user, prefix):
     for target_name in self.targets[:MAX_TARGETS]:
-      if channel.Channel.is_valid_name(target_name):
+      if channel.Channel.is_channel_name(target_name):
         try:
           chan = user.server.get_channel(target_name)
         except errors.NoSuchNick:

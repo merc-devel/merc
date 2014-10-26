@@ -67,22 +67,15 @@ class ChannelUser(object):
 
 
 class Channel(object):
-  CHANNEL_NAME_REGEX = regex.compile(r"^[^\x00\x07\r\n,: ]*$")
   CHANNEL_CHARS = {"#", "&"}
 
   @classmethod
-  def is_valid_name(cls, name):
-    sigil, *rest = name
-
-    return cls.CHANNEL_NAME_REGEX.match("".join(rest)) is not None and \
-           sigil in cls.CHANNEL_CHARS
+  def is_channel_name(cls, name):
+    sigil, *_ = name
+    return sigil in cls.CHANNEL_CHARS
 
   def __init__(self, server, name):
     self.server = server
-
-    if not self.is_valid_name(name):
-      raise errors.NoSuchChannel(name)
-
     self.name = name
     self.creation_time = datetime.datetime.now()
 

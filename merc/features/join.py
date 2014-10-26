@@ -1,4 +1,5 @@
 import itertools
+import regex
 
 from merc import channel
 from merc import errors
@@ -14,6 +15,11 @@ class JoinFeature(feature.Feature):
 install = JoinFeature
 
 
+MAX_CHANNEL_NAME_LENGTH = 50
+
+CHANNEL_NAME_REGEX = regex.compile(r"^[#&][^\x00\x07\r\n,: ]*$")
+
+
 class _Join(message.Command):
   @message.Command.requires_registration
   def handle_for(self, user, prefix):
@@ -23,6 +29,10 @@ class _Join(message.Command):
                                                    self.keys,
                                                    fillvalue=None):
       is_new = False
+
+      if CHANNEL_NAME_REGEX.match(channel_name) is None or \
+         len(channel_name) > MAX_CHANNEL_NAME_LENGTH:
+        raise errors.NoSuchChannel(channel_name)
 
       try:
         channel = user.server.get_channel(channel_name)
@@ -147,3 +157,4 @@ class SAPart(_Part):
 @JoinFeature.hook("modify_isupport")
 def modify_isupport(server, isupport):
   isupport["CHANTYPES"] = "".join(channel.Channel.CHANNEL_CHARS)
+  isupport["CHANNELLEN"] = MAX_CHANNEL_NAME_LENGTH

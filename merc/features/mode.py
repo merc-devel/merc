@@ -127,7 +127,7 @@ class _Mode(message.Command):
   def handle_for(self, user, prefix):
     applied = []
 
-    if channel.Channel.is_valid_name(self.target):
+    if channel.Channel.is_channel_name(self.target):
       try:
         chan = user.server.get_channel(self.target)
       except errors.NoSuchNick:
@@ -184,7 +184,7 @@ class Mode(_Mode):
   @message.Command.requires_registration
   def handle_for(self, user, prefix):
     if self.flags is None:
-      if channel.Channel.is_valid_name(self.target):
+      if channel.Channel.is_channel_name(self.target):
         try:
           chan = user.server.get_channel(self.target)
         except errors.NoSuchNick:

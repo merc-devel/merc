@@ -64,7 +64,7 @@ class Who(message.Command):
     who = []
 
     try:
-      if channel.Channel.is_valid_name(self.target):
+      if channel.Channel.is_channel_name(self.target):
         chan = user.server.get_channel(self.target)
 
         if user.can_see_channel(chan):
