@@ -15,7 +15,7 @@ class Protocol(asyncio.Protocol):
     self.buffer = b""
 
   def connection_made(self, transport):
-    self.user = self.server.new_user(transport)
+    self.user = self.server.new_local_user(transport)
     self.user.on_connect()
 
   def data_received(self, data):

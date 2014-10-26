@@ -103,13 +103,12 @@ class Server(object):
       isupport.update(feature.isupport)
     return isupport
 
-  def new_user(self, transport):
-    u = user.User(self, transport)
+  def new_local_user(self, transport):
+    u = user.LocalUser(self, transport)
 
     logger.info("Accepted connection from {}".format(
         transport.get_extra_info("peername")))
 
-    self.run_hooks("after_new_user", u)
     return u
 
   def register_user(self, user):
