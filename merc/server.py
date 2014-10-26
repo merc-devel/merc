@@ -276,7 +276,10 @@ class Server(object):
     except KeyboardInterrupt:
       pass
 
-    proto_server.close()
-    self.loop.run_until_complete(asyncio.gather(*[proto_server.wait_closed()
-                                               for proto_server in proto_servers]))
+    for proto_server in proto_servers:
+      proto_server.close()
+
+    self.loop.run_until_complete(
+        asyncio.gather(*[proto_server.wait_closed()
+                         for proto_server in proto_servers]))
     self.loop.close()
