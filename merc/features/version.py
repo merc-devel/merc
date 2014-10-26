@@ -35,10 +35,9 @@ class Version(message.Command):
   @message.Command.requires_registration
   def handle_for(self, user, prefix):
     if self.server and self.server != user.server.name:
-        raise errors.NoSuchServer(self.server)
-    else:
-        server = user.server
+      raise errors.NoSuchServer(self.server)
 
+    server = user.server
     version = 'merc-{}'.format(server.version)
     user.send_reply(VersionReply(version, server.name, "..."))
     user.send_reply(welcome.ISupport(server.isupport))
