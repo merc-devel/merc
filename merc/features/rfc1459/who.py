@@ -70,6 +70,9 @@ class Who(message.Command):
                         if self.user_matches_query_type(target.user)]
       else:
         for target in user.server.users.query(self.target):
+          if target.is_invisible and target.nickname != self.target:
+            continue
+
           if not self.user_matches_query_type(target):
             continue
 
@@ -87,7 +90,7 @@ class Who(message.Command):
 
     for cu in who:
       reply = WhoReply(cu, False, False)
-      user.server.run_hooks("modify_who_reply", cu, reply)
+      user.server.run_hooks("modify_who_reply", user, cu, reply)
       user.send_reply(reply)
 
     user.send_reply(EndOfWho(self.target))

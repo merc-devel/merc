@@ -65,7 +65,7 @@ def send_is_away_if_away(user, target):
 
 
 @AwayFeature.hook("modify_who_reply")
-def modify_who_reply(target, reply):
+def modify_who_reply(user, target, reply):
   locals = target.user.get_feature_locals(AwayFeature)
   reply.is_away = locals.get("away", None) is not None
 

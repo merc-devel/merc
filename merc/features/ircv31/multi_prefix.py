@@ -21,6 +21,6 @@ def modify_name_reply(user, reply):
 
 
 @MultiPrefixFeature.hook("modify_who_reply")
-def modify_who_reply(user, reply):
+def modify_who_reply(user, target, reply):
   if MultiPrefix(user).get():
     reply.multi_prefix = True
