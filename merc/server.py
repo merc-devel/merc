@@ -52,7 +52,7 @@ class Server(object):
   def rehash(self):
     self._unload_all_features()
     with open(self.config_filename, "r") as f:
-      self.config = yaml.load(f)
+      self.config = yaml.safe_load(f)
     self._load_configured_features()
 
   @property
