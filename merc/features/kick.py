@@ -10,6 +10,9 @@ class KickFeature(feature.Feature):
 install = KickFeature
 
 
+MAX_TARGETS = 1
+
+
 @KickFeature.register_command
 class Kick(message.Command):
   NAME = "KICK"
@@ -49,3 +52,7 @@ class Kick(message.Command):
       params.append(self.reason)
     return params
 
+
+@KickFeature.hook("modify_targmax")
+def modify_targmax(targmax):
+  targmax["KICK"] = MAX_TARGETS

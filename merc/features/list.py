@@ -10,6 +10,9 @@ class ListFeature(feature.Feature):
 install = ListFeature
 
 
+MAX_TARGETS = 1
+
+
 class ListStart(message.Reply):
   NAME = "321"
   FORCE_TRAILING = True
@@ -80,3 +83,8 @@ class Secret(mode.FlagMode, mode.ChanModeMixin):
 
   def get(self):
     return self.target.is_secret
+
+
+@ListFeature.hook("modify_targmax")
+def modify_targmax(targmax):
+  targmax["LIST"] = MAX_TARGETS

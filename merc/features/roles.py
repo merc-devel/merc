@@ -9,12 +9,6 @@ ROLE_MODES = "qaohv"
 class RolesFeature(feature.Feature):
   NAME = __name__
 
-  @property
-  def isupport(self):
-    return {
-        "PREFIX": "({}){}".format(ROLE_MODES, ROLE_CHARS)
-    }
-
 
 install = RolesFeature
 
@@ -119,3 +113,10 @@ class Voiced(ChannelRoleMode):
 
   def get_for_target(self, target):
     return target.is_voiced
+
+
+@RolesFeature.hook("modify_isupport")
+def modify_isupport(server, isupport):
+  isupport.update({
+      "PREFIX": "({}){}".format(ROLE_MODES, ROLE_CHARS)
+  })

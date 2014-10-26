@@ -12,12 +12,6 @@ NICKNAME_REGEX = regex.compile(r"^[\p{L}\p{So}_\[\]\\^{}|`][\p{L}\p{So}\p{N}_\[\
 class NickFeature(feature.Feature):
   NAME = __name__
 
-  @property
-  def isupport(self):
-    return {
-        "NICKLEN": MAX_NICKNAME_LENGTH
-    }
-
 
 install = NickFeature
 
@@ -72,3 +66,10 @@ class SANick(_Nick):
   def handle_for(self, user, prefix):
     user.check_is_irc_operator()
     super().handle_for(user, prefix)
+
+
+@NickFeature.hook("modify_isupport")
+def modify_isupport(server, isupport):
+  isupport.update({
+      "NICKLEN": MAX_NICKNAME_LENGTH
+  })

@@ -14,32 +14,6 @@ MAX_MODES = 4
 class ModeFeature(feature.Feature):
   NAME = __name__
 
-  @property
-  def isupport(self):
-    list_modes = set()
-    param_modes = set()
-    set_with_param_modes = set()
-    flag_modes = set()
-
-    for m in self.server.channel_modes.values():
-      if issubclass(m, mode.ListMode):
-        list_modes.add(m.CHAR)
-      elif issubclass(m, mode.ParamMode):
-        param_modes.add(m.CHAR)
-      elif issubclass(m, mode.SetWithParamMode):
-        set_with_param_modes.add(m.CHAR)
-      elif issubclass(m, mode.FlagMode):
-        flag_modes.add(m.CHAR)
-
-    return {
-        "MODES": MAX_MODES,
-        "CHANMODES": ",".join(["".join(sorted(list_modes)),
-                               "".join(sorted(param_modes)),
-                               "".join(sorted(set_with_param_modes)),
-                               "".join(sorted(flag_modes))])
-    }
-
-
 install = ModeFeature
 
 
@@ -283,3 +257,29 @@ def send_channel_modes_on_new_join(user, target, channel):
 def send_mode_on_user_mode_change(user, applied):
   flags, args = Mode._coalesce_modes(applied)
   user.relay_to_self(Mode(user.nickname, flags, *args))
+
+
+@ModeFeature.hook("modify_isupport")
+def modify_isupport(server, isupport):
+  list_modes = set()
+  param_modes = set()
+  set_with_param_modes = set()
+  flag_modes = set()
+
+  for m in server.channel_modes.values():
+    if issubclass(m, mode.ListMode):
+      list_modes.add(m.CHAR)
+    elif issubclass(m, mode.ParamMode):
+      param_modes.add(m.CHAR)
+    elif issubclass(m, mode.SetWithParamMode):
+      set_with_param_modes.add(m.CHAR)
+    elif issubclass(m, mode.FlagMode):
+      flag_modes.add(m.CHAR)
+
+  isupport.update({
+      "MODES": MAX_MODES,
+      "CHANMODES": ",".join(["".join(sorted(list_modes)),
+                             "".join(sorted(param_modes)),
+                             "".join(sorted(set_with_param_modes)),
+                             "".join(sorted(flag_modes))])
+  })

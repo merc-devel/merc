@@ -1,10 +1,10 @@
+from merc import channel
 from merc import feature
 from merc import message
 
 
 class ISupportFeature(feature.Feature):
   NAME = __name__
-
 
 install = ISupportFeature
 
@@ -23,4 +23,17 @@ class ISupport(message.Reply):
 
 @ISupportFeature.hook("send_isupport")
 def send_isupport(user):
-  user.send_reply(ISupport(user.server.isupport))
+  targmax = {}
+  user.server.run_hooks("modify_targmax", targmax)
+
+  isupport = {
+      "CHANTYPES": "".join(channel.Channel.CHANNEL_CHARS),
+      "NETWORK": user.server.network_name,
+      "CASEMAPPING": "unicode",
+      "CHARSET": "utf-8",
+      "TARGMAX": ",".join("{}:{}".format(k, v if v is not None else "")
+                          for k, v in targmax.items())
+  }
+  user.server.run_hooks("modify_isupport", user.server, isupport)
+
+  user.send_reply(ISupport(isupport))

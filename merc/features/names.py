@@ -12,6 +12,9 @@ class NamesFeature(feature.Feature):
 install = NamesFeature
 
 
+MAX_TARGETS = 1
+
+
 class LUserClient(message.Reply):
   NAME = "251"
   FORCE_TRAILING = True
@@ -103,7 +106,7 @@ class Names(message.Command):
 
       user.send_reply(EndOfNames(None))
     else:
-      for channel_name in self.channel_names:
+      for channel_name in self.channel_names[:MAX_TARGETS]:
         try:
           chan = user.server.get_channel(channel_name)
         except errors.NoSuchNick:
@@ -119,6 +122,11 @@ class Names(message.Command):
               chan.name,
               chan.get_visible_users_for(user)))
         user.send_reply(EndOfNames(channel_name))
+
+
+@NamesFeature.hook("modify_targmax")
+def modify_targmax(targmax):
+  targmax["NAMES"] = MAX_TARGETS
 
 
 @NamesFeature.hook("after_join_channel")

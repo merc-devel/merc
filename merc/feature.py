@@ -16,10 +16,6 @@ class Feature(object, metaclass=FeatureMeta):
   def __init__(self, server):
     self.server = server
 
-  @property
-  def isupport(self):
-    return {}
-
   @classmethod
   def register_command(cls, command):
     cls.COMMANDS[command.NAME] = command

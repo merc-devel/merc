@@ -17,12 +17,6 @@ TopicDetail = collections.namedtuple("TopicDetail", ["text", "who", "time"])
 class TopicFeature(feature.Feature):
   NAME = __name__
 
-  @property
-  def isupport(self):
-    return {
-        "TOPICLEN": MAX_TOPIC_LENGTH
-    }
-
 
 install = TopicFeature
 
@@ -135,3 +129,10 @@ def modify_list_reply(channel, reply):
 
   if current_topic is not None:
     reply.topic = current_topic.text
+
+
+@TopicFeature.hook("modify_isupport")
+def modify_isupport(server, isupport):
+  isupport.update({
+      "TOPICLEN": MAX_TOPIC_LENGTH
+  })

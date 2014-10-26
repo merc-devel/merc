@@ -13,6 +13,9 @@ class PrivmsgFeature(feature.Feature):
 install = PrivmsgFeature
 
 
+MAX_TARGETS = 4
+
+
 class _Privmsg(message.Command):
   MIN_ARITY = 2
   FORCE_TRAILING = True
@@ -26,7 +29,7 @@ class _Privmsg(message.Command):
 
   @message.Command.requires_registration
   def handle_for(self, user, prefix):
-    for target_name in self.targets:
+    for target_name in self.targets[:MAX_TARGETS]:
       if channel.Channel.is_valid_name(target_name):
         try:
           chan = user.server.get_channel(target_name)
@@ -75,3 +78,9 @@ class Moderated(mode.FlagMode, mode.ChanModeMixin):
 @PrivmsgFeature.hook("send_server_notice")
 def send_server_notice(user, text):
   user.send_reply(Notice("*", text))
+
+
+@PrivmsgFeature.hook("modify_targmax")
+def modify_targmax(targmax):
+  targmax["PRIVMSG"] = MAX_TARGETS
+  targmax["NOTICE"] = MAX_TARGETS

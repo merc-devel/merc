@@ -12,6 +12,9 @@ class WhoIsFeature(feature.Feature):
 install = WhoIsFeature
 
 
+MAX_TARGETS = 1
+
+
 class WhoIsUser(message.Reply):
   NAME = "311"
   FORCE_TRAILING = True
@@ -96,7 +99,7 @@ class WhoIs(message.Command):
 
   @message.Command.requires_registration
   def handle_for(self, user, prefix):
-    for nickname in self.nicknames:
+    for nickname in self.nicknames[:MAX_TARGETS]:
       try:
         target = user.server.get_user(nickname)
       except errors.NoSuchNick as e:
@@ -122,3 +125,8 @@ class WhoIs(message.Command):
           user.send_reply(WhoIsChannels(target.nickname, channels))
         user.server.run_hooks("after_user_whois", user, target)
         user.send_reply(WhoIsEnd(target.nickname))
+
+
+@WhoIsFeature.hook("modify_targmax")
+def modify_targmax(targmax):
+  targmax["WHOIS"] = MAX_TARGETS

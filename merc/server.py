@@ -90,19 +90,6 @@ class Server(object):
   def register_signal_handlers(self):
     signal.signal(signal.SIGHUP, lambda signum, frame: self.rehash())
 
-  @property
-  def isupport(self):
-    isupport = {
-      "CHANTYPES": "".join(channel.Channel.CHANNEL_CHARS),
-      "NETWORK": self.network_name,
-      "CASEMAPPING": "unicode",
-      "CHARSET": "utf-8"
-    }
-
-    for feature in self.features.values():
-      isupport.update(feature.isupport)
-    return isupport
-
   def new_local_user(self, transport):
     u = user.LocalUser(self, transport)
 
