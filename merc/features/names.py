@@ -41,12 +41,10 @@ class NameReply(message.Reply):
   def as_reply_params(self, user):
     return [self.type,
             self.channel_name if self.channel_name is not None else "*",
-            " ".join((target.sigils
-                      if "multi-prefix" in target.user.capabilities
-                      else target.sigil) +
-                     (target.user.hostmask
-                      if "uhnames" in target.user.capabilities
-                      else target.user.nickname)
+            " ".join((target.sigils if "multi-prefix" in user.capabilities
+                                    else target.sigil) +
+                     (target.user.hostmask if "uhnames" in user.capabilities
+                                           else target.user.nickname)
                      for target in self.users)]
 
 
