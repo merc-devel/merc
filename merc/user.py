@@ -132,7 +132,7 @@ class LocalUser(User):
     message.handle_for(self, prefix)
     self.server.run_hooks("after_message", self, message, prefix)
 
-  def on_close(self):
+  def on_remove(self):
     for channel_name in list(self.channels):
       self.server.part_channel(self, channel_name)
     self.transport.close()

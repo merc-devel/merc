@@ -91,12 +91,7 @@ class Server(object):
     signal.signal(signal.SIGHUP, lambda signum, frame: self.rehash())
 
   def new_local_user(self, transport):
-    u = user.LocalUser(self, transport)
-
-    logger.info("Accepted connection from {}".format(
-        transport.get_extra_info("peername")))
-
-    return u
+    return user.LocalUser(self, transport)
 
   def register_user(self, user):
     if user.normalized_nickname in self.users:
@@ -127,7 +122,7 @@ class Server(object):
     self.run_hooks("before_remove_user", user)
     if user.is_registered:
       del self.users[user.normalized_nickname]
-    user.on_close()
+    user.on_remove()
     self.run_hooks("after_remove_user", user)
 
   def get_user(self, name):
