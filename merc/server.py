@@ -165,7 +165,11 @@ class Server(object):
       pattern += "!*@*"
 
     return (user for user in self.users.values()
-                   if user.hostmask_matches(pattern))
+                 if user.hostmask_matches(pattern))
+
+  def query_channels(self, pattern):
+    return (channel for channel in self.channels.values()
+                    if channel.name_matches(pattern))
 
   def run_hooks(self, hook_name, *args, **kwargs):
     for feature in self.features.values():

@@ -56,9 +56,9 @@ class List(message.Command):
 
     try:
       if self.target is not None:
-        channels = [user.server.get_channel(self.target)]
+        channels = user.server.query_channels(self.target)
       else:
-        channels = (channel for channel in user.server.channels.values())
+        channels = user.server.channels.values()
 
       for channel in channels:
         if not user.can_see_channel(channel):
