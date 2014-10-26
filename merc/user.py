@@ -22,12 +22,14 @@ class User(object):
     self.host = None
     self.realname = None
 
+    self.is_negotiating_cap = False
     self.is_registered = False
     self.disconnect_reason = None
 
     self.channels = {}
     self.modes = {}
     self.feature_locals = {}
+    self.capabilities = set()
 
     self.is_invisible = True
     self.is_irc_operator = False
@@ -59,7 +61,7 @@ class User(object):
   @property
   def is_ready_for_registration(self):
     return self.nickname is not None and self.username is not None and \
-           self.host is not None
+           self.host is not None and not self.is_negotiating_cap
 
   def send(self):
     raise NotImplementedError
