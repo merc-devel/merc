@@ -179,3 +179,12 @@ class LocalUser(User):
   def close(self, reason=None):
     self.disconnect_reason = reason
     self.transport.close()
+
+
+class RemoteUser(User):
+  def __init__(self, id, server, remote_sid):
+    super.__init__(id, server)
+    self.remote_sid = sid
+
+  def send(self, prefix, msg):
+    self.server.run_hooks("send_remote", self, prefix, message)
