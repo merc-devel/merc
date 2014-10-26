@@ -59,18 +59,6 @@ class MyInfo(message.Reply):
                                 if mode.TAKES_PARAM)))]
 
 
-class ISupport(message.Reply):
-  NAME = "005"
-  FORCE_TRAILING = True
-
-  def __init__(self, support_params):
-    self.support_params = support_params
-
-  def as_reply_params(self, user):
-    return ["{}={}".format(k, v) for k, v in self.support_params.items()] + \
-        ["are supported by this server"]
-
-
 @WelcomeFeature.register_command
 class User(message.Command):
   NAME = "USER"
@@ -123,8 +111,7 @@ def welcome_on_register(user):
   user.send_reply(YourHost())
   user.send_reply(Created())
   user.send_reply(MyInfo())
-  user.send_reply(ISupport(user.server.isupport))
-
+  user.server.run_hooks("send_isupport", user)
   user.server.run_hooks("after_welcome", user)
 
 

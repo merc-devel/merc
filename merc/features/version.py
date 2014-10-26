@@ -1,7 +1,6 @@
 from merc import errors
 from merc import feature
 from merc import message
-from merc.features import welcome
 
 
 class VersionFeature(feature.Feature):
@@ -40,4 +39,4 @@ class Version(message.Command):
     server = user.server
     version = 'merc-{}'.format(server.version)
     user.send_reply(VersionReply(version, server.name, "..."))
-    user.send_reply(welcome.ISupport(server.isupport))
+    user.server.run_hooks("send_isupport", user)
