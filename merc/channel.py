@@ -54,7 +54,7 @@ class ChannelUser(object):
 
   @property
   def is_operator_equivalent(self):
-    return self.is_operator or self.is_admin
+    return self.is_operator or self.is_admin_equivalent
 
   @property
   def is_admin_equivalent(self):
