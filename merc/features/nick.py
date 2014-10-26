@@ -70,6 +70,4 @@ class SANick(_Nick):
 
 @NickFeature.hook("modify_isupport")
 def modify_isupport(server, isupport):
-  isupport.update({
-      "NICKLEN": MAX_NICKNAME_LENGTH
-  })
+  isupport["NICKLEN"] = MAX_NICKNAME_LENGTH

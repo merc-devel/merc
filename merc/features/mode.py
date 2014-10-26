@@ -276,10 +276,8 @@ def modify_isupport(server, isupport):
     elif issubclass(m, mode.FlagMode):
       flag_modes.add(m.CHAR)
 
-  isupport.update({
-      "MODES": MAX_MODES,
-      "CHANMODES": ",".join(["".join(sorted(list_modes)),
-                             "".join(sorted(param_modes)),
-                             "".join(sorted(set_with_param_modes)),
-                             "".join(sorted(flag_modes))])
-  })
+  isupport["MODES"] = MAX_MODES
+  isupport["CHANMODES"] = ",".join(["".join(sorted(list_modes)),
+                                    "".join(sorted(param_modes)),
+                                    "".join(sorted(set_with_param_modes)),
+                                    "".join(sorted(flag_modes))])

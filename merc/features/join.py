@@ -1,5 +1,6 @@
 import itertools
 
+from merc import channel
 from merc import errors
 from merc import feature
 from merc import message
@@ -141,3 +142,8 @@ class SAPart(_Part):
   def handle_for(self, user, prefix):
     user.check_is_irc_operator()
     super().handle_for(user, prefix)
+
+
+@JoinFeature.hook("modify_isupport")
+def modify_isupport(server, isupport):
+  isupport["CHANTYPES"] = "".join(channel.Channel.CHANNEL_CHARS)

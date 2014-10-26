@@ -133,6 +133,4 @@ def modify_list_reply(channel, reply):
 
 @TopicFeature.hook("modify_isupport")
 def modify_isupport(server, isupport):
-  isupport.update({
-      "TOPICLEN": MAX_TOPIC_LENGTH
-  })
+  isupport["TOPICLEN"] = MAX_TOPIC_LENGTH

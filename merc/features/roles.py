@@ -117,6 +117,4 @@ class Voiced(ChannelRoleMode):
 
 @RolesFeature.hook("modify_isupport")
 def modify_isupport(server, isupport):
-  isupport.update({
-      "PREFIX": "({}){}".format(ROLE_MODES, ROLE_CHARS)
-  })
+  isupport["PREFIX"] = "({}){}".format(ROLE_MODES, ROLE_CHARS)

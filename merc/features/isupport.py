@@ -27,7 +27,6 @@ def send_isupport(user):
   user.server.run_hooks("modify_targmax", targmax)
 
   isupport = {
-      "CHANTYPES": "".join(channel.Channel.CHANNEL_CHARS),
       "NETWORK": user.server.network_name,
       "CASEMAPPING": "unicode",
       "CHARSET": "utf-8",
