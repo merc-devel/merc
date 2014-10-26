@@ -56,6 +56,5 @@ features:
   - .ts6
   - .extban
   - .extrole
-  - .flood
   - .is_secure
   - .isupport
