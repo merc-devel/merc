@@ -20,6 +20,7 @@ class UserHostReply(message.Reply):
 
   def as_reply_params(self, user):
     return [" ".join("{}={}{}".format(user_host.nickname,
+                                      "*" if user_host.is_oper else "",
                                       "+" if not user_host.is_away else "-",
                                       user_host.hostmask)
             for user_host in self.user_hosts)]
@@ -38,13 +39,14 @@ class UserHost(message.Command):
     user_hosts = []
     for nickname in self.nicknames:
       try:
-        user = user.server.get_user(nickname)
+        target = user.server.get_user(nickname)
       except errors.NoSuchNick:
         pass
       else:
         user_host = util.Expando(nickname=nickname, is_away=False,
-                                 hostmask=user.hostmask)
-        user.server.run_hooks("modify_userhost_entry", user, user_host)
+                                 is_oper=target.is_irc_operator,
+                                 hostmask=target.hostmask)
+        user.server.run_hooks("modify_userhost_entry", target, user_host)
         user_hosts.append(user_host)
 
     user.send_reply(UserHostReply(user_hosts))

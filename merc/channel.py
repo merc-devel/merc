@@ -1,5 +1,6 @@
 import collections
 import datetime
+import fnmatch
 import functools
 import regex
 
@@ -93,6 +94,10 @@ class Channel(object):
 
     self.modes = {}
     self.feature_locals = {}
+
+  def name_matches(self, pattern):
+    return regex.match(fnmatch.translate(util.to_irc_lower(pattern)),
+                       util.to_irc_lower(self.name)) is not None
 
   @property
   def is_local(self):

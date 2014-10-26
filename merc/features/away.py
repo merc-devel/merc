@@ -71,6 +71,6 @@ def modify_who_reply(target, reply):
 
 
 @AwayFeature.hook("modify_userhost_entry")
-def modify_who_reply(target, entry):
+def modify_userhost_reply(target, entry):
   locals = target.get_feature_locals(AwayFeature)
   entry.is_away = locals.get("away", None) is not None
