@@ -19,10 +19,10 @@ class UserHostReply(message.Reply):
     self.user_hosts = user_hosts
 
   def as_reply_params(self, user):
-    return [" ".join("{}={}{}".format(user_host.nickname,
-                                      "*" if user_host.is_oper else "",
-                                      "+" if not user_host.is_away else "-",
-                                      user_host.hostmask)
+    return [" ".join("{}{}={}{}".format(user_host.nickname,
+                                        "*" if user_host.is_oper else "",
+                                        "+" if not user_host.is_away else "-",
+                                        user_host.hostmask)
             for user_host in self.user_hosts)]
 
 
