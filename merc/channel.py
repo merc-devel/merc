@@ -223,3 +223,12 @@ class ChannelStore(object):
 
   def count(self):
     return len(self.channels)
+
+  @property
+  def modes(self):
+    modes = {}
+
+    for feature in self.server.features.values():
+      modes.update(feature.CHANNEL_MODES)
+
+    return modes

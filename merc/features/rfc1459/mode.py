@@ -38,7 +38,7 @@ class UmodeIs(message.Reply):
   NAME = "221"
 
   def as_reply_params(self, user):
-    flags, args = show_modes(user, user.server.user_modes)
+    flags, args = show_modes(user, user.server.users.modes)
     return [flags] + args
 
 
@@ -49,7 +49,7 @@ class ChannelModeIs(message.Reply):
     self.channel = channel
 
   def as_reply_params(self, user):
-    flags, args = show_modes(self.channel, user.server.channel_modes)
+    flags, args = show_modes(self.channel, user.server.channels.modes)
     return [self.channel.name, flags] + args
 
 
@@ -134,7 +134,7 @@ class _Mode(message.Command):
         raise errors.NoSuchChannel(self.target)
 
       expanded = self._expand_modes(self.flags, self.args,
-                                    user.server.channel_modes)
+                                    user.server.channels.modes)
 
       self.check_can_set_channel_modes(user, chan, expanded)
 
@@ -155,7 +155,7 @@ class _Mode(message.Command):
 
       try:
         expanded = self._expand_modes(self.flags, self.args,
-                                      user.server.user_modes)
+                                      user.server.users.modes)
       except errors.UnknownMode as e:
         raise errors.UmodeUnknownFlag(e.param)
 
@@ -237,7 +237,7 @@ class SAMode(_Mode):
 
 @ModeFeature.hook("after_welcome")
 def send_modes_on_welcome(user):
-  flags, args = show_modes(user, user.server.user_modes)
+  flags, args = show_modes(user, user.server.users.modes)
   if flags != "+":
     user.relay_to_self(Mode(user.nickname, flags, *args))
 
@@ -249,7 +249,7 @@ def send_timestamp_on_join(user, target, channel):
 
 @ModeFeature.hook("after_join_new_channel")
 def send_channel_modes_on_new_join(user, target, channel):
-  flags, args = show_modes(channel, user.server.channel_modes)
+  flags, args = show_modes(channel, user.server.channels.modes)
   target.send_reply(Mode(channel.name, flags, *args))
 
 
@@ -266,7 +266,7 @@ def modify_isupport(server, isupport):
   set_with_param_modes = set()
   flag_modes = set()
 
-  for m in server.channel_modes.values():
+  for m in server.channels.modes.values():
     if issubclass(m, mode.ListMode):
       list_modes.add(m.CHAR)
     elif issubclass(m, mode.ParamMode):

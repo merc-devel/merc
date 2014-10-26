@@ -94,24 +94,6 @@ class Server(object):
     for feature in self.features.values():
       feature.run_hooks(hook_name, *args, **kwargs)
 
-  @property
-  def user_modes(self):
-    modes = {}
-
-    for feature in self.features.values():
-      modes.update(feature.USER_MODES)
-
-    return modes
-
-  @property
-  def channel_modes(self):
-    modes = {}
-
-    for feature in self.features.values():
-      modes.update(feature.CHANNEL_MODES)
-
-    return modes
-
   def get_command(self, name):
     for feature in self.features.values():
       if name in feature.COMMANDS:

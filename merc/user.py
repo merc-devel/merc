@@ -253,3 +253,12 @@ class UserStore(object):
 
   def count(self):
     return len(self.users)
+
+  @property
+  def modes(self):
+    modes = {}
+
+    for feature in self.server.features.values():
+      modes.update(feature.USER_MODES)
+
+    return modes
