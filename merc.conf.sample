@@ -63,6 +63,7 @@ features:
   - .mode
   - .motd
   - .names
+  - .nick
   - .oper
   - .ping
   - .privmsg
@@ -70,6 +71,7 @@ features:
   - .roles
   - .topic
   - .userhost
+  - .version
   - .welcome
   - .who
   - .whois
