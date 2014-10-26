@@ -1,3 +1,4 @@
+from merc import errors
 from merc import feature
 from merc import message
 from merc import mode
@@ -8,6 +9,11 @@ class IsSecureFeature(feature.Feature):
 
 
 install = IsSecureFeature
+
+
+class SecureOnlyChannel(errors.ParametrizedError):
+  NAME = "489"
+  REASON = "Channel can only be joined by securely connected users"
 
 
 @IsSecureFeature.register_user_mode
@@ -37,3 +43,14 @@ class WhoIsSecure(message.Reply):
 def send_whois_secure_if_secure(user, target):
   if target.is_securely_connected:
     user.send_reply(WhoIsSecure(target.nickname, "*"))
+
+
+@IsSecureFeature.register_channel_mode
+class SecureOnly(mode.FlagMode, mode.ChanModeMixin):
+  CHAR = "S"
+
+
+@IsSecureFeature.hook("check_join_channel")
+def check_channel_ban(target, channel, key):
+  if SecureOnly(channel).get() and not target.is_securely_connected:
+    raise SecureOnlyChannel(channel.name)
