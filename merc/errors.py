@@ -18,7 +18,7 @@ class Error(BaseError):
 
 class SimpleError(BaseError):
   def as_reply_params(self):
-    return [user.displayed_nickname, self.REASON]
+    return [self.REASON]
 
 
 class ParametrizedError(BaseError):
