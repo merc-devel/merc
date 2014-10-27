@@ -18,21 +18,21 @@ class IsAway(message.Reply):
     self.nick = nick
     self.msg = msg
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return [self.nick, self.msg]
 
 
 class NowAway(message.Reply):
   NAME = "306"
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return ["You have been marked as being away"]
 
 
 class UnAway(message.Reply):
   NAME = "305"
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return ["You are no longer marked as being away"]
 
 
@@ -58,7 +58,7 @@ class Away(message.Command):
 @AwayFeature.hook("after_user_invite")
 @AwayFeature.hook("after_user_privmsg")
 @AwayFeature.hook("after_user_whois")
-def send_is_away_if_away(user, target):
+def send_is_away_if_away(server, user, target):
   locals = target.get_feature_locals(AwayFeature)
 
   if locals.get("away", None) is not None:
@@ -66,12 +66,12 @@ def send_is_away_if_away(user, target):
 
 
 @AwayFeature.hook("modify_who_reply")
-def modify_who_reply(user, target, reply):
+def modify_who_reply(server, user, target, reply):
   locals = target.user.get_feature_locals(AwayFeature)
   reply.is_away = locals.get("away", None) is not None
 
 
 @AwayFeature.hook("modify_userhost_entry")
-def modify_userhost_reply(target, entry):
+def modify_userhost_reply(server, target, entry):
   locals = target.get_feature_locals(AwayFeature)
   entry.is_away = locals.get("away", None) is not None

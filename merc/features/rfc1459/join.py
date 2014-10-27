@@ -62,12 +62,12 @@ class Join(_Join):
     self.keys = keys.split(",") if keys is not None else []
 
   def check_can_join(self, server, user, channel, key):
-    server.run_hooks("check_join_channel", server, user, channel, key)
+    server.run_hooks("check_join_channel", user, channel, key)
 
   def get_target(self, server, user):
     return user
 
-  def as_params(self, server, user):
+  def as_command_params(self):
     params = [",".join(self.channel_names)]
     if self.keys:
       params.append(",".join(self.keys))
@@ -128,7 +128,7 @@ class Part(_Part):
   def get_target(self, server, user):
     return user
 
-  def as_params(self, server, user):
+  def as_command_params(self):
     params = [",".join(self.channel_names)]
     if self.reason is not None:
       params.append(self.reason)

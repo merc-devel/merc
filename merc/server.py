@@ -92,7 +92,7 @@ class Server(object):
 
   def run_hooks(self, hook_name, *args, **kwargs):
     for feature in self.features.values():
-      feature.run_hooks(hook_name, *args, **kwargs)
+      feature.run_hooks(hook_name, self, *args, **kwargs)
 
   def get_command(self, name):
     for feature in self.features.values():

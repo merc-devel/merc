@@ -19,7 +19,7 @@ class EndOfWho(message.Reply):
   def __init__(self, target):
     self.target = target
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return [self.target, "End of /WHO command"]
 
 
@@ -32,7 +32,7 @@ class WhoReply(message.Reply):
     self.is_away = is_away
     self.multi_prefix = multi_prefix
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return [self.target.channel.name if self.target.channel is not None
                                      else "*",
             self.target.user.username, self.target.user.host,

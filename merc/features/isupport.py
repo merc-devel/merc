@@ -17,7 +17,7 @@ class ISupport(message.Reply):
   def __init__(self, support_params):
     self.support_params = support_params
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return ["{}={}".format(k, v) for k, v in self.support_params.items()] + \
         ["are supported by this server"]
 
@@ -34,7 +34,7 @@ def send_isupport(server, user):
       "TARGMAX": ",".join("{}:{}".format(k, v if v is not None else "")
                           for k, v in targmax.items())
   }
-  server.run_hooks("modify_isupport", server, isupport)
+  server.run_hooks("modify_isupport", isupport)
 
   reply = ISupport({})
 

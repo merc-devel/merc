@@ -19,14 +19,15 @@ class LUserClient(message.Reply):
   NAME = "251"
   FORCE_TRAILING = True
 
-  def as_reply_params(self, server, user):
-    num_invisible = sum(
-        user.is_invisible for user in server.users.all())
+  def __init__(self, num_users, num_invisible, num_servers):
+    self.num_users = num_users
+    self.num_invisible = num_invisible
+    self.num_servers = num_servers
 
+  def as_reply_params(self):
     return ["There are {} users and {} invisible on {} servers".format(
-        server.users.count() - num_invisible,
-        num_invisible,
-        1)]
+        self.num_users - self.num_invisible,
+        self.num_invisible, self.num_servers)]
 
 
 class NameReply(message.Reply):
@@ -40,7 +41,7 @@ class NameReply(message.Reply):
     self.multi_prefix = False
     self.uhnames = False
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return [self.type,
             self.channel_name if self.channel_name is not None else "*",
             " ".join((target.sigils if self.multi_prefix
@@ -57,7 +58,7 @@ class EndOfNames(message.Reply):
   def __init__(self, channel_name=None):
     self.channel_name = channel_name
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return [self.channel_name if self.channel_name is not None else "*",
             "End of /NAMES list"]
 
@@ -73,7 +74,7 @@ class Names(message.Command):
 
   def make_name_reply(self, server, user, type, channel_name, users):
     reply = NameReply(type, channel_name, users, False, False)
-    server.run_hooks("modify_name_reply", server, user, reply)
+    server.run_hooks("modify_name_reply", user, reply)
     return reply
 
   @message.Command.requires_registration
@@ -86,7 +87,7 @@ class Names(message.Command):
           seen_nicknames.update(cu.user.normalized_nickname
                                 for cu in chan.get_visible_users_for(user))
           user.send_reply(self.make_name_reply(
-              user, "@", chan.name, chan.get_visible_users_for(user)))
+              server, user, "@", chan.name, chan.get_visible_users_for(user)))
           continue
 
         if chan.is_secret:
@@ -100,7 +101,7 @@ class Names(message.Command):
             channel_users.append(cu)
 
         if channel_users:
-          user.send_reply(self.make_name_reply(user, "=", chan.name,
+          user.send_reply(self.make_name_reply(server, user, "=", chan.name,
                                                channel_users))
 
       visible_users = []
@@ -131,26 +132,28 @@ class Names(message.Command):
           channel_name = chan.name
 
           user.send_reply(self.make_name_reply(
-              user,
+              server, user,
               "@" if user.is_in_channel(chan) else "*",
-              chan.name,
-              chan.get_visible_users_for(user)))
+              chan.name, chan.get_visible_users_for(user)))
         user.send_reply(EndOfNames(channel_name))
 
 
 @NamesFeature.hook("modify_targmax")
-def modify_targmax(targmax):
+def modify_targmax(server, targmax):
   targmax["NAMES"] = MAX_TARGETS
 
 
 @NamesFeature.hook("after_join_channel")
-def send_names_on_join(user, target, channel):
-    target.on_message(target.hostmask, Names(channel.name))
+def send_names_on_join(server, user, target, channel):
+    target.on_message(server, target.hostmask, Names(channel.name))
 
 
 @NamesFeature.hook("luser_user")
-def show_luser_oper(user):
-  user.send_reply(LUserClient())
+def show_luser_oper(server, user):
+  num_invisible = sum(
+      user.is_invisible for user in server.users.all())
+
+  user.send_reply(LUserClient(server.users.count(), num_invisible, 1))
 
 
 @NamesFeature.register_user_mode

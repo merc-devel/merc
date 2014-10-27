@@ -45,7 +45,7 @@ class Kick(message.Command):
                       Kick(self.channel_name, self.nickname, self.reason))
     channel.part(target)
 
-  def as_params(self, server, user):
+  def as_command_params(self):
     params = [self.channel_name, self.nickname]
     if self.reason is not None:
       params.append(self.reason)
@@ -53,5 +53,5 @@ class Kick(message.Command):
 
 
 @KickFeature.hook("modify_targmax")
-def modify_targmax(targmax):
+def modify_targmax(server, targmax):
   targmax["KICK"] = MAX_TARGETS

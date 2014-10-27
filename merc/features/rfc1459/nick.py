@@ -32,7 +32,7 @@ class _Nick(message.Command):
       target.send(old_hostmask, Nick(self.nickname))
     else:
       if target.is_ready_for_registration:
-        target.register()
+        target.register(server)
 
 
 @NickFeature.register_command
@@ -43,7 +43,7 @@ class Nick(_Nick):
   def __init__(self, nickname, *args):
     self.nickname = nickname
 
-  def as_params(self, server, user):
+  def as_command_params(self):
     return [self.nickname]
 
   def get_target(self, server, user):

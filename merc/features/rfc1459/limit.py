@@ -44,7 +44,7 @@ class Limit(mode.SetWithParamMode, mode.ChanModeMixin):
 
 
 @LimitFeature.hook("check_join_channel")
-def check_channel_limit(target, channel, key):
+def check_channel_limit(server, target, channel, key):
   locals = channel.get_feature_locals(LimitFeature)
   limit = locals.get("limit", None)
 

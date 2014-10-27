@@ -18,7 +18,7 @@ class CapReply(message.Reply):
     self.subcommand = subcommand
     self.arg = arg
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return [self.subcommand, self.arg]
 
 
@@ -42,7 +42,7 @@ class Cap(message.Command):
   def req(self, server, user, caps):
     capabilities = server.users.capabilities
 
-    if not (set(caps) - set(capabilities.keys())):
+    if set(caps) <= set(capabilities.keys()):
       for cap in caps:
         capabilities[cap](user).set()
       user.send_reply(CapReply("ACK", " ".join(caps)))
@@ -65,7 +65,7 @@ class Cap(message.Command):
   def end(self, server, user):
     user.is_negotiating_cap = False
     if user.is_ready_for_registration:
-      user.register()
+      user.register(server)
 
   def handle_for(self, server, user, prefix):
     subcommand = self.subcommand.upper()

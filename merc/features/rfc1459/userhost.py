@@ -18,7 +18,7 @@ class UserHostReply(message.Reply):
   def __init__(self, user_hosts):
     self.user_hosts = user_hosts
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return [" ".join("{}{}={}{}".format(user_host.nickname,
                                         "*" if user_host.is_oper else "",
                                         "+" if not user_host.is_away else "-",

@@ -84,14 +84,14 @@ class ListMode(Mode):
   def list(self, user):
     raise NotImplementedError
 
-  def set(self, user, value):
+  def set(self, server, user, value):
     if value is None:
       self.list(user)
       return False
 
     return self.add(server, user, value)
 
-  def unset(self, user, value):
+  def unset(self, server, user, value):
     if value is None:
       return False
 
@@ -161,7 +161,7 @@ class ChannelRoleMode(Mode):
     self.toggle_for_target(target)
     return True
 
-  def unset(self, user, value):
+  def unset(self, server, user, value):
     target = self.target.get_channel_user_for(server.users.get(value))
 
     if not self.get_for_target(target):

@@ -24,7 +24,7 @@ class _Privmsg(message.Command):
     self.targets = targets.split(",")
     self.text = text
 
-  def as_params(self, server, user):
+  def as_command_params(self):
     return [",".join(self.targets), self.text]
 
   @message.Command.requires_registration
@@ -42,7 +42,7 @@ class _Privmsg(message.Command):
           except errors.NoSuchNick:
             raise errors.CannotSendToChan(chan.name)
 
-          server.run_hooks("check_can_message_channel", server, user, chan)
+          server.run_hooks("check_can_message_channel", user, chan)
 
         if Moderated(chan).get():
           chan.check_is_voiced(user)
@@ -77,11 +77,11 @@ class Moderated(mode.FlagMode, mode.ChanModeMixin):
 
 
 @PrivmsgFeature.hook("send_server_notice")
-def send_server_notice(user, text):
+def send_server_notice(server, user, text):
   user.send_reply(Notice("*", text))
 
 
 @PrivmsgFeature.hook("modify_targmax")
-def modify_targmax(targmax):
+def modify_targmax(server, targmax):
   targmax["PRIVMSG"] = MAX_TARGETS
   targmax["NOTICE"] = MAX_TARGETS

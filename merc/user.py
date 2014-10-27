@@ -104,10 +104,9 @@ class User(object):
 
 
 class LocalUser(User):
-  def __init__(self, store, server, transport):
-    super().__init__(id(self), store, server.name)
+  def __init__(self, store, server_name, transport):
+    super().__init__(id(self), store, server_name)
 
-    self.server = server
     self.transport = transport
     self.is_securely_connected = \
         self.transport.get_extra_info("sslcontext") is not None
@@ -116,11 +115,11 @@ class LocalUser(User):
     self.transport.write(msg.emit(self, prefix) + b"\r\n")
 
   def on_connect(self, server):
-    asyncio.async(self.resolve_hostname_coro(server), loop=self.server.loop)
+    asyncio.async(self.resolve_hostname_coro(server), loop=server.loop)
 
   def on_raw_message(self, server, prefix, command, params):
     try:
-      command_type = self.server.get_command(command)
+      command_type = server.get_command(command)
     except KeyError:
       if self.is_registered:
         self.send_reply(errors.UnknownCommand(command))
@@ -136,7 +135,7 @@ class LocalUser(User):
   def on_message(self, server, prefix, message):
     self.last_activity_time = datetime.datetime.now()
     message.handle_for(server, self, prefix)
-    self.server.run_hooks("after_message", server, self, message, prefix)
+    server.run_hooks("after_message", self, message, prefix)
 
   def on_remove(self, server):
     for channel_name in list(self.channels):
@@ -148,8 +147,8 @@ class LocalUser(User):
     host, *_ = self.transport.get_extra_info("peername")
     host, _, _ = host.partition("%")
 
-    self.server.run_hooks("send_server_notice", self
-                          "*** Looking up your hostname...")
+    server.run_hooks("send_server_notice", self,
+                     "*** Looking up your hostname...")
     ip = ipaddress.ip_address(host)
 
     is_ipv4 = False
@@ -161,24 +160,24 @@ class LocalUser(User):
       rip = ".".join(reversed("".join(ip.exploded.split(":")))) + ".ip6.arpa."
 
     try:
-      forward, *_ = yield from self.server.resolver.query(rip, "PTR")
-      backward, *_ = yield from self.server.resolver.query(
+      forward, *_ = yield from server.resolver.query(rip, "PTR")
+      backward, *_ = yield from server.resolver.query(
           forward, "AAAA" if not is_ipv4 else "A")
 
       if ip == ipaddress.ip_address(backward):
-        self.server.run_hooks("send_server_notice", self
-                              "*** Found your hostname ({})".format(forward))
+        server.run_hooks("send_server_notice", self,
+                         "*** Found your hostname ({})".format(forward))
         self.host = forward
       else:
-        self.server.run_hooks("send_server_notice", self
-                              "*** Hostname does not resolve correctly")
+        server.run_hooks("send_server_notice", self,
+                         "*** Hostname does not resolve correctly")
     except aiodns.error.DNSError:
-      self.server.run_hooks("send_server_notice", self
-                            "*** Couldn't look up your hostname")
+      server.run_hooks("send_server_notice", self,
+                       "*** Couldn't look up your hostname")
       self.host = host
 
     if self.is_ready_for_registration:
-      self.register()
+      self.register(server)
 
   def register(self, server):
     if self.store.has(self.nickname):
@@ -187,7 +186,7 @@ class LocalUser(User):
 
     self.store.add(self)
     self.is_registered = True
-    self.server.run_hooks("after_register", server, self)
+    server.run_hooks("after_register", self)
 
   def close(self, reason=None):
     self.disconnect_reason = reason
@@ -199,9 +198,6 @@ class RemoteUser(User):
     super.__init__(id, server_name)
     self.remote_sid = sid
 
-  def send(self, prefix, msg):
-    self.server.run_hooks("send_remote", self, prefix, message)
-
 
 class UserStore(object):
   def __init__(self, server):
@@ -209,7 +205,7 @@ class UserStore(object):
     self.users = {}
 
   def local_new(self, transport):
-    return LocalUser(self, self.server, transport)
+    return LocalUser(self, self.server.name, transport)
 
   def add(self, user):
     self.users[user.normalized_nickname] = user
@@ -230,11 +226,11 @@ class UserStore(object):
       self.users[user.normalized_nickname] = user
 
   def remove(self, user):
-    self.server.run_hooks("before_remove_user", self.server, user)
+    self.server.run_hooks("before_remove_user", user)
     if user.is_registered:
       del self.users[user.normalized_nickname]
     user.on_remove(self.server)
-    self.server.run_hooks("after_remove_user", self.server, user)
+    self.server.run_hooks("after_remove_user", user)
 
   def get(self, name):
     try:

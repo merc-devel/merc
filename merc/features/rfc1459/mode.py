@@ -37,20 +37,24 @@ def show_modes(target, modes):
 class UmodeIs(message.Reply):
   NAME = "221"
 
-  def as_reply_params(self, server, user):
-    flags, args = show_modes(user, server.users.modes)
-    return [flags] + args
+  def __init__(self, flags, args):
+    self.flags = flags
+    self.args = args
+
+  def as_reply_params(self):
+    return [self.flags] + self.args
 
 
 class ChannelModeIs(message.Reply):
   NAME = "324"
 
-  def __init__(self, channel):
-    self.channel = channel
+  def __init__(self, channel_name, flags, args):
+    self.channel_name = channel_name
+    self.flags = flags
+    self.args = args
 
-  def as_reply_params(self, server, user):
-    flags, args = show_modes(self.channel, server.channels.modes)
-    return [self.channel.name, flags] + args
+  def as_reply_params(self):
+    return [self.channel_name, self.flags] + self.args
 
 
 class CreationTime(message.Reply):
@@ -60,7 +64,7 @@ class CreationTime(message.Reply):
     self.channel_name = channel_name
     self.time = time
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return [self.channel_name, str(int(self.time.timestamp()))]
 
 
@@ -70,7 +74,7 @@ class _Mode(message.Command):
     self.flags = flags
     self.args = args
 
-  def as_params(self, server, user):
+  def as_command_params(self):
     return [self.target, self.flags] + list(self.args)
 
   @staticmethod
@@ -148,7 +152,7 @@ class _Mode(message.Command):
       if applied:
         flags, args = self._coalesce_modes(applied)
 
-        chan.broadcast(None, self.get_prefix(user),
+        chan.broadcast(None, self.get_prefix(server, user),
                        Mode(chan.name, flags, *args))
     else:
       target = server.users.get(self.target)
@@ -171,8 +175,8 @@ class _Mode(message.Command):
       if applied:
         flags, args = self._coalesce_modes(applied)
 
-        msg_prefix = self.get_prefix(user)
-        target.send(self.get_prefix(user),
+        msg_prefix = self.get_prefix(server, user)
+        target.send(self.get_prefix(server, user),
                     Mode(target.nickname, flags, *args))
 
 
@@ -190,13 +194,15 @@ class Mode(_Mode):
         except errors.NoSuchNick:
           raise errors.NoSuchChannel(self.target)
 
-        user.send_reply(ChannelModeIs(chan))
+        flags, args = show_modes(chan, server.channels.modes)
+        user.send_reply(ChannelModeIs(chan.name, flags, args))
       else:
         target = server.users.get(self.target)
         if target is not user:
           raise errors.UsersDontMatch
 
-        user.send_reply(UmodeIs())
+        flags, args = show_modes(target, server.users.modes)
+        user.send_reply(UmodeIs(flags, args))
     else:
         super().handle_for(server, user, prefix)
 
@@ -216,7 +222,7 @@ class Mode(_Mode):
       m(target).check(server, user, arg)
       return
 
-  def get_prefix(self, user):
+  def get_prefix(self, server, user):
     return user.hostmask
 
 
@@ -231,7 +237,7 @@ class SAMode(_Mode):
   def check_can_set_user_modes(self, server, user, target, modes):
     user.check_is_irc_operator()
 
-  def get_prefix(self, user):
+  def get_prefix(self, server, user):
     return server.name
 
 

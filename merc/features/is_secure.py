@@ -35,12 +35,12 @@ class WhoIsSecure(message.Reply):
     self.nick = nick
     self.type = type
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return [self.nick, self.type, "is using a secure connection"]
 
 
 @IsSecureFeature.hook("after_user_whois")
-def send_whois_secure_if_secure(user, target):
+def send_whois_secure_if_secure(server, user, target):
   if target.is_securely_connected:
     user.send_reply(WhoIsSecure(target.nickname, "*"))
 
@@ -51,6 +51,6 @@ class SecureOnly(mode.FlagMode, mode.ChanModeMixin):
 
 
 @IsSecureFeature.hook("check_join_channel")
-def check_channel_ban(target, channel, key):
+def check_channel_ban(server, target, channel, key):
   if SecureOnly(channel).get() and not target.is_securely_connected:
     raise SecureOnlyChannel(channel.name)

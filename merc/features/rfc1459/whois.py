@@ -25,7 +25,7 @@ class WhoIsUser(message.Reply):
     self.host = host
     self.realname = realname
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return [self.nick, self.user, self.host, "*", self.realname]
 
 
@@ -33,13 +33,13 @@ class WhoIsServer(message.Reply):
   NAME = "312"
   FORCE_TRAILING = True
 
-  def __init__(self, nick, server, server_info=""):
+  def __init__(self, nick, server_name, server_info=""):
     self.nick = nick
-    self.server = server
+    self.server_name = server_name
     self.server_info = server_info
 
-  def as_reply_params(self, server, user):
-    return [self.nick, self.server, self.server_info]
+  def as_reply_params(self):
+    return [self.nick, self.server_name, self.server_info]
 
 
 class WhoIsOperator(message.Reply):
@@ -49,7 +49,7 @@ class WhoIsOperator(message.Reply):
   def __init__(self, nick):
     self.nick = nick
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return [self.nick, "is an IRC operator"]
 
 
@@ -62,7 +62,7 @@ class WhoIsIdle(message.Reply):
     self.idle_time = idle_time
     self.signon_time = signon_time
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return [self.nick, str(int(self.idle_time.total_seconds())),
             str(int(self.signon_time.timestamp())), "seconds idle, signon time"]
 
@@ -74,7 +74,7 @@ class WhoIsEnd(message.Reply):
   def __init__(self, nick):
     self.nick = nick
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return [self.nick, "End of /WHOIS list"]
 
 class WhoIsChannels(message.Reply):
@@ -85,7 +85,7 @@ class WhoIsChannels(message.Reply):
     self.nick = nick
     self.channels = channels
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return [self.nick, " ".join(self.channels)]
 
 
@@ -113,8 +113,8 @@ class WhoIs(message.Command):
 
         user.send_reply(WhoIsUser(target.nickname, target.username,
                                     target.host, target.realname))
-        user.send_reply(WhoIsServer(target.nickname, target.server.name,
-                                      target.server.network_name))
+        user.send_reply(WhoIsServer(target.nickname, target.server_name,
+                                      server.network_name))
         if target.is_irc_operator:
           user.send_reply(WhoIsOperator(target.nickname))
         user.send_reply(WhoIsIdle(
@@ -128,5 +128,5 @@ class WhoIs(message.Command):
 
 
 @WhoIsFeature.hook("modify_targmax")
-def modify_targmax(targmax):
+def modify_targmax(server, targmax):
   targmax["WHOIS"] = MAX_TARGETS

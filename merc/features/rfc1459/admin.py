@@ -16,7 +16,7 @@ class AdminInfo(message.Reply):
   def __init__(self, server):
     self.server = server
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return [self.server, "Administrative info"]
 
 class AdminLocation(message.Reply):
@@ -26,7 +26,7 @@ class AdminLocation(message.Reply):
   def __init__(self, location):
     self.location = location
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return [self.location]
 
 class AdminFineLocation(message.Reply):
@@ -36,7 +36,7 @@ class AdminFineLocation(message.Reply):
   def __init__(self, location):
     self.location = location
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return [self.location]
 
 class AdminEmail(message.Reply):
@@ -47,7 +47,7 @@ class AdminEmail(message.Reply):
     self.name = name
     self.email = email
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     if self.name:
       email = '{} <{}>'.format(self.name, self.email)
     else:

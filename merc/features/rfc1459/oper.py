@@ -15,16 +15,18 @@ class LUserOp(message.Reply):
   NAME = "252"
   FORCE_TRAILING = True
 
-  def as_reply_params(self, server, user):
-    return [str(sum(user.is_irc_operator for user in server.users.all())),
-            "IRC operators online"]
+  def __init__(self, num_irc_operators):
+    self.num_irc_operators = num_irc_operators
+
+  def as_reply_params(self):
+    return [str(self.num_irc_operators), "IRC operators online"]
 
 
 class YoureOper(message.Reply):
   NAME = "381"
   FORCE_TRAILING = True
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return ["You are now an IRC operator"]
 
 
@@ -77,8 +79,9 @@ class Oper(message.Command):
 
 
 @OperFeature.hook("luser_oper")
-def show_luser_oper(user):
-  user.send_reply(LUserOp())
+def show_luser_oper(server, user):
+  user.send_reply(LUserOp(sum(user.is_irc_operator
+                              for user in server.users.all())))
 
 
 @OperFeature.register_user_mode

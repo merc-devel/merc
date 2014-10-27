@@ -17,7 +17,7 @@ class IsOnReply(message.Reply):
   def __init__(self, nicknames):
     self.nicknames = nicknames
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return [" ".join(self.nicknames)]
 
 

@@ -15,6 +15,6 @@ class UHNames(capability.Capability):
 
 
 @UHNamesFeature.hook("modify_name_reply")
-def modify_name_reply(user, reply):
+def modify_name_reply(server, user, reply):
   if UHNames(user).get():
     reply.uhnames = True

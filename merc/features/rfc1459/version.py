@@ -16,11 +16,11 @@ class VersionReply(message.Reply):
 
   def __init__(self, version, server, comment):
     self.version = version
-    self.server = server
+    self.server_name = server_name
     self.comment = comment
 
-  def as_reply_params(self, server, user):
-    return [self.version, self.server, self.comment]
+  def as_reply_params(self):
+    return [self.version, self.server_name, self.comment]
 
 
 @VersionFeature.register_command

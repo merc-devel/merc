@@ -21,14 +21,14 @@ install = BanFeature.install
 class BanList(message.Reply):
   NAME = "367"
 
-  def __init__(self, channel_name, mask, server, creation_time):
+  def __init__(self, channel_name, mask, server_name, creation_time):
     self.channel_name = channel_name
     self.mask = mask
-    self.server = server
+    self.server_name = server_name
     self.creation_time = creation_time
 
-  def as_reply_params(self, server, user):
-    return [self.channel_name, self.mask, self.server,
+  def as_reply_params(self):
+    return [self.channel_name, self.mask, self.server_name,
             str(int(self.creation_time.timestamp()))]
 
 
@@ -39,7 +39,7 @@ class EndOfBanList(message.Reply):
   def __init__(self, channel_name):
     self.channel_name = channel_name
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return [self.channel_name, "End of channel ban list"]
 
 

@@ -28,7 +28,7 @@ class NoTopic(message.Reply):
   def __init__(self, channel_name):
     self.channel_name = channel_name
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return [self.channel_name, "No topic set"]
 
 
@@ -40,7 +40,7 @@ class TopicReply(message.Reply):
     self.channel_name = channel_name
     self.text = text
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return [self.channel_name, self.text]
 
 
@@ -52,7 +52,7 @@ class TopicWhoTime(message.Reply):
     self.who = who
     self.time = time
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return [self.channel_name, self.who, str(int(self.time.timestamp()))]
 
 
@@ -99,7 +99,7 @@ class Topic(message.Command):
           Topic(chan.name,
                 locals["topic"].text if locals["topic"] is not None else ""))
 
-  def as_params(self, server, user):
+  def as_command_params(self):
     params = [self.channel_name]
     if self.text is not None:
       params.append(self.text)
@@ -107,12 +107,12 @@ class Topic(message.Command):
 
 
 @TopicFeature.hook("after_join_channel")
-def send_topic_on_join(user, target, channel):
+def send_topic_on_join(server, user, target, channel):
   locals = channel.get_feature_locals(TopicFeature)
   current_topic = locals.get("topic", None)
 
   if current_topic is not None:
-    target.on_message(target.hostmask, Topic(channel.name))
+    target.on_message(server, target.hostmask, Topic(channel.name))
 
 
 @TopicFeature.register_channel_mode
@@ -122,7 +122,7 @@ class TopicLock(mode.FlagMode, mode.ChanModeMixin):
 
 
 @TopicFeature.hook("modify_list_reply")
-def modify_list_reply(channel, reply):
+def modify_list_reply(server, channel, reply):
   locals = channel.get_feature_locals(TopicFeature)
 
   current_topic = locals.get("topic", None)

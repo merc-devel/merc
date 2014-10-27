@@ -49,14 +49,14 @@ class InfoReply(message.Reply):
   def __init__(self, line):
     self.line = line
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return [self.line]
 
 
 class EndOfInfo(message.Reply):
   NAME = "374"
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return ["End of /INFO list"]
 
 

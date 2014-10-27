@@ -25,7 +25,7 @@ class Inviting(message.Reply):
     self.channel = channel
     self.nick = nick
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return [self.channel, self.nick]
 
 
@@ -71,11 +71,12 @@ class Invite(message.Command):
     user.send_reply(Inviting(self.channel, self.target))
     server.run_hooks("after_user_invite", user, target)
 
-  def as_params(self, server, user):
+  def as_command_params(self):
     return [self.target, self.channel]
 
+
 @InviteFeature.hook("check_join_channel")
-def check_invite_status(target, channel, key):
+def check_invite_status(server, target, channel, key):
   if InviteOnly(channel).get():
     locals = target.get_feature_locals(InviteFeature)
     invites = locals.get("invited_channels", set())

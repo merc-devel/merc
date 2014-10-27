@@ -1,7 +1,7 @@
 from merc import message
 
 
-class BaseError(Exception, message.Message):
+class BaseError(Exception, message.Reply):
   pass
 
 
@@ -12,21 +12,21 @@ class Error(BaseError):
   def __init__(self, reason):
     self.reason = reason
 
-  def as_params(self, server, user):
+  def as_reply_params(self):
     return [self.reason]
 
 
 class SimpleError(BaseError):
-  def as_params(self, server, user):
+  def as_reply_params(self):
     return [user.displayed_nickname, self.REASON]
 
 
 class ParametrizedError(BaseError):
   def __init__(self, *params):
-    self.params = list(params)
+    self.params = params
 
-  def as_params(self, server, user):
-    return [user.displayed_nickname] + self.params + [self.REASON]
+  def as_reply_params(self):
+    return list(self.params) + [self.REASON]
 
 
 class NoSuchNick(ParametrizedError):

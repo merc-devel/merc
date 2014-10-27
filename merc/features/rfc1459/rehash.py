@@ -13,8 +13,11 @@ class Rehashing(message.Reply):
   NAME = "382"
   FORCE_TRAILING = True
 
-  def as_reply_params(self, server, user):
-    return [server.config_filename, "Rehashing configuration"]
+  def __init__(self, config_filename):
+    self.config_filename = config_filename
+
+  def as_reply_params(self):
+    return [self.config_filename, "Rehashing configuration"]
 
 
 @RehashFeature.register_command
@@ -24,5 +27,5 @@ class Rehash(message.Command):
 
   def handle_for(self, server, user, prefix):
     user.check_is_irc_operator()
-    user.send_reply(Rehashing())
+    user.send_reply(Rehashing(server.config_filename))
     server.rehash()

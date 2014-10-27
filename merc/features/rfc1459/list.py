@@ -17,7 +17,7 @@ class ListStart(message.Reply):
   NAME = "321"
   FORCE_TRAILING = True
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return ["Channels", "Users Name"]
 
 
@@ -30,7 +30,7 @@ class ListReply(message.Reply):
     self.num_visible = num_visible
     self.topic = topic
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return [self.channel_name, str(self.num_visible), self.topic]
 
 
@@ -38,7 +38,7 @@ class ListEnd(message.Reply):
   NAME = "323"
   FORCE_TRAILING = True
 
-  def as_reply_params(self, server, user):
+  def as_reply_params(self):
     return ["End of /LIST"]
 
 
@@ -86,5 +86,5 @@ class Secret(mode.FlagMode, mode.ChanModeMixin):
 
 
 @ListFeature.hook("modify_targmax")
-def modify_targmax(targmax):
+def modify_targmax(server, targmax):
   targmax["LIST"] = MAX_TARGETS

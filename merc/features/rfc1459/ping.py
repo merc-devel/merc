@@ -25,7 +25,7 @@ class Ping(message.Command):
     self.value = value
     self.server_name = server_name
 
-  def as_params(self, server, user):
+  def as_command_params(self):
     params = [self.value]
     if self.server_name is not None:
       params.append(self.server_name)
@@ -50,7 +50,7 @@ class Pong(message.Command):
     self.server_name = server_name
     self.value = value
 
-  def as_params(self, server, user):
+  def as_command_params(self):
     params = [self.server_name]
 
     if self.value is not None:

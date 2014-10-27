@@ -11,9 +11,6 @@ class Message(object):
   MAX_LENGTH = 510
   FORCE_TRAILING = False
 
-  def as_params(self, server, user):
-    raise NotImplementedError
-
   def emit(self, user, prefix):
     emitted = emitter.emit_message(prefix, self.NAME, self.as_params(user),
                                    force_trailing=self.FORCE_TRAILING)
@@ -23,18 +20,27 @@ class Message(object):
 
     return emitted
 
+  def as_params(self, user):
+    raise NotImplementedError
+
 
 class Reply(Message):
-  def as_params(self, server, user):
-    return [user.displayed_nickname] + self.as_reply_params(server, user)
+  def as_params(self, user):
+    return [user.displayed_nickname] + self.as_reply_params()
 
-  def as_reply_params(self, server, user):
-    return []
+  def as_reply_params(self):
+    raise NotImplementedError
 
 
 class Command(Message):
   def __init__(self, *args):
     pass
+
+  def as_params(self, user):
+    return self.as_command_params()
+
+  def as_command_params(self):
+    raise NotImplementedError
 
   @classmethod
   def with_params(cls, params):

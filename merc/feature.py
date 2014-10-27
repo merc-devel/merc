@@ -48,6 +48,6 @@ class Feature(object, metaclass=FeatureMeta):
       return f
     return _wrapper
 
-  def run_hooks(self, name, *args, **kwargs):
+  def run_hooks(self, name, server, *args, **kwargs):
     for hook in self.HOOKS[name]:
-      hook(*args, **kwargs)
+      hook(server, *args, **kwargs)
