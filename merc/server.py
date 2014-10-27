@@ -188,11 +188,14 @@ class Server(object):
   @asyncio.coroutine
   def bind(self):
     for bind in self.config["bind"]:
+      type = bind.get("type", "users")
+
       binding = yield from self.loop.create_server(
-          lambda type=bind.get("type", "users"): net.Protocol(self, type),
+          lambda type=type: net.Protocol(self, type),
           bind["host"], bind["port"],
           ssl=self.ssl_ctx if bind.get("ssl", False) else None)
-      logger.info("Binding to {}".format(binding.sockets[0].getsockname()))
+      logger.info("Binding to {}: {}".format(binding.sockets[0].getsockname(),
+                                             type))
 
       self.bindings.append(binding)
 
