@@ -193,8 +193,8 @@ class Channel(object):
 
 
 class ChannelStore(object):
-  def __init__(self, server):
-    self.server = server
+  def __init__(self, app):
+    self.app = app
     self.channels = {}
 
   def get(self, name):
@@ -213,7 +213,7 @@ class ChannelStore(object):
 
   def remove(self, channel):
     del self.channels[channel.normalized_name]
-    self.server.run_hooks("after_remove_channel", channel)
+    self.app.run_hooks("after_remove_channel", channel)
 
   def query(self, pattern):
     return (channel for channel in self.channels.values()
@@ -229,7 +229,7 @@ class ChannelStore(object):
   def modes(self):
     modes = {}
 
-    for feature in self.server.features.values():
+    for feature in self.app.features.values():
       modes.update(feature.CHANNEL_MODES)
 
     return modes

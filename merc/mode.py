@@ -2,7 +2,7 @@ import collections
 import datetime
 
 
-ListDetail = collections.namedtuple("ListDetail", ["server", "creation_time"])
+ListDetail = collections.namedtuple("ListDetail", ["app", "creation_time"])
 
 
 class Mode(object):
@@ -11,10 +11,10 @@ class Mode(object):
   def __init__(self, target):
     self.target = target
 
-  def set(self, server, user, value):
+  def set(self, app, user, value):
     raise NotImplementedError
 
-  def unset(self, server, user, value):
+  def unset(self, app, user, value):
     raise NotImplementedError
 
   def get(self):
@@ -22,12 +22,12 @@ class Mode(object):
 
 
 class ChanModeMixin(object):
-  def check(self, server, user, arg):
+  def check(self, app, user, arg):
     self.target.check_is_operator(user)
 
 
 class UModeMixin(object):
-  def check(self, server, user, arg):
+  def check(self, app, user, arg):
     if self.target is not user:
       raise errors.UsersDontMatch
 
@@ -40,13 +40,13 @@ class FlagMode(Mode):
     self.target.modes[self.CHAR] = not self.get()
     return True
 
-  def set(self, server, user, value):
+  def set(self, app, user, value):
     if self.get():
       return False
 
     return self.toggle()
 
-  def unset(self, server, user, value):
+  def unset(self, app, user, value):
     if not self.get():
       return False
 
@@ -57,11 +57,11 @@ class ListMode(Mode):
   TAKES_PARAM = True
   MAX_ITEMS = 100
 
-  def check(self, server, user, arg):
+  def check(self, app, user, arg):
     if arg is not None:
-      super().check(server, user, arg)
+      super().check(app, user, arg)
 
-  def add(self, server, user, value):
+  def add(self, app, user, value):
     list = self.target.modes.setdefault(self.CHAR, {})
 
     if value in list:
@@ -70,10 +70,10 @@ class ListMode(Mode):
     if len(list) >= MAX_ITEMS:
       return False
 
-    list[value] = ListDetail(server.name, datetime.datetime.now())
+    list[value] = ListDetail(app.name, datetime.datetime.now())
     return True
 
-  def remove(self, server, user, value):
+  def remove(self, app, user, value):
     list = self.target.modes.get(self.CHAR, {})
     if value not in list:
       return False
@@ -84,18 +84,18 @@ class ListMode(Mode):
   def list(self, user):
     raise NotImplementedError
 
-  def set(self, server, user, value):
+  def set(self, app, user, value):
     if value is None:
       self.list(user)
       return False
 
-    return self.add(server, user, value)
+    return self.add(app, user, value)
 
-  def unset(self, server, user, value):
+  def unset(self, app, user, value):
     if value is None:
       return False
 
-    return self.remove(server, user, value)
+    return self.remove(app, user, value)
 
   def get(self):
     return None
@@ -107,33 +107,33 @@ class SetWithParamMode(Mode):
   def mutate(self, user, value):
     self.target.modes[self.CHAR] = value
 
-  def set(self, server, user, value):
+  def set(self, app, user, value):
     if self.get() == value:
       return False
 
-    return self.mutate(server, user, value)
+    return self.mutate(app, user, value)
 
-  def unset(self, server, user, value):
+  def unset(self, app, user, value):
     if value is None:
       return False
 
     if self.get() is None:
       return False
 
-    return self.mutate(server, user, None)
+    return self.mutate(app, user, None)
 
 
 class ParamMode(SetWithParamMode):
   TAKES_PARAM = True
 
-  def unset(self, server, user, value):
+  def unset(self, app, user, value):
     if value is None:
       return False
 
     if self.get() != value:
       return False
 
-    return super().unset(server, user, value)
+    return super().unset(app, user, value)
 
 
 class ChannelRoleMode(Mode):
@@ -148,12 +148,12 @@ class ChannelRoleMode(Mode):
   def check_for_target(self, user, target):
     self.target.check_is_operator(user)
 
-  def check(self, server, user, value):
-    target = self.target.get_channel_user_for(server.users.get(value))
+  def check(self, app, user, value):
+    target = self.target.get_channel_user_for(app.users.get(value))
     self.check_for_target(user, target)
 
-  def set(self, server, user, value):
-    target = self.target.get_channel_user_for(server.users.get(value))
+  def set(self, app, user, value):
+    target = self.target.get_channel_user_for(app.users.get(value))
 
     if self.get_for_target(target):
       return False
@@ -161,8 +161,8 @@ class ChannelRoleMode(Mode):
     self.toggle_for_target(target)
     return True
 
-  def unset(self, server, user, value):
-    target = self.target.get_channel_user_for(server.users.get(value))
+  def unset(self, app, user, value):
+    target = self.target.get_channel_user_for(app.users.get(value))
 
     if not self.get_for_target(target):
       return False

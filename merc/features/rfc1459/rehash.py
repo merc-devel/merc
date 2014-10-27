@@ -25,7 +25,7 @@ class Rehash(message.Command):
   NAME = "REHASH"
   MIN_ARITY = 0
 
-  def handle_for(self, server, user, prefix):
+  def handle_for(self, app, user, prefix):
     user.check_is_irc_operator()
-    user.send_reply(Rehashing(server.config_filename))
-    server.rehash()
+    user.send_reply(Rehashing(app.config_filename))
+    app.rehash()

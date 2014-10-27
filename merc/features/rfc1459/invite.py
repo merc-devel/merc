@@ -44,9 +44,9 @@ class Invite(message.Command):
     self.channel = channel
 
   @message.Command.requires_registration
-  def handle_for(self, server, user, prefix):
-    target = server.users.get(self.target)
-    channel = server.channels.get(self.channel)
+  def handle_for(self, app, user, prefix):
+    target = app.users.get(self.target)
+    channel = app.channels.get(self.channel)
 
     channel_user = channel.get_channel_user_for(user)
     if InviteOnly(channel).get() and not channel_user.is_operator_equivalent:
@@ -64,19 +64,19 @@ class Invite(message.Command):
     locals["invited_channels"].add(channel)
 
     # Set timer to expire invite.
-    server.loop.call_later(INVITE_EXPIRATION_TIME,
+    app.loop.call_later(INVITE_EXPIRATION_TIME,
                            lambda: locals["invited_channels"].discard(channel))
 
     target.send(user.hostmask, Invite(self.target, self.channel))
     user.send_reply(Inviting(self.channel, self.target))
-    server.run_hooks("after_user_invite", user, target)
+    app.run_hooks("after_user_invite", user, target)
 
   def as_command_params(self):
     return [self.target, self.channel]
 
 
 @InviteFeature.hook("check_join_channel")
-def check_invite_status(server, target, channel, key):
+def check_invite_status(app, target, channel, key):
   if InviteOnly(channel).get():
     locals = target.get_feature_locals(InviteFeature)
     invites = locals.get("invited_channels", set())

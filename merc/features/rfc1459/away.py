@@ -58,7 +58,7 @@ class Away(message.Command):
 @AwayFeature.hook("after_user_invite")
 @AwayFeature.hook("after_user_privmsg")
 @AwayFeature.hook("after_user_whois")
-def send_is_away_if_away(server, user, target):
+def send_is_away_if_away(app, user, target):
   locals = target.get_feature_locals(AwayFeature)
 
   if locals.get("away", None) is not None:
@@ -66,12 +66,12 @@ def send_is_away_if_away(server, user, target):
 
 
 @AwayFeature.hook("modify_who_reply")
-def modify_who_reply(server, user, target, reply):
+def modify_who_reply(app, user, target, reply):
   locals = target.user.get_feature_locals(AwayFeature)
   reply.is_away = locals.get("away", None) is not None
 
 
 @AwayFeature.hook("modify_userhost_entry")
-def modify_userhost_reply(server, target, entry):
+def modify_userhost_reply(app, target, entry):
   locals = target.get_feature_locals(AwayFeature)
   entry.is_away = locals.get("away", None) is not None

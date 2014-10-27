@@ -119,40 +119,40 @@ class LocalUser(User):
   def send(self, prefix, msg):
     self.transport.write(msg.emit(self, prefix) + b"\r\n")
 
-  def on_connect(self, server):
-    asyncio.async(self.resolve_hostname_coro(server), loop=server.loop)
+  def on_connect(self, app):
+    asyncio.async(self.resolve_hostname_coro(app), loop=app.loop)
 
-  def on_raw_message(self, server, prefix, command, params):
+  def on_raw_message(self, app, prefix, command, params):
     try:
-      command_type = server.get_command(command)
+      command_type = app.get_command(command)
     except KeyError:
       if self.is_registered:
         self.send_reply(errors.UnknownCommand(command))
     else:
       try:
-        self.on_message(server, prefix, command_type.with_params(params))
+        self.on_message(app, prefix, command_type.with_params(params))
       except errors.Error as e:
         self.send(None, e)
         self.transport.close()
       except errors.BaseError as e:
         self.send_reply(e)
 
-  def on_message(self, server, prefix, message):
+  def on_message(self, app, prefix, message):
     self.last_activity_time = datetime.datetime.now()
-    message.handle_for(server, self, prefix)
-    server.run_hooks("after_message", self, message, prefix)
+    message.handle_for(app, self, prefix)
+    app.run_hooks("after_message", self, message, prefix)
 
-  def on_remove(self, server):
+  def on_remove(self, app):
     for channel_name in list(self.channels):
-      server.channels.get(channel_name).part(self)
+      app.channels.get(channel_name).part(self)
     self.transport.close()
 
   @asyncio.coroutine
-  def resolve_hostname_coro(self, server):
+  def resolve_hostname_coro(self, app):
     host, *_ = self.transport.get_extra_info("peername")
     host, _, _ = host.partition("%")
 
-    server.run_hooks("send_server_notice", self,
+    app.run_hooks("send_server_notice", self,
                      "*** Looking up your hostname...")
     ip = ipaddress.ip_address(host)
 
@@ -165,33 +165,33 @@ class LocalUser(User):
       rip = ".".join(reversed("".join(ip.exploded.split(":")))) + ".ip6.arpa."
 
     try:
-      forward, *_ = yield from server.resolver.query(rip, "PTR")
-      backward, *_ = yield from server.resolver.query(
+      forward, *_ = yield from app.resolver.query(rip, "PTR")
+      backward, *_ = yield from app.resolver.query(
           forward, "AAAA" if not is_ipv4 else "A")
 
       if ip == ipaddress.ip_address(backward):
-        server.run_hooks("send_server_notice", self,
+        app.run_hooks("send_server_notice", self,
                          "*** Found your hostname ({})".format(forward))
         self.host = forward
       else:
-        server.run_hooks("send_server_notice", self,
+        app.run_hooks("send_server_notice", self,
                          "*** Hostname does not resolve correctly")
     except aiodns.error.DNSError:
-      server.run_hooks("send_server_notice", self,
+      app.run_hooks("send_server_notice", self,
                        "*** Couldn't look up your hostname")
       self.host = host
 
     if self.is_ready_for_registration:
-      self.register(server)
+      self.register(app)
 
-  def register(self, server):
+  def register(self, app):
     if self.store.has(self.nickname):
       host, *_ = self.transport.get_extra_info("peername")
       raise errors.Error("Closing Link: {} (Overridden)".format(host))
 
     self.store.add(self)
     self.is_registered = True
-    server.run_hooks("after_register", self)
+    app.run_hooks("after_register", self)
 
   def close(self, reason=None):
     self.disconnect_reason = reason
@@ -204,14 +204,14 @@ class RemoteUser(User):
 
 
 class UserStore(object):
-  def __init__(self, server):
-    self.server = server
+  def __init__(self, app):
+    self.app = app
     self.users = {}
-    self._local_uid_serial = (self.server.sid + util.uidify(i)
+    self._local_uid_serial = (self.app.sid + util.uidify(i)
                               for i in itertools.count(0))
 
   def local_new(self, transport):
-    return LocalUser(self, next(self._local_uid_serial), self.server.name,
+    return LocalUser(self, next(self._local_uid_serial), self.app.name,
                      transport)
 
   def add(self, user):
@@ -233,11 +233,11 @@ class UserStore(object):
       self.users[user.normalized_nickname] = user
 
   def remove(self, user):
-    self.server.run_hooks("before_remove_user", user)
+    self.app.run_hooks("before_remove_user", user)
     if user.is_registered:
       del self.users[user.normalized_nickname]
-    user.on_remove(self.server)
-    self.server.run_hooks("after_remove_user", user)
+    user.on_remove(self.app)
+    self.app.run_hooks("after_remove_user", user)
 
   def get(self, name):
     try:
@@ -265,7 +265,7 @@ class UserStore(object):
   def modes(self):
     modes = {}
 
-    for feature in self.server.features.values():
+    for feature in self.app.features.values():
       modes.update(feature.USER_MODES)
 
     return modes
@@ -274,7 +274,7 @@ class UserStore(object):
   def capabilities(self):
     capabilities = {}
 
-    for feature in self.server.features.values():
+    for feature in self.app.features.values():
       capabilities.update(feature.CAPABILITIES)
 
     return capabilities

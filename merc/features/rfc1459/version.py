@@ -14,7 +14,7 @@ class VersionReply(message.Reply):
   NAME = "351"
   FORCE_TRAILING = True
 
-  def __init__(self, version, server, comment):
+  def __init__(self, version, app, comment):
     self.version = version
     self.server_name = server_name
     self.comment = comment
@@ -28,14 +28,14 @@ class Version(message.Command):
   NAME = "VERSION"
   MIN_ARITY = 0
 
-  def __init__(self, server=None):
-    self.server = server
+  def __init__(self, app=None):
+    self.app = app
 
   @message.Command.requires_registration
-  def handle_for(self, server, user, prefix):
-    if self.server and self.server != server.name:
-      raise errors.NoSuchServer(self.server)
+  def handle_for(self, app, user, prefix):
+    if self.app and self.app != app.name:
+      raise errors.NoSuchServer(self.app)
 
-    version = 'merc-{}'.format(server.version)
-    user.send_reply(VersionReply(version, server.name, "..."))
-    server.run_hooks("send_isupport", user)
+    version = 'merc-{}'.format(app.version)
+    user.send_reply(VersionReply(version, app.name, "..."))
+    app.run_hooks("send_isupport", user)

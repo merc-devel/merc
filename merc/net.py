@@ -11,16 +11,16 @@ logger = logging.getLogger(__name__)
 class Protocol(asyncio.Protocol):
   MAX_BUFFER_SIZE = 2048
 
-  def __init__(self, server, type):
-    self.server = server
+  def __init__(self, app, type):
+    self.app = app
     self.type = type
     self.buffer = b""
 
   def connection_made(self, transport):
-    self.user = self.server.users.local_new(transport)
+    self.user = self.app.users.local_new(transport)
     logger.info("Accepted connection from {} (type: {})".format(
         self.user.transport.get_extra_info("peername"), self.type))
-    self.user.on_connect(self.server)
+    self.user.on_connect(self.app)
 
   def data_received(self, data):
     self.buffer += data
@@ -40,7 +40,7 @@ class Protocol(asyncio.Protocol):
     if self.user.disconnect_reason is None:
       self.user.disconnect_reason = "Remote host closed connection"
 
-    self.server.users.remove(self.user)
+    self.app.users.remove(self.user)
 
     logger.info("Lost connection from {}: {}".format(
         self.user.transport.get_extra_info("peername"),
@@ -52,4 +52,4 @@ class Protocol(asyncio.Protocol):
     except parser.ParseError:
       return
 
-    self.user.on_raw_message(self.server, prefix, command, params)
+    self.user.on_raw_message(self.app, prefix, command, params)

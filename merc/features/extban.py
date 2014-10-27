@@ -9,9 +9,9 @@ class ExtBanFeature(feature.Feature):
 install = ExtBanFeature.install
 
 
-def join_ban_checker(server, target, channel, value):
+def join_ban_checker(app, target, channel, value):
   try:
-    origin_channel = server.channels.get(value)
+    origin_channel = app.channels.get(value)
   except errors.NoSuchNick:
     return
 
@@ -24,7 +24,7 @@ CHECKERS = {
 }
 
 
-def check_ban(server, target, channel, mask):
+def check_ban(app, target, channel, mask):
   mode, colon, value = mask.partition(":")
 
   if colon != ":" or len(mode) != 1:
@@ -33,17 +33,17 @@ def check_ban(server, target, channel, mask):
   checker = CHECKERS.get(mode, None)
 
   if checker is not None:
-    checker(server, target, channel, value)
+    checker(app, target, channel, value)
 
 
 @ExtBanFeature.hook("check_join_ban_mask")
-def check_join_ban_mask(server, target, channel, mask):
-  check_ban(server, target, channel, mask)
+def check_join_ban_mask(app, target, channel, mask):
+  check_ban(app, target, channel, mask)
 
 
 @ExtBanFeature.hook("check_message_ban_mask")
-def check_message_ban_mask(server, target, channel, mask):
+def check_message_ban_mask(app, target, channel, mask):
   try:
-    check_ban(server, target, channel, mask)
+    check_ban(app, target, channel, mask)
   except errors.BannedFromChannel:
     channel.check_is_voiced(target)

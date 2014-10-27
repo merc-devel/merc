@@ -128,55 +128,55 @@ class _Mode(message.Command):
     return flags, args
 
   @message.Command.requires_registration
-  def handle_for(self, server, user, prefix):
+  def handle_for(self, app, user, prefix):
     applied = []
 
     if channel.Channel.is_channel_name(self.target):
       try:
-        chan = server.channels.get(self.target)
+        chan = app.channels.get(self.target)
       except errors.NoSuchNick:
         raise errors.NoSuchChannel(self.target)
 
       expanded = self._expand_modes(self.flags, self.args,
-                                    server.channels.modes)
+                                    app.channels.modes)
 
-      self.check_can_set_channel_modes(server, user, chan, expanded)
+      self.check_can_set_channel_modes(app, user, chan, expanded)
 
       for mode_factory, op, arg in expanded:
         mode = mode_factory(chan)
 
-        if (op == "+" and mode.set(server, user, arg)) or \
-           (op == "-" and mode.unset(server, user, arg)):
+        if (op == "+" and mode.set(app, user, arg)) or \
+           (op == "-" and mode.unset(app, user, arg)):
           applied.append((mode_factory, op, arg))
 
       if applied:
         flags, args = self._coalesce_modes(applied)
 
-        chan.broadcast(None, self.get_prefix(server, user),
+        chan.broadcast(None, self.get_prefix(app, user),
                        Mode(chan.name, flags, *args))
     else:
-      target = server.users.get(self.target)
+      target = app.users.get(self.target)
 
       try:
         expanded = self._expand_modes(self.flags, self.args,
-                                      server.users.modes)
+                                      app.users.modes)
       except errors.UnknownMode as e:
         raise errors.UmodeUnknownFlag(e.param)
 
-      self.check_can_set_user_modes(server, user, target, expanded)
+      self.check_can_set_user_modes(app, user, target, expanded)
 
       for mode_factory, op, arg in expanded:
         mode = mode_factory(target)
 
-        if (op == "+" and mode.set(server, target, arg)) or \
-           (op == "-" and mode.unset(server, target, arg)):
+        if (op == "+" and mode.set(app, target, arg)) or \
+           (op == "-" and mode.unset(app, target, arg)):
           applied.append((mode_factory, op, arg))
 
       if applied:
         flags, args = self._coalesce_modes(applied)
 
-        msg_prefix = self.get_prefix(server, user)
-        target.send(self.get_prefix(server, user),
+        msg_prefix = self.get_prefix(app, user)
+        target.send(self.get_prefix(app, user),
                     Mode(target.nickname, flags, *args))
 
 
@@ -186,43 +186,43 @@ class Mode(_Mode):
   MIN_ARITY = 1
 
   @message.Command.requires_registration
-  def handle_for(self, server, user, prefix):
+  def handle_for(self, app, user, prefix):
     if self.flags is None:
       if channel.Channel.is_channel_name(self.target):
         try:
-          chan = server.channels.get(self.target)
+          chan = app.channels.get(self.target)
         except errors.NoSuchNick:
           raise errors.NoSuchChannel(self.target)
 
-        flags, args = show_modes(chan, server.channels.modes)
+        flags, args = show_modes(chan, app.channels.modes)
         user.send_reply(ChannelModeIs(chan.name, flags, args))
       else:
-        target = server.users.get(self.target)
+        target = app.users.get(self.target)
         if target is not user:
           raise errors.UsersDontMatch
 
-        flags, args = show_modes(target, server.users.modes)
+        flags, args = show_modes(target, app.users.modes)
         user.send_reply(UmodeIs(flags, args))
     else:
-        super().handle_for(server, user, prefix)
+        super().handle_for(app, user, prefix)
 
-  def check_can_set_channel_modes(self, server, user, channel, modes):
+  def check_can_set_channel_modes(self, app, user, channel, modes):
     for m, op, arg in modes:
       if issubclass(m, mode.ListMode) and arg is None:
         continue
 
-      m(channel).check(server, user, arg)
+      m(channel).check(app, user, arg)
       return
 
-  def check_can_set_user_modes(self, server, user, target, modes):
+  def check_can_set_user_modes(self, app, user, target, modes):
     for m, op, arg in modes:
       if issubclass(m, mode.ListMode) and arg is None:
         continue
 
-      m(target).check(server, user, arg)
+      m(target).check(app, user, arg)
       return
 
-  def get_prefix(self, server, user):
+  def get_prefix(self, app, user):
     return user.hostmask
 
 
@@ -231,48 +231,48 @@ class SAMode(_Mode):
   NAME = "SAMODE"
   MIN_ARITY = 2
 
-  def check_can_set_channel_modes(self, server, user, channel, modes):
+  def check_can_set_channel_modes(self, app, user, channel, modes):
     user.check_is_irc_operator()
 
-  def check_can_set_user_modes(self, server, user, target, modes):
+  def check_can_set_user_modes(self, app, user, target, modes):
     user.check_is_irc_operator()
 
-  def get_prefix(self, server, user):
-    return server.name
+  def get_prefix(self, app, user):
+    return app.name
 
 
 @ModeFeature.hook("after_welcome")
-def send_modes_on_welcome(server, user):
-  flags, args = show_modes(user, server.users.modes)
+def send_modes_on_welcome(app, user):
+  flags, args = show_modes(user, app.users.modes)
   if flags != "+":
     user.relay_to_self(Mode(user.nickname, flags, *args))
 
 
 @ModeFeature.hook("after_join_channel")
-def send_timestamp_on_join(server, user, target, channel):
+def send_timestamp_on_join(app, user, target, channel):
   target.send_reply(CreationTime(channel.name, channel.creation_time))
 
 
 @ModeFeature.hook("after_join_new_channel")
-def send_channel_modes_on_new_join(server, user, target, channel):
-  flags, args = show_modes(channel, server.channels.modes)
+def send_channel_modes_on_new_join(app, user, target, channel):
+  flags, args = show_modes(channel, app.channels.modes)
   target.send_reply(Mode(channel.name, flags, *args))
 
 
 @ModeFeature.hook("user_mode_change")
-def send_mode_on_user_mode_change(server, user, applied):
+def send_mode_on_user_mode_change(app, user, applied):
   flags, args = Mode._coalesce_modes(applied)
   user.relay_to_self(Mode(user.nickname, flags, *args))
 
 
 @ModeFeature.hook("modify_isupport")
-def modify_isupport(server, isupport):
+def modify_isupport(app, isupport):
   list_modes = set()
   param_modes = set()
   set_with_param_modes = set()
   flag_modes = set()
 
-  for m in server.channels.modes.values():
+  for m in app.channels.modes.values():
     if issubclass(m, mode.ListMode):
       list_modes.add(m.CHAR)
     elif issubclass(m, mode.ParamMode):

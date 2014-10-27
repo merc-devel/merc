@@ -14,12 +14,12 @@ class FeatureMeta(type):
 
 
 class Feature(object, metaclass=FeatureMeta):
-  def __init__(self, server):
-    self.server = server
+  def __init__(self, app):
+    self.app = app
 
   @classmethod
-  def install(cls, server):
-    server.install_feature(cls(server))
+  def install(cls, app):
+    app.install_feature(cls(app))
 
   @classmethod
   def register_command(cls, command):
@@ -48,6 +48,6 @@ class Feature(object, metaclass=FeatureMeta):
       return f
     return _wrapper
 
-  def run_hooks(self, name, server, *args, **kwargs):
+  def run_hooks(self, name, app, *args, **kwargs):
     for hook in self.HOOKS[name]:
-      hook(server, *args, **kwargs)
+      hook(app, *args, **kwargs)

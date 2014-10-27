@@ -30,11 +30,11 @@ class IsOn(message.Command):
     self.nicknames = nicknames
 
   @message.Command.requires_registration
-  def handle_for(self, server, user, prefix):
+  def handle_for(self, app, user, prefix):
     is_on = []
     for nickname in self.nicknames:
       try:
-        server.users.get(nickname)
+        app.users.get(nickname)
       except errors.NoSuchNick:
         pass
       else:

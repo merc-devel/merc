@@ -5,6 +5,6 @@ import importlib
 import imp
 
 
-def install(server):
+def install(app):
   for name in __all__:
-    imp.reload(importlib.import_module("." + name, __name__)).install(server)
+    imp.reload(importlib.import_module("." + name, __name__)).install(app)

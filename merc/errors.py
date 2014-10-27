@@ -36,7 +36,7 @@ class NoSuchNick(ParametrizedError):
 
 class NoSuchServer(ParametrizedError):
   NAME = "402"
-  REASON = "No such server"
+  REASON = "No such app"
 
 
 class NoSuchChannel(ParametrizedError):

@@ -13,11 +13,11 @@ install = AdminFeature.install
 class AdminInfo(message.Reply):
   NAME = "256"
 
-  def __init__(self, server):
-    self.server = server
+  def __init__(self, app):
+    self.app = app
 
   def as_reply_params(self):
-    return [self.server, "Administrative info"]
+    return [self.app, "Administrative info"]
 
 class AdminLocation(message.Reply):
   NAME = "257"
@@ -60,15 +60,15 @@ class Admin(message.Command):
   NAME = "ADMIN"
   MIN_ARITY = 0
 
-  def __init__(self, server=None, *args):
-    self.server = server
+  def __init__(self, app=None, *args):
+    self.app = app
 
   @message.Command.requires_registration
-  def handle_for(self, server, user, prefix):
-    if self.server is not None and self.server != server.name:
-      raise errors.NoSuchServer(self.server)
+  def handle_for(self, app, user, prefix):
+    if self.app is not None and self.app != app.name:
+      raise errors.NoSuchServer(self.app)
 
-    user.send_reply(AdminInfo(server.name))
-    user.send_reply(AdminLocation(server.admin_location))
-    user.send_reply(AdminFineLocation(server.admin_location_fine))
-    user.send_reply(AdminEmail(server.admin_name, server.admin_email))
+    user.send_reply(AdminInfo(app.name))
+    user.send_reply(AdminLocation(app.admin_location))
+    user.send_reply(AdminFineLocation(app.admin_location_fine))
+    user.send_reply(AdminEmail(app.admin_name, app.admin_email))

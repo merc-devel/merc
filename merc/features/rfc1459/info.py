@@ -66,21 +66,21 @@ class Info(message.Command):
   MIN_ARITY = 0
 
   @message.Command.requires_registration
-  def handle_for(self, server, user, prefix):
+  def handle_for(self, app, user, prefix):
     year = datetime.date.today().year
-    online_since = server.creation_time.strftime("%c")
+    online_since = app.creation_time.strftime("%c")
     online_for = friendly_timespan(datetime.datetime.now() -
-                                   server.creation_time)
+                                   app.creation_time)
 
     lines = INFO_TEMPLATE.format(
-        version=server.version,
+        version=app.version,
         year=year,
         online_since=online_since,
         online_for=online_for)
 
     for line in lines.splitlines():
       user.send_reply(InfoReply(line))
-    server.run_hooks("after_info", user)
+    app.run_hooks("after_info", user)
     user.send_reply(EndOfInfo())
 
 def friendly_timespan(diff, range=3):

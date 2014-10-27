@@ -27,7 +27,7 @@ from merc import util
 logger = logging.getLogger(__name__)
 
 
-class Server(object):
+class Application(object):
   def __init__(self, config_filename, loop=None):
     if loop is None:
       loop = asyncio.get_event_loop()

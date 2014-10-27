@@ -51,18 +51,18 @@ class Command(Message):
 
     return cls(*params)
 
-  def handle_for(self, server, user, prefix):
+  def handle_for(self, app, user, prefix):
     raise NotImplementedError
 
   @staticmethod
   def requires_registration(f):
     @functools.wraps(f)
-    def _wrapper(self, server, user, prefix):
+    def _wrapper(self, app, user, prefix):
       from merc import errors
 
       if not user.is_registered:
         raise errors.NotRegistered
 
-      f(self, server, user, prefix)
+      f(self, app, user, prefix)
     return _wrapper
 

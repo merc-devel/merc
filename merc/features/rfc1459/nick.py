@@ -17,22 +17,22 @@ install = NickFeature.install
 
 
 class _Nick(message.Command):
-  def handle_for(self, server, user, prefix):
-    target = self.get_target(server, user)
+  def handle_for(self, app, user, prefix):
+    target = self.get_target(app, user)
     old_hostmask = target.hostmask
 
     if NICKNAME_REGEX.match(self.nickname) is None or \
         len(self.nickname) > MAX_NICKNAME_LENGTH:
       raise errors.ErroneousNickname
 
-    server.users.rename(target, self.nickname)
+    app.users.rename(target, self.nickname)
 
     if target.is_registered:
       target.relay_to_all(Nick(self.nickname), old_hostmask)
       target.send(old_hostmask, Nick(self.nickname))
     else:
       if target.is_ready_for_registration:
-        target.register(server)
+        target.register(app)
 
 
 @NickFeature.register_command
@@ -46,7 +46,7 @@ class Nick(_Nick):
   def as_command_params(self):
     return [self.nickname]
 
-  def get_target(self, server, user):
+  def get_target(self, app, user):
     return user
 
 
@@ -59,15 +59,15 @@ class SANick(_Nick):
     self.target = target
     self.nickname = nickname
 
-  def get_target(self, server, user):
-    return server.users.get(self.target)
+  def get_target(self, app, user):
+    return app.users.get(self.target)
 
   @message.Command.requires_registration
-  def handle_for(self, server, user, prefix):
+  def handle_for(self, app, user, prefix):
     user.check_is_irc_operator()
-    super().handle_for(server, user, prefix)
+    super().handle_for(app, user, prefix)
 
 
 @NickFeature.hook("modify_isupport")
-def modify_isupport(server, isupport):
+def modify_isupport(app, isupport):
   isupport["NICKLEN"] = MAX_NICKNAME_LENGTH

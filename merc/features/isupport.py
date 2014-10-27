@@ -19,22 +19,22 @@ class ISupport(message.Reply):
 
   def as_reply_params(self):
     return ["{}={}".format(k, v) for k, v in self.support_params.items()] + \
-        ["are supported by this server"]
+        ["are supported by this app"]
 
 
 @ISupportFeature.hook("send_isupport")
-def send_isupport(server, user):
+def send_isupport(app, user):
   targmax = {}
-  server.run_hooks("modify_targmax", targmax)
+  app.run_hooks("modify_targmax", targmax)
 
   isupport = {
-      "NETWORK": server.network_name,
+      "NETWORK": app.network_name,
       "CASEMAPPING": "unicode",
       "CHARSET": "utf-8",
       "TARGMAX": ",".join("{}:{}".format(k, v if v is not None else "")
                           for k, v in targmax.items())
   }
-  server.run_hooks("modify_isupport", isupport)
+  app.run_hooks("modify_isupport", isupport)
 
   reply = ISupport({})
 
@@ -42,7 +42,7 @@ def send_isupport(server, user):
     reply.support_params[k] = v
 
     try:
-      reply.emit(user, server.name)
+      reply.emit(user, app.name)
     except message.MessageTooLongError:
       del reply.support_params[k]
       user.send_reply(reply)

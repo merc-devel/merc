@@ -45,15 +45,15 @@ class Motd(message.Command):
   MIN_ARITY = 0
 
   @message.Command.requires_registration
-  def handle_for(self, server, user, prefix):
-    user.send_reply(MotdStart(server.name))
+  def handle_for(self, app, user, prefix):
+    user.send_reply(MotdStart(app.name))
 
-    for line in server.motd.splitlines():
+    for line in app.motd.splitlines():
       user.send_reply(MotdReply(line))
 
     user.send_reply(EndOfMotd())
 
 
 @MotdFeature.hook("after_welcome")
-def send_motd_on_welcome(server, user):
-  user.on_message(server, user.hostmask, Motd())
+def send_motd_on_welcome(app, user):
+  user.on_message(app, user.hostmask, Motd())

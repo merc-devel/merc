@@ -70,8 +70,8 @@ class Topic(message.Command):
     return self.text is not None
 
   @message.Command.requires_registration
-  def handle_for(self, server, user, prefix):
-    chan = server.channels.get(self.channel_name)
+  def handle_for(self, app, user, prefix):
+    chan = app.channels.get(self.channel_name)
     locals = chan.get_feature_locals(TopicFeature)
 
     current_topic = locals.get("topic", None)
@@ -107,12 +107,12 @@ class Topic(message.Command):
 
 
 @TopicFeature.hook("after_join_channel")
-def send_topic_on_join(server, user, target, channel):
+def send_topic_on_join(app, user, target, channel):
   locals = channel.get_feature_locals(TopicFeature)
   current_topic = locals.get("topic", None)
 
   if current_topic is not None:
-    target.on_message(server, target.hostmask, Topic(channel.name))
+    target.on_message(app, target.hostmask, Topic(channel.name))
 
 
 @TopicFeature.register_channel_mode
@@ -122,7 +122,7 @@ class TopicLock(mode.FlagMode, mode.ChanModeMixin):
 
 
 @TopicFeature.hook("modify_list_reply")
-def modify_list_reply(server, channel, reply):
+def modify_list_reply(app, channel, reply):
   locals = channel.get_feature_locals(TopicFeature)
 
   current_topic = locals.get("topic", None)
@@ -132,5 +132,5 @@ def modify_list_reply(server, channel, reply):
 
 
 @TopicFeature.hook("modify_isupport")
-def modify_isupport(server, isupport):
+def modify_isupport(app, isupport):
   isupport["TOPICLEN"] = MAX_TOPIC_LENGTH

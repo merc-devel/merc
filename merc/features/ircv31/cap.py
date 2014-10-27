@@ -31,18 +31,18 @@ class Cap(message.Command):
     self.subcommand = subcommand
     self.arg = arg
 
-  def ls(self, server, user):
+  def ls(self, app, user):
     user.is_negotiating_cap = True
     user.send_reply(CapReply("LS", " ".join(
-        capability.NAME for capability in server.users.capabilities.values())))
+        capability.NAME for capability in app.users.capabilities.values())))
 
-  def list(self, server, user):
+  def list(self, app, user):
     user.send_reply(CapReply("LIST", " ".join(
-        capability.NAME for capability in server.users.capabilities.values()
+        capability.NAME for capability in app.users.capabilities.values()
                         if capability(user).get())))
 
-  def req(self, server, user, caps):
-    capabilities = server.users.capabilities
+  def req(self, app, user, caps):
+    capabilities = app.users.capabilities
 
     if set(caps) <= set(capabilities.keys()):
       for cap in caps:
@@ -51,10 +51,10 @@ class Cap(message.Command):
     else:
       user.send_reply(CapReply("NAK", " ".join(caps)))
 
-  def clear(self, server, user):
+  def clear(self, app, user):
     cleared_caps = []
 
-    for capability_factory in server.users.capabilities.values():
+    for capability_factory in app.users.capabilities.values():
       capability = capability_factory(user)
 
       if capability.get():
@@ -64,22 +64,22 @@ class Cap(message.Command):
     user.send_reply(CapReply("ACK",
                              " ".join("-" + cap for cap in cleared_caps)))
 
-  def end(self, server, user):
+  def end(self, app, user):
     user.is_negotiating_cap = False
     if user.is_ready_for_registration:
-      user.register(server)
+      user.register(app)
 
-  def handle_for(self, server, user, prefix):
+  def handle_for(self, app, user, prefix):
     subcommand = self.subcommand.upper()
 
     if subcommand == "LS":
-      self.ls(server, user)
+      self.ls(app, user)
     if subcommand == "LIST":
-      self.list(server, user)
+      self.list(app, user)
     elif subcommand == "REQ":
-      self.req(server, user,
+      self.req(app, user,
                self.arg.split(" ") if self.arg is not None else [])
     elif subcommand == "CLEAR":
-      self.clear(server, user)
+      self.clear(app, user)
     elif subcommand == "END":
-      self.end(server, user)
+      self.end(app, user)

@@ -35,18 +35,18 @@ class UserHost(message.Command):
     self.nicknames = nicknames[:5]
 
   @message.Command.requires_registration
-  def handle_for(self, server, user, prefix):
+  def handle_for(self, app, user, prefix):
     user_hosts = []
     for nickname in self.nicknames:
       try:
-        target = server.users.get(nickname)
+        target = app.users.get(nickname)
       except errors.NoSuchNick:
         pass
       else:
         user_host = util.Expando(nickname=nickname, is_away=False,
                                  is_oper=target.is_irc_operator,
                                  hostmask=target.hostmask)
-        server.run_hooks("modify_userhost_entry", target, user_host)
+        app.run_hooks("modify_userhost_entry", target, user_host)
         user_hosts.append(user_host)
 
     user.send_reply(UserHostReply(user_hosts))

@@ -58,18 +58,18 @@ class Who(message.Command):
     return True
 
   @message.Command.requires_registration
-  def handle_for(self, server, user, prefix):
+  def handle_for(self, app, user, prefix):
     who = []
 
     try:
       if channel.Channel.is_channel_name(self.target):
-        chan = server.channels.get(self.target)
+        chan = app.channels.get(self.target)
 
         if user.can_see_channel(chan):
           who = [target for target in chan.get_visible_users_for(user)
                         if self.user_matches_query_type(target.user)]
       else:
-        for target in server.users.query(self.target):
+        for target in app.users.query(self.target):
           if target.is_invisible and target.nickname != self.target:
             continue
 
@@ -90,7 +90,7 @@ class Who(message.Command):
 
     for cu in who:
       reply = WhoReply(cu, False, False)
-      server.run_hooks("modify_who_reply", user, cu, reply)
+      app.run_hooks("modify_who_reply", user, cu, reply)
       user.send_reply(reply)
 
     user.send_reply(EndOfWho(self.target))

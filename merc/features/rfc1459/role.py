@@ -32,7 +32,7 @@ class Voiced(mode.ChannelRoleMode):
 
 
 @RoleFeature.hook("modify_isupport")
-def modify_isupport(server, isupport):
+def modify_isupport(app, isupport):
   if "PREFIX" in isupport:
     # We may be overriden by extrole, and we're not sure if extrole was loaded
     # before us -- so if extrole has written to PREFIX already, we won't write

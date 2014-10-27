@@ -10,7 +10,7 @@ def main():
   import logging
   import yaml
 
-  from merc import server
+  from merc import application
 
   coloredlogs.install(level=logging.INFO)
   logging.getLogger("asyncio").setLevel(logging.WARN)
@@ -22,4 +22,4 @@ def main():
 
   args = parser.parse_args()
 
-  server.Server(args.config).start()
+  application.Application(args.config).start()

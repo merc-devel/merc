@@ -29,13 +29,13 @@ class Kick(message.Command):
     return self.reason is not None
 
   @message.Command.requires_registration
-  def handle_for(self, server, user, prefix):
+  def handle_for(self, app, user, prefix):
     try:
-      channel = server.channels.get(self.channel_name)
+      channel = app.channels.get(self.channel_name)
     except errors.NoSuchNick:
       raise errors.NoSuchChannel(self.channel_name)
 
-    target = server.users.get(self.nickname)
+    target = app.users.get(self.nickname)
 
     channel.check_has_user(user)
     channel.check_has_user(target)
@@ -53,5 +53,5 @@ class Kick(message.Command):
 
 
 @KickFeature.hook("modify_targmax")
-def modify_targmax(server, targmax):
+def modify_targmax(app, targmax):
   targmax["KICK"] = MAX_TARGETS

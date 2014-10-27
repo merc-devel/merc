@@ -98,10 +98,10 @@ class WhoIs(message.Command):
     self.nicknames = nicknames.split(",")
 
   @message.Command.requires_registration
-  def handle_for(self, server, user, prefix):
+  def handle_for(self, app, user, prefix):
     for nickname in self.nicknames[:MAX_TARGETS]:
       try:
-        target = server.users.get(nickname)
+        target = app.users.get(nickname)
       except errors.NoSuchNick as e:
         user.send_reply(e)
       else:
@@ -114,7 +114,7 @@ class WhoIs(message.Command):
         user.send_reply(WhoIsUser(target.nickname, target.username,
                                     target.host, target.realname))
         user.send_reply(WhoIsServer(target.nickname, target.server_name,
-                                      server.network_name))
+                                      app.network_name))
         if target.is_irc_operator:
           user.send_reply(WhoIsOperator(target.nickname))
         user.send_reply(WhoIsIdle(
@@ -123,10 +123,10 @@ class WhoIs(message.Command):
             target.creation_time))
         if channels:
           user.send_reply(WhoIsChannels(target.nickname, channels))
-        server.run_hooks("after_user_whois", user, target)
+        app.run_hooks("after_user_whois", user, target)
         user.send_reply(WhoIsEnd(target.nickname))
 
 
 @WhoIsFeature.hook("modify_targmax")
-def modify_targmax(server, targmax):
+def modify_targmax(app, targmax):
   targmax["WHOIS"] = MAX_TARGETS

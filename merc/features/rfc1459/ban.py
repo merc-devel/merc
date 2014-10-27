@@ -8,7 +8,7 @@ from merc import message
 from merc import mode
 
 
-BanDetail = collections.namedtuple("BanDetail", ["server", "creation_time"])
+BanDetail = collections.namedtuple("BanDetail", ["app", "creation_time"])
 
 
 class BanFeature(feature.Feature):
@@ -54,18 +54,18 @@ class BanMask(mode.ListMode, mode.ChanModeMixin):
     for mask, detail in sorted(bans.items(),
                                key=lambda v: v[1].creation_time,
                                reverse=True):
-      user.send_reply(BanList(self.target.name, mask, detail.server,
+      user.send_reply(BanList(self.target.name, mask, detail.app,
                                 detail.creation_time))
     user.send_reply(EndOfBanList(self.target.name))
 
-  def add(self, server, user, value):
+  def add(self, app, user, value):
     locals = self.target.get_feature_locals(BanFeature)
     bans = locals.setdefault("bans", {})
 
     if value in bans:
       return False
 
-    bans[value] = BanDetail(server.name, datetime.datetime.now())
+    bans[value] = BanDetail(app.name, datetime.datetime.now())
     return True
 
   def remove(self, user, value):
@@ -80,22 +80,22 @@ class BanMask(mode.ListMode, mode.ChanModeMixin):
 
 
 @BanFeature.hook("check_join_channel")
-def check_channel_ban(server, target, channel, key):
+def check_channel_ban(app, target, channel, key):
   locals = channel.get_feature_locals(BanFeature)
 
   for mask in locals.get("bans", {}):
     if target.hostmask_matches(mask):
       raise errors.BannedFromChannel(channel.name)
 
-    server.run_hooks("check_join_ban_mask", target, channel, mask)
+    app.run_hooks("check_join_ban_mask", target, channel, mask)
 
 
 @BanFeature.hook("check_can_message_channel")
-def check_can_message_channel(server, target, channel):
+def check_can_message_channel(app, target, channel):
   locals = channel.get_feature_locals(BanFeature)
 
   for mask in locals.get("bans", {}):
     if target.hostmask_matches(mask):
       channel.check_is_voiced(target)
 
-    server.run_hooks("check_message_ban_mask", target, channel, mask)
+    app.run_hooks("check_message_ban_mask", target, channel, mask)

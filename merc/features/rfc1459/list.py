@@ -51,21 +51,21 @@ class List(message.Command):
     self.target = target
 
   @message.Command.requires_registration
-  def handle_for(self, server, user, prefix):
+  def handle_for(self, app, user, prefix):
     user.send_reply(ListStart())
 
     try:
       if self.target is not None:
-        channels = server.channels.query(self.target)
+        channels = app.channels.query(self.target)
       else:
-        channels = server.channels.all()
+        channels = app.channels.all()
 
       for channel in channels:
         if not user.can_see_channel(channel):
           continue
 
         reply = ListReply(channel.name, len(channel.users), "")
-        server.run_hooks("modify_list_reply", channel, reply)
+        app.run_hooks("modify_list_reply", channel, reply)
 
         user.send_reply(reply)
     finally:
@@ -86,5 +86,5 @@ class Secret(mode.FlagMode, mode.ChanModeMixin):
 
 
 @ListFeature.hook("modify_targmax")
-def modify_targmax(server, targmax):
+def modify_targmax(app, targmax):
   targmax["LIST"] = MAX_TARGETS

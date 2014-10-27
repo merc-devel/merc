@@ -15,12 +15,12 @@ class MultiPrefix(capability.Capability):
 
 
 @MultiPrefixFeature.hook("modify_name_reply")
-def modify_name_reply(server, user, reply):
+def modify_name_reply(app, user, reply):
   if MultiPrefix(user).get():
     reply.multi_prefix = True
 
 
 @MultiPrefixFeature.hook("modify_who_reply")
-def modify_who_reply(server, user, target, reply):
+def modify_who_reply(app, user, target, reply):
   if MultiPrefix(user).get():
     reply.multi_prefix = True

@@ -21,5 +21,5 @@ class YourID(message.Reply):
 
 
 @YourIDFeature.hook("after_welcome")
-def send_your_id_on_welcome(server, user):
+def send_your_id_on_welcome(app, user):
   user.send_reply(YourID(user.uid))

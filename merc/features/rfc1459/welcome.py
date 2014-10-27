@@ -48,7 +48,7 @@ class Created(message.Reply):
     self.creation_time = creation_time
 
   def as_reply_params(self):
-    return ["This server was created {}".format(
+    return ["This app was created {}".format(
         self.creation_time.isoformat())]
 
 
@@ -84,12 +84,12 @@ class User(message.Command):
   def as_command_params(self):
     return [self.username, self.hostname, self.servername, self.realname]
 
-  def handle_for(self, server, user, prefix):
+  def handle_for(self, app, user, prefix):
     user.username = self.username
     user.realname = self.realname
 
     if user.is_ready_for_registration:
-      user.register(server)
+      user.register(app)
 
 
 @WelcomeFeature.register_command
@@ -105,7 +105,7 @@ class Quit(message.Command):
     return self.reason is not None
 
   @message.Command.requires_registration
-  def handle_for(self, server, user, prefix):
+  def handle_for(self, app, user, prefix):
     user.close("Quit: " + self.reason if self.reason is not None
                                         else "Remote host closed connection")
 
@@ -117,16 +117,16 @@ class Quit(message.Command):
 
 
 @WelcomeFeature.hook("after_register")
-def welcome_on_register(server, user):
-  user.send_reply(Welcome(server.network_name, user.nickname))
-  user.send_reply(YourHost(server.name, server.version))
-  user.send_reply(Created(server.creation_time))
-  user.send_reply(MyInfo(server.name, server.users.modes,
-                         server.channels.modes))
-  server.run_hooks("send_isupport", user)
-  server.run_hooks("after_welcome", user)
+def welcome_on_register(app, user):
+  user.send_reply(Welcome(app.network_name, user.nickname))
+  user.send_reply(YourHost(app.name, app.version))
+  user.send_reply(Created(app.creation_time))
+  user.send_reply(MyInfo(app.name, app.users.modes,
+                         app.channels.modes))
+  app.run_hooks("send_isupport", user)
+  app.run_hooks("after_welcome", user)
 
 
 @WelcomeFeature.hook("before_remove_user")
-def broadcast_quit_on_quit(server, user):
+def broadcast_quit_on_quit(app, user):
   user.relay_to_all(Quit(user.disconnect_reason))
