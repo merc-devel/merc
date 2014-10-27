@@ -1,10 +1,10 @@
+         ____
+      __/ / /___ _  ___ ________
+     /_  . __/  ' \/ -_) __/ __/
+    /_    __/_/_/_/\__/_/  \__/
+     /_/_/
 
-      _ __ ___   ___ _ __ ___
-     | '_ ` _ \ / _ \ '__/ __|
-     | | | | | |  __/ | | (__ _
-     |_| |_| |_|\___|_|  \___(_)
-
-    The Modern Ethereal Relay Chat daemon.
+_The Modern Ethereal Relay Chat daemon._
 
 merc is an IRC daemon written using the `asyncio` framework in Python 3.3. It
 aims to be a modern implementation of the IRC protocol with relatively good
