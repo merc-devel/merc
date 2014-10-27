@@ -147,11 +147,8 @@ class Server(object):
       self.load_feature(feature_name)
 
   def start(self):
-    logger.info("""
-  Welcome to merc-{}, running for {} on network {}.
-
-  {}\
-  """.format(merc.__version__, self.name, self.network_name, self.motd))
+    logger.info("Welcome to merc-{}, running for {} on network {}.".format(
+        merc.__version__, self.name, self.network_name))
 
     if "ssl" in self.config:
       ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)

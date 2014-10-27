@@ -6,7 +6,7 @@ from merc import feature
 from merc import message
 
 
-INFO_TEMPLATE = """
+INFO_TEMPLATE = """\
      ____
   __/ / /___ _  ___ ________
  /_  . __/  ' \/ -_) __/ __/
