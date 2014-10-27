@@ -11,8 +11,8 @@ INFO_TEMPLATE="""
   | | | | | |  __/ | | (__ _
   |_| |_| |_|\___|_|  \___(_)
 
-  The Modern Ethereal Relay Chat daemon, version %v.
-  Copyright (C) %y, #merc-devel
+  The Modern Ethereal Relay Chat daemon, version {version}.
+  Copyright (C) {year}, #merc-devel
 
   This software comes with no warranties: see the LICENSE file in the
   source root for details and usage terms.
@@ -25,8 +25,8 @@ INFO_TEMPLATE="""
   - rfw <press@rfw.name>
   - Shiz <hi@shiz.me>
 
-  This merc instance has been online since %s,
-  meaning it has been up for %p!
+  This merc instance has been online since {online_since},
+  meaning it has been up for {online_for}!
 """
 
 
@@ -63,14 +63,14 @@ class Info(message.Command):
   def handle_for(self, user, prefix):
     version = util.get_version()
     year = date.today().year
-    online_since = user.server.creation_time
-    online_for = datetime.now() - online_since
+    online_since = user.server.creation_time.strftime("%c")
+    online_for = friendly_timespan(datetime.now() - user.server.creation_time)
 
-    lines = INFO_TEMPLATE
-    lines = lines.replace("%v", version)
-    lines = lines.replace("%y", str(year))
-    lines = lines.replace("%s", online_since.strftime("%c"))
-    lines = lines.replace("%p", friendly_timespan(online_for))
+    lines = INFO_TEMPLATE.format(
+        version=version,
+        year=year,
+        online_since=online_since,
+        online_for=online_for)
 
     for line in lines.splitlines():
       user.send_reply(InfoReply(line))
