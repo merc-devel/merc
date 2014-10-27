@@ -74,6 +74,7 @@ class Info(message.Command):
 
     for line in lines.splitlines():
       user.send_reply(InfoReply(line))
+    user.server.run_hooks("after_info", user)
     user.send_reply(EndOfInfo())
 
 def friendly_timespan(diff, range=3):
