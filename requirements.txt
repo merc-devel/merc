@@ -3,3 +3,4 @@ regex
 aiodns
 PyYAML
 passlib
+networkx

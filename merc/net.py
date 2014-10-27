@@ -5,7 +5,6 @@ from merc import message
 from merc import parser
 
 
-
 logger = logging.getLogger(__name__)
 
 

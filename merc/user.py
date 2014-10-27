@@ -45,6 +45,10 @@ class User(object):
     self.pong_check_handle = None
 
   @property
+  def sid(self):
+    return self.uid[:3]
+
+  @property
   def hostmask(self):
     return emitter.emit_hostmask(self.nickname, self.username, self.host)
 
@@ -195,9 +199,8 @@ class LocalUser(User):
 
 
 class RemoteUser(User):
-  def __init__(self, uid, server_name, remote_sid):
+  def __init__(self, uid):
     super.__init__(uid, server_name)
-    self.remote_sid = sid
 
 
 class UserStore(object):

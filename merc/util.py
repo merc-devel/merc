@@ -23,7 +23,7 @@ class Expando(object):
 
 
 def uidify(i):
-  BASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  BASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
   MAX_LENGTH = 6
 
   parts = []
