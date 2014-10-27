@@ -5,28 +5,33 @@ from merc import util
 from merc import feature
 from merc import message
 
-INFO_TEMPLATE="""
-   _ __ ___   ___ _ __ ___
-  | '_ ` _ \ / _ \ '__/ __|
-  | | | | | |  __/ | | (__ _
-  |_| |_| |_|\___|_|  \___(_)
 
-  The Modern Ethereal Relay Chat daemon, version {version}.
-  Copyright (C) {year}, #merc-devel
+INFO_TEMPLATE = """
+     ____
+  __/ / /___ _  ___ ________
+ /_  . __/  ' \/ -_) __/ __/
+/_    __/_/_/_/\__/_/  \__/
+ /_/_/
 
-  This software comes with no warranties: see the LICENSE file in the
-  source root for details and usage terms.
+The Modern Ethereal Relay Chat daemon, version {version}.
+Copyright (C) {year}, #merc-devel
 
-  Visit us: http://merc-devel.com
-  Get the merc source code at: https://github.com/merc-devel/merc
+This software is licensed under the terms of the MIT license. The LICENSE file
+in the source root contains full details and usage terms.
 
-  The following people have contributed significantly to merc,
-  in nickname-alphabetic order:
-  - rfw <press@rfw.name>
-  - Shiz <hi@shiz.me>
+Visit us: http://merc-devel.com
+Visit us on IRC: #merc @ irc.merc-devel.com
 
-  This merc instance has been online since {online_since},
-  meaning it has been up for {online_for}!
+Get the merc source code at: https://github.com/merc-devel/merc
+
+The following people have contributed significantly to merc, in
+nickname-alphabetical order:
+
+rfw, Tony Young <tony@rfw.name>
+Shiz <hi@shiz.me>
+
+This merc instance has been online since {online_since}, meaning it has been up
+for {online_for}!
 """
 
 
