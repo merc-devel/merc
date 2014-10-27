@@ -15,11 +15,14 @@ class Protocol(asyncio.Protocol):
     self.app = app
     self.type = type
     self.buffer = b""
+
+    self.client = None
     self.disconnect_reason = None
 
   def local_new(self):
     return {
-        "users": self.app.users.local_new
+        "users": self.app.users.new_local_user,
+        "servers": self.app.network.new_neighbor
     }[self.type](self)
 
   def connection_made(self, transport):
@@ -34,7 +37,7 @@ class Protocol(asyncio.Protocol):
     self.buffer += data
 
     if len(self.buffer) > self.MAX_BUFFER_SIZE:
-      self.client.close("Excess flood")
+      self.close("Excess flood")
 
     *lines, self.buffer = self.buffer.split(b"\n")
 

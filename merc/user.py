@@ -205,7 +205,7 @@ class UserStore(object):
     self._local_uid_serial = (self.app.sid + util.uidify(i)
                               for i in itertools.count(0))
 
-  def local_new(self, transport):
+  def new_local_user(self, transport):
     return LocalUser(self, next(self._local_uid_serial), self.app.name,
                      transport)
 

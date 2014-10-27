@@ -21,6 +21,7 @@ from merc import errors
 from merc import features
 from merc import message
 from merc import protocol
+from merc import server
 from merc import user
 from merc import util
 
@@ -56,6 +57,7 @@ class Application(object):
 
     self.users = user.UserStore(self)
     self.channels = channel.ChannelStore(self)
+    self.network = server.Network(self)
 
     self.register_signal_handlers()
 
