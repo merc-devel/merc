@@ -100,7 +100,7 @@ class Channel(object):
     try:
       return self.users[user.id]
     except KeyError:
-      raise errors.NoSuchNick(self.name)
+      raise errors.NotOnChannel(self.name)
 
   @property
   def normalized_name(self):
