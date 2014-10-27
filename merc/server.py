@@ -35,13 +35,22 @@ class Server(object):
     self.loop = loop
 
     self.features = {}
+    self.bindings = []
 
     self.config_filename = config_filename
-    self.rehash()
+    self.reload_config()
 
     self.resolver = aiodns.DNSResolver(loop=loop)
     self.crypt_context = passlib.context.CryptContext(
         schemes=self.config["crypto"]["hash_schemes"])
+
+    if "ssl" in self.config:
+      self.ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+      self.ssl_ctx.load_cert_chain(self.config["ssl"]["cert"],
+                                   self.config["ssl"]["key"])
+    else:
+      logger.warn("No SSL configuration found.")
+      self.ssl_ctx = None
 
     self.creation_time = datetime.datetime.now()
 
@@ -54,12 +63,20 @@ class Server(object):
     if not self.sid[0].isdigit():
       raise ValueError("sid does not start with a digit")
 
-  def rehash(self):
+  def reload_config(self):
     self._unload_all_features()
     with open(self.config_filename, "r") as f:
       self.config = yaml.safe_load(f)
     self.check_config()
     self._load_configured_features()
+
+  def rehash(self):
+    @asyncio.coroutine
+    def coro():
+      self.reload_config()
+      yield from self.unbind()
+      yield from self.bind()
+    return asyncio.async(coro(), loop=self.loop)
 
   @property
   def name(self):
@@ -156,39 +173,39 @@ class Server(object):
     for feature_name in self.config["features"]:
       self.load_feature(feature_name)
 
+  @asyncio.coroutine
+  def unbind(self):
+    wait_for = []
+
+    while self.bindings:
+      binding = self.bindings.pop()
+      logger.info("Unbinding from {}".format(binding.sockets[0].getsockname()))
+      binding.close()
+      wait_for.append(binding.wait_closed())
+
+    yield from asyncio.gather(*wait_for)
+
+  @asyncio.coroutine
+  def bind(self):
+    for bind in self.config["bind"]:
+      binding = yield from self.loop.create_server(
+          lambda type=bind.get("type", "users"): net.Protocol(self, type),
+          bind["host"], bind["port"],
+          ssl=self.ssl_ctx if bind.get("ssl", False) else None)
+      logger.info("Binding to {}".format(binding.sockets[0].getsockname()))
+
+      self.bindings.append(binding)
+
   def start(self):
     logger.info("Welcome to merc-{}, running for {} on network {}.".format(
         merc.__version__, self.name, self.network_name))
 
-    if "ssl" in self.config:
-      ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-      ssl_ctx.load_cert_chain(self.config["ssl"]["cert"],
-                              self.config["ssl"]["key"])
-    else:
-      logger.warn("No SSL configuration found.")
-      ssl_ctx = None
-
-    proto_servers = []
-
-    for bind in self.config["bind"]:
-      coro = self.loop.create_server(
-          lambda: net.Protocol(self), bind["host"], bind["port"],
-          ssl=ssl_ctx if bind["ssl"] else None)
-
-      proto_server = self.loop.run_until_complete(coro)
-      proto_servers.append(proto_server)
-
-      logger.info("Serving on {}".format(proto_server.sockets[0].getsockname()))
+    self.loop.run_until_complete(self.bind())
 
     try:
       self.loop.run_forever()
     except KeyboardInterrupt:
       pass
 
-    for proto_server in proto_servers:
-      proto_server.close()
-
-    self.loop.run_until_complete(
-        asyncio.gather(*[proto_server.wait_closed()
-                         for proto_server in proto_servers]))
+    self.loop.run_until_complete(self.unbind())
     self.loop.close()

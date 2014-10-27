@@ -28,18 +28,27 @@ bind:
   - host: 0.0.0.0
     port: 6667
     ssl: false
+    type: users
 
   - host: 0.0.0.0
     port: 6697
     ssl: true
+    type: users
 
   - host: "::"
     port: 6667
     ssl: false
+    type: users
 
   - host: "::"
     port: 6697
     ssl: true
+    type: users
+
+  - host: 0.0.0.0
+    port: 7000
+    ssl: false
+    type: servers
 
 crypto:
   hash_schemes:

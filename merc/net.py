@@ -12,14 +12,15 @@ logger = logging.getLogger(__name__)
 class Protocol(asyncio.Protocol):
   MAX_BUFFER_SIZE = 2048
 
-  def __init__(self, server):
+  def __init__(self, server, type):
     self.server = server
+    self.type = type
     self.buffer = b""
 
   def connection_made(self, transport):
     self.user = self.server.users.local_new(transport)
-    logger.info("Accepted connection from {}".format(
-        self.user.transport.get_extra_info("peername")))
+    logger.info("Accepted connection from {} (type: {})".format(
+        self.user.transport.get_extra_info("peername"), self.type))
     self.user.on_connect(self.server)
 
   def data_received(self, data):
