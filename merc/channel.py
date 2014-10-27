@@ -99,7 +99,7 @@ class Channel(object):
 
   def get_channel_user_for(self, user):
     try:
-      return self.users[user.id]
+      return self.users[user.uid]
     except KeyError:
       raise errors.NotOnChannel(self.name)
 
@@ -118,18 +118,18 @@ class Channel(object):
     if not self.users:
       channel_user.is_operator = True
 
-    self.users[user.id] = channel_user
+    self.users[user.uid] = channel_user
     user.channels[self.normalized_name] = self
 
   def part(self, user):
-    del self.users[user.id]
+    del self.users[user.uid]
     del user.channels[self.normalized_name]
 
     if not self.users:
       self.store.remove(self)
 
   def has_user(self, user):
-    return user.id in self.users
+    return user.uid in self.users
 
   def get_visible_users_for(self, user):
     if user.is_in_channel(self):
