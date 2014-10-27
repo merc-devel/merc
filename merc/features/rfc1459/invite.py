@@ -66,6 +66,7 @@ class Invite(message.Command):
 
     target.send(user.hostmask, Invite(self.target, self.channel))
     user.send_reply(Inviting(self.channel, self.target))
+    user.server.run_hooks("after_user_invite", user, target)
 
   def as_params(self, user):
     return [self.target, self.channel]

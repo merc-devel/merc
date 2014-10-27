@@ -55,6 +55,7 @@ class Away(message.Command):
       user.send_reply(UnAway())
 
 
+@AwayFeature.hook("after_user_invite")
 @AwayFeature.hook("after_user_privmsg")
 @AwayFeature.hook("after_user_whois")
 def send_is_away_if_away(user, target):
