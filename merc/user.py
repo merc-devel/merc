@@ -27,7 +27,6 @@ class User(object):
 
     self.is_negotiating_cap = False
     self.is_registered = False
-    self.disconnect_reason = None
 
     self.channels = {}
     self.modes = {}
@@ -109,47 +108,44 @@ class User(object):
 
 
 class LocalUser(User):
-  def __init__(self, store, uid, server_name, transport):
+  def __init__(self, store, uid, server_name, protocol):
     super().__init__(store, uid, server_name)
 
-    self.transport = transport
+    self.protocol = protocol
     self.is_securely_connected = \
-        self.transport.get_extra_info("sslcontext") is not None
+        self.protocol.transport.get_extra_info("sslcontext") is not None
 
   def send(self, prefix, msg):
-    self.transport.write(msg.emit(self, prefix) + b"\r\n")
+    self.protocol.send(prefix, msg)
 
   def on_connect(self, app):
     asyncio.async(self.resolve_hostname_coro(app), loop=app.loop)
 
-  def on_raw_message(self, app, prefix, command, params):
-    try:
-      command_type = app.get_command(command)
-    except KeyError:
-      if self.is_registered:
-        self.send_reply(errors.UnknownCommand(command))
-    else:
-      try:
-        self.on_message(app, prefix, command_type.with_params(params))
-      except errors.Error as e:
-        self.send(None, e)
-        self.transport.close()
-      except errors.BaseError as e:
-        self.send_reply(e)
-
   def on_message(self, app, prefix, message):
     self.last_activity_time = datetime.datetime.now()
-    message.handle_for(app, self, prefix)
+    try:
+      message.handle_for(app, self, prefix)
+    except errors.Error as e:
+      self.send(None, e)
+      self.client.close()
+    except errors.BaseError as e:
+      self.send_reply(e)
     app.run_hooks("after_message", self, message, prefix)
+
+  def on_unknown_command(self, command_name):
+    if self.is_registered:
+      self.send_reply(errors.UnknownCommand(command_name))
+
+  def on_disconnect(self, exc):
+    self.store.remove(self)
 
   def on_remove(self, app):
     for channel_name in list(self.channels):
       app.channels.get(channel_name).part(self)
-    self.transport.close()
 
   @asyncio.coroutine
   def resolve_hostname_coro(self, app):
-    host, *_ = self.transport.get_extra_info("peername")
+    host, *_ = self.protocol.transport.get_extra_info("peername")
     host, _, _ = host.partition("%")
 
     app.run_hooks("send_server_notice", self,
@@ -186,7 +182,7 @@ class LocalUser(User):
 
   def register(self, app):
     if self.store.has(self.nickname):
-      host, *_ = self.transport.get_extra_info("peername")
+      host, *_ = self.protocol.transport.get_extra_info("peername")
       raise errors.Error("Closing Link: {} (Overridden)".format(host))
 
     self.store.add(self)
@@ -194,8 +190,7 @@ class LocalUser(User):
     app.run_hooks("after_register", self)
 
   def close(self, reason=None):
-    self.disconnect_reason = reason
-    self.transport.close()
+    self.protocol.close(reason)
 
 
 class RemoteUser(User):

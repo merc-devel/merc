@@ -106,8 +106,7 @@ class Quit(message.Command):
 
   @message.Command.requires_registration
   def handle_for(self, app, user, prefix):
-    user.close("Quit: " + self.reason if self.reason is not None
-                                        else "Remote host closed connection")
+    user.close("Quit: " + self.reason if self.reason is not None else None)
 
   def as_command_params(self):
     params = []
@@ -129,4 +128,4 @@ def welcome_on_register(app, user):
 
 @WelcomeFeature.hook("before_remove_user")
 def broadcast_quit_on_quit(app, user):
-  user.relay_to_all(Quit(user.disconnect_reason))
+  user.relay_to_all(Quit(user.protocol.disconnect_reason))

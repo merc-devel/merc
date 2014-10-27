@@ -20,7 +20,7 @@ from merc import channel
 from merc import errors
 from merc import features
 from merc import message
-from merc import net
+from merc import protocol
 from merc import user
 from merc import util
 
@@ -191,7 +191,7 @@ class Application(object):
       type = bind.get("type", "users")
 
       binding = yield from self.loop.create_server(
-          lambda type=type: net.Protocol(self, type),
+          lambda type=type: protocol.Protocol(self, type),
           bind["host"], bind["port"],
           ssl=self.ssl_ctx if bind.get("ssl", False) else None)
       logger.info("Binding to {}: {}".format(binding.sockets[0].getsockname(),
