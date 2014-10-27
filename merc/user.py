@@ -204,13 +204,12 @@ class UserStore(object):
   def __init__(self, server):
     self.server = server
     self.users = {}
-    self._local_user_serial = itertools.count(0)
-
-  def _next_uid(self):
-    return self.server.sid + util.uidify(next(self._local_user_serial))
+    self._local_uid_serial = (self.server.sid + util.uidify(i)
+                              for i in itertools.count(0))
 
   def local_new(self, transport):
-    return LocalUser(self, self._next_uid(), self.server.name, transport)
+    return LocalUser(self, next(self._local_uid_serial), self.server.name,
+                     transport)
 
   def add(self, user):
     self.users[user.normalized_nickname] = user
