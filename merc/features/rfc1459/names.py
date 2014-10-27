@@ -63,7 +63,7 @@ class EndOfNames(message.Reply):
             "End of /NAMES list"]
 
 
-@NamesFeature.register_command
+@NamesFeature.register_user_command
 class Names(message.Command):
   NAME = "NAMES"
   MIN_ARITY = 0

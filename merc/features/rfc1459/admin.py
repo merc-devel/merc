@@ -55,7 +55,7 @@ class AdminEmail(message.Reply):
     return [email]
 
 
-@AdminFeature.register_command
+@AdminFeature.register_user_command
 class Admin(message.Command):
   NAME = "ADMIN"
   MIN_ARITY = 0

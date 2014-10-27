@@ -30,7 +30,7 @@ class YoureOper(message.Reply):
     return ["You are now an IRC operator"]
 
 
-@OperFeature.register_command
+@OperFeature.register_user_command
 class Kill(message.Command):
   NAME = "KILL"
   MIN_ARITY = 2
@@ -50,7 +50,7 @@ class Kill(message.Command):
     target.close(disconnect_reason)
 
 
-@OperFeature.register_command
+@OperFeature.register_user_command
 class Oper(message.Command):
   NAME = "OPER"
   MIN_ARITY = 2

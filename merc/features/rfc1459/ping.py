@@ -15,7 +15,7 @@ class PingFeature(feature.Feature):
 install = PingFeature.install
 
 
-@PingFeature.register_command
+@PingFeature.register_user_command
 class Ping(message.Command):
   NAME = "PING"
   MIN_ARITY = 1
@@ -37,7 +37,7 @@ class Ping(message.Command):
         self.value))
 
 
-@PingFeature.register_command
+@PingFeature.register_user_command
 class Pong(message.Command):
   NAME = "PONG"
   MIN_ARITY = 1

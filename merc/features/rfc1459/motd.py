@@ -39,7 +39,7 @@ class EndOfMotd(message.Reply):
     return ["End of /MOTD command"]
 
 
-@MotdFeature.register_command
+@MotdFeature.register_user_command
 class Motd(message.Command):
   NAME = "MOTD"
   MIN_ARITY = 0

@@ -11,8 +11,8 @@ class Message(object):
   MAX_LENGTH = 510
   FORCE_TRAILING = False
 
-  def emit(self, user, prefix):
-    emitted = emitter.emit_message(prefix, self.NAME, self.as_params(user),
+  def emit(self, client, prefix):
+    emitted = emitter.emit_message(prefix, self.NAME, self.as_params(client),
                                    force_trailing=self.FORCE_TRAILING)
 
     if len(emitted) > self.MAX_LENGTH:
@@ -20,13 +20,13 @@ class Message(object):
 
     return emitted
 
-  def as_params(self, user):
+  def as_params(self, client):
     raise NotImplementedError
 
 
 class Reply(Message):
-  def as_params(self, user):
-    return [user.displayed_nickname] + self.as_reply_params()
+  def as_params(self, client):
+    return [client.displayed_nickname] + self.as_reply_params()
 
   def as_reply_params(self):
     raise NotImplementedError
@@ -36,7 +36,7 @@ class Command(Message):
   def __init__(self, *args):
     pass
 
-  def as_params(self, user):
+  def as_params(self, client):
     return self.as_command_params()
 
   def as_command_params(self):
@@ -51,18 +51,18 @@ class Command(Message):
 
     return cls(*params)
 
-  def handle_for(self, app, user, prefix):
+  def handle_for(self, app, client, prefix):
     raise NotImplementedError
 
   @staticmethod
   def requires_registration(f):
     @functools.wraps(f)
-    def _wrapper(self, app, user, prefix):
+    def _wrapper(self, app, client, prefix):
       from merc import errors
 
-      if not user.is_registered:
+      if not client.is_registered:
         raise errors.NotRegistered
 
-      f(self, app, user, prefix)
+      f(self, app, client, prefix)
     return _wrapper
 

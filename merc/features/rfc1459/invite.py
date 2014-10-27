@@ -34,7 +34,7 @@ class InviteOnly(mode.FlagMode, mode.ChanModeMixin):
   CHAR = "i"
 
 
-@InviteFeature.register_command
+@InviteFeature.register_user_command
 class Invite(message.Command):
   NAME = "INVITE"
   MIN_ARITY = 2

@@ -56,7 +56,7 @@ class TopicWhoTime(message.Reply):
     return [self.channel_name, self.who, str(int(self.time.timestamp()))]
 
 
-@TopicFeature.register_command
+@TopicFeature.register_user_command
 class Topic(message.Command):
   NAME = "TOPIC"
   MIN_ARITY = 1

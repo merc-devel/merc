@@ -60,7 +60,7 @@ class EndOfInfo(message.Reply):
     return ["End of /INFO list"]
 
 
-@InfoFeature.register_command
+@InfoFeature.register_user_command
 class Info(message.Command):
   NAME = "INFO"
   MIN_ARITY = 0

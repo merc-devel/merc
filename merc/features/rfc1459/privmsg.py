@@ -55,12 +55,12 @@ class _Privmsg(message.Command):
         user.relay_to_user(target, self.__class__(target.nickname, self.text))
 
 
-@PrivmsgFeature.register_command
+@PrivmsgFeature.register_user_command
 class Privmsg(_Privmsg):
   NAME = "PRIVMSG"
 
 
-@PrivmsgFeature.register_command
+@PrivmsgFeature.register_user_command
 class Notice(_Privmsg):
   NAME = "NOTICE"
 

@@ -52,7 +52,7 @@ class _Join(message.Command):
         app.run_hooks("after_join_new_channel", user, target, channel)
 
 
-@JoinFeature.register_command
+@JoinFeature.register_user_command
 class Join(_Join):
   NAME = "JOIN"
   MIN_ARITY = 1
@@ -74,7 +74,7 @@ class Join(_Join):
     return params
 
 
-@JoinFeature.register_command
+@JoinFeature.register_user_command
 class SAJoin(_Join):
   NAME = "SAJOIN"
   MIN_ARITY = 2
@@ -112,7 +112,7 @@ class _Part(message.Command):
         channel.part(user)
 
 
-@JoinFeature.register_command
+@JoinFeature.register_user_command
 class Part(_Part):
   NAME = "PART"
   MIN_ARITY = 1
@@ -135,7 +135,7 @@ class Part(_Part):
     return params
 
 
-@JoinFeature.register_command
+@JoinFeature.register_user_command
 class SAPart(_Part):
   NAME = "SAPART"
   MIN_ARITY = 2

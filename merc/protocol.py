@@ -63,12 +63,7 @@ class Protocol(asyncio.Protocol):
     except parser.ParseError:
       return
 
-    try:
-      command_type = self.app.get_command(command_name)
-    except KeyError:
-      self.client.on_unknown_command(command_name)
-    else:
-      self.client.on_message(self.app, prefix, command_type.with_params(params))
+    self.client.on_raw_message(self.app, prefix, command_name, params)
 
   def send(self, prefix, msg):
     self.transport.write(msg.emit(self.client, prefix) + b"\r\n")

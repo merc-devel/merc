@@ -23,7 +23,7 @@ class VersionReply(message.Reply):
     return [self.version, self.server_name, self.comment]
 
 
-@VersionFeature.register_command
+@VersionFeature.register_user_command
 class Version(message.Command):
   NAME = "VERSION"
   MIN_ARITY = 0

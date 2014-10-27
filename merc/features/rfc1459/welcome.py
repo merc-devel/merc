@@ -70,7 +70,7 @@ class MyInfo(message.Reply):
                                      if mode.TAKES_PARAM))]
 
 
-@WelcomeFeature.register_command
+@WelcomeFeature.register_user_command
 class User(message.Command):
   NAME = "USER"
   MIN_ARITY = 4
@@ -92,7 +92,7 @@ class User(message.Command):
       user.register(app)
 
 
-@WelcomeFeature.register_command
+@WelcomeFeature.register_user_command
 class Quit(message.Command):
   NAME = "QUIT"
   MIN_ARITY = 0

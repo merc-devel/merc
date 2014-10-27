@@ -36,7 +36,7 @@ class UnAway(message.Reply):
     return ["You are no longer marked as being away"]
 
 
-@AwayFeature.register_command
+@AwayFeature.register_user_command
 class Away(message.Command):
   NAME = "AWAY"
   MIN_ARITY = 0

@@ -43,7 +43,7 @@ class WhoReply(message.Reply):
             str(0) + " " + self.target.user.realname]
 
 
-@WhoFeature.register_command
+@WhoFeature.register_user_command
 class Who(message.Command):
   NAME = "WHO"
   MIN_ARITY = 1

@@ -123,10 +123,17 @@ class Application(object):
     for feature in self.features.values():
       feature.run_hooks(hook_name, self, *args, **kwargs)
 
-  def get_command(self, name):
+  def get_user_command(self, name):
     for feature in self.features.values():
-      if name in feature.COMMANDS:
-        return feature.COMMANDS[name]
+      if name in feature.USER_COMMANDS:
+        return feature.USER_COMMANDS[name]
+
+    raise KeyError(name)
+
+  def get_server_command(self, name):
+    for feature in self.features.values():
+      if name in feature.SERVER_COMMANDS:
+        return feature.SERVER_COMMANDS[name]
 
     raise KeyError(name)
 

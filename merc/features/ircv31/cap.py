@@ -22,7 +22,7 @@ class CapReply(message.Reply):
     return [self.subcommand, self.arg]
 
 
-@CapFeature.register_command
+@CapFeature.register_user_command
 class Cap(message.Command):
   NAME = "CAP"
   MIN_ARITY = 1

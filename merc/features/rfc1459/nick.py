@@ -35,7 +35,7 @@ class _Nick(message.Command):
         target.register(app)
 
 
-@NickFeature.register_command
+@NickFeature.register_user_command
 class Nick(_Nick):
   NAME = "NICK"
   MIN_ARITY = 1
@@ -50,7 +50,7 @@ class Nick(_Nick):
     return user
 
 
-@NickFeature.register_command
+@NickFeature.register_user_command
 class SANick(_Nick):
   NAME = "SANICK"
   MIN_ARITY = 2

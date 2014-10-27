@@ -121,20 +121,25 @@ class LocalUser(User):
   def on_connect(self, app):
     asyncio.async(self.resolve_hostname_coro(app), loop=app.loop)
 
+  def on_raw_message(self, app, prefix, command_name, params):
+    try:
+      command_type = app.get_user_command(command_name)
+    except KeyError:
+      if self.is_registered:
+        self.send_reply(errors.UnknownCommand(command_name))
+    else:
+      self.on_message(app, prefix, command_type.with_params(params))
+
   def on_message(self, app, prefix, message):
     self.last_activity_time = datetime.datetime.now()
     try:
       message.handle_for(app, self, prefix)
     except errors.Error as e:
       self.send(None, e)
-      self.client.close()
+      self.close()
     except errors.BaseError as e:
       self.send_reply(e)
     app.run_hooks("after_message", self, message, prefix)
-
-  def on_unknown_command(self, command_name):
-    if self.is_registered:
-      self.send_reply(errors.UnknownCommand(command_name))
 
   def on_disconnect(self, exc):
     self.store.remove(self)

@@ -5,14 +5,14 @@ class BaseError(Exception, message.Reply):
   pass
 
 
-class Error(BaseError):
+class Error(Exception, message.Message):
   NAME = "ERROR"
   FORCE_TRAILING = True
 
   def __init__(self, reason):
     self.reason = reason
 
-  def as_reply_params(self):
+  def as_params(self, client):
     return [self.reason]
 
 

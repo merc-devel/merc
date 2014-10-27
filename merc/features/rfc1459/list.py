@@ -42,7 +42,7 @@ class ListEnd(message.Reply):
     return ["End of /LIST"]
 
 
-@ListFeature.register_command
+@ListFeature.register_user_command
 class List(message.Command):
   NAME = "LIST"
   MIN_ARITY = 0

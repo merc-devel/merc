@@ -13,7 +13,7 @@ install = KickFeature.install
 MAX_TARGETS = 1
 
 
-@KickFeature.register_command
+@KickFeature.register_user_command
 class Kick(message.Command):
   NAME = "KICK"
   MIN_ARITY = 2

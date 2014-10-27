@@ -21,7 +21,7 @@ class IsOnReply(message.Reply):
     return [" ".join(self.nicknames)]
 
 
-@IsOnFeature.register_command
+@IsOnFeature.register_user_command
 class IsOn(message.Command):
   NAME = "ISON"
   MIN_ARITY = 0

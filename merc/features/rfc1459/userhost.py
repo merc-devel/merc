@@ -26,7 +26,7 @@ class UserHostReply(message.Reply):
             for user_host in self.user_hosts)]
 
 
-@UserHostFeature.register_command
+@UserHostFeature.register_user_command
 class UserHost(message.Command):
   NAME = "USERHOST"
   MIN_ARITY = 1

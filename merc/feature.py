@@ -5,7 +5,8 @@ import weakref
 class FeatureMeta(type):
   def __new__(cls, names, bases, attrs):
     c = super().__new__(cls, names, bases, attrs)
-    c.COMMANDS = {}
+    c.USER_COMMANDS = {}
+    c.SERVER_COMMANDS = {}
     c.USER_MODES = {}
     c.CHANNEL_MODES = {}
     c.CAPABILITIES = {}
@@ -22,8 +23,13 @@ class Feature(object, metaclass=FeatureMeta):
     app.install_feature(cls(app))
 
   @classmethod
-  def register_command(cls, command):
-    cls.COMMANDS[command.NAME] = command
+  def register_user_command(cls, command):
+    cls.USER_COMMANDS[command.NAME] = command
+    return command
+
+  @classmethod
+  def register_server_command(cls, command):
+    cls.SERVER_COMMANDS[command.NAME] = command
     return command
 
   @classmethod

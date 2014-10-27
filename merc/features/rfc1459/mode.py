@@ -180,7 +180,7 @@ class _Mode(message.Command):
                     Mode(target.nickname, flags, *args))
 
 
-@ModeFeature.register_command
+@ModeFeature.register_user_command
 class Mode(_Mode):
   NAME = "MODE"
   MIN_ARITY = 1
@@ -226,7 +226,7 @@ class Mode(_Mode):
     return user.hostmask
 
 
-@ModeFeature.register_command
+@ModeFeature.register_user_command
 class SAMode(_Mode):
   NAME = "SAMODE"
   MIN_ARITY = 2

@@ -20,7 +20,7 @@ class Rehashing(message.Reply):
     return [self.config_filename, "Rehashing configuration"]
 
 
-@RehashFeature.register_command
+@RehashFeature.register_user_command
 class Rehash(message.Command):
   NAME = "REHASH"
   MIN_ARITY = 0

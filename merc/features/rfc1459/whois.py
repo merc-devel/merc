@@ -89,7 +89,7 @@ class WhoIsChannels(message.Reply):
     return [self.nick, " ".join(self.channels)]
 
 
-@WhoIsFeature.register_command
+@WhoIsFeature.register_user_command
 class WhoIs(message.Command):
   NAME = "WHOIS"
   MIN_ARITY = 1
