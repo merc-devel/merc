@@ -33,11 +33,13 @@ class Cap(message.Command):
 
   def ls(self, server, user):
     user.is_negotiating_cap = True
-    user.send_reply(CapReply("LS",
-                             " ".join(server.users.capabilities.keys())))
+    user.send_reply(CapReply("LS", " ".join(
+        capability.NAME for capability in server.users.capabilities.values())))
 
   def list(self, server, user):
-    user.send_reply(CapReply("LIST", " ".join(user.capabilities)))
+    user.send_reply(CapReply("LIST", " ".join(
+        capability.NAME for capability in server.users.capabilities.values()
+                        if capability(user).get())))
 
   def req(self, server, user, caps):
     capabilities = server.users.capabilities
