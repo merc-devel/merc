@@ -22,11 +22,11 @@ class SimpleError(BaseError):
 
 
 class ParametrizedError(BaseError):
-  def __init__(self, param):
-    self.param = param
+  def __init__(self, *params):
+    self.params = list(params)
 
   def as_params(self, user):
-    return [user.displayed_nickname, self.param, self.REASON]
+    return [user.displayed_nickname] + self.params + [self.REASON]
 
 
 class NoSuchNick(ParametrizedError):
@@ -97,6 +97,11 @@ class ChanOpPrivsNeeded(ParametrizedError):
 class NotOnChannel(ParametrizedError):
   NAME = "442"
   REASON = "You're not on that channel"
+
+
+class AlreadyOnChannel(ParametrizedError):
+  NAME = "443"
+  REASON = "is already on channel"
 
 
 class PasswordMismatch(SimpleError):
