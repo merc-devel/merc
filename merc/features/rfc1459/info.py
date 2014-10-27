@@ -1,5 +1,5 @@
 import collections
-from datetime import datetime, date
+import datetime
 
 from merc import util
 from merc import feature
@@ -49,13 +49,14 @@ class InfoReply(message.Reply):
   def __init__(self, line):
     self.line = line
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return [self.line]
+
 
 class EndOfInfo(message.Reply):
   NAME = "374"
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return ["End of /INFO list"]
 
 
@@ -65,21 +66,21 @@ class Info(message.Command):
   MIN_ARITY = 0
 
   @message.Command.requires_registration
-  def handle_for(self, user, prefix):
-    version = util.get_version()
-    year = date.today().year
-    online_since = user.server.creation_time.strftime("%c")
-    online_for = friendly_timespan(datetime.now() - user.server.creation_time)
+  def handle_for(self, server, user, prefix):
+    year = datetime.date.today().year
+    online_since = server.creation_time.strftime("%c")
+    online_for = friendly_timespan(datetime.datetime.now() -
+                                   server.creation_time)
 
     lines = INFO_TEMPLATE.format(
-        version=version,
+        version=server.version,
         year=year,
         online_since=online_since,
         online_for=online_for)
 
     for line in lines.splitlines():
       user.send_reply(InfoReply(line))
-    user.server.run_hooks("after_info", user)
+    server.run_hooks("after_info", user)
     user.send_reply(EndOfInfo())
 
 def friendly_timespan(diff, range=3):

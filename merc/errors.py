@@ -12,12 +12,12 @@ class Error(BaseError):
   def __init__(self, reason):
     self.reason = reason
 
-  def as_params(self, user):
+  def as_params(self, server, user):
     return [self.reason]
 
 
 class SimpleError(BaseError):
-  def as_params(self, user):
+  def as_params(self, server, user):
     return [user.displayed_nickname, self.REASON]
 
 
@@ -25,7 +25,7 @@ class ParametrizedError(BaseError):
   def __init__(self, *params):
     self.params = list(params)
 
-  def as_params(self, user):
+  def as_params(self, server, user):
     return [user.displayed_nickname] + self.params + [self.REASON]
 
 

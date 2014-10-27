@@ -11,7 +11,7 @@ class Message(object):
   MAX_LENGTH = 510
   FORCE_TRAILING = False
 
-  def as_params(self, user):
+  def as_params(self, server, user):
     raise NotImplementedError
 
   def emit(self, user, prefix):
@@ -25,10 +25,10 @@ class Message(object):
 
 
 class Reply(Message):
-  def as_params(self, user):
-    return [user.displayed_nickname] + self.as_reply_params(user)
+  def as_params(self, server, user):
+    return [user.displayed_nickname] + self.as_reply_params(server, user)
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return []
 
 
@@ -45,18 +45,18 @@ class Command(Message):
 
     return cls(*params)
 
-  def handle_for(self, user, prefix):
-    pass
+  def handle_for(self, server, user, prefix):
+    raise NotImplementedError
 
   @staticmethod
   def requires_registration(f):
     @functools.wraps(f)
-    def _wrapper(self, user, prefix):
+    def _wrapper(self, server, user, prefix):
       from merc import errors
 
       if not user.is_registered:
         raise errors.NotRegistered
 
-      f(self, user, prefix)
+      f(self, server, user, prefix)
     return _wrapper
 

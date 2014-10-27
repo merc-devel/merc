@@ -22,8 +22,8 @@ CHANNEL_NAME_REGEX = regex.compile(r"^[#&][^\x00\x07\r\n,: ]*$")
 
 class _Join(message.Command):
   @message.Command.requires_registration
-  def handle_for(self, user, prefix):
-    target = self.get_target(user)
+  def handle_for(self, server, user, prefix):
+    target = self.get_target(server, user)
 
     for channel_name, key in itertools.zip_longest(self.channel_names,
                                                    self.keys,
@@ -35,21 +35,21 @@ class _Join(message.Command):
         raise errors.NoSuchChannel(channel_name)
 
       try:
-        channel = user.server.channels.get(channel_name)
+        channel = server.channels.get(channel_name)
       except errors.NoSuchNick:
-        channel = user.server.channels.new(channel_name)
+        channel = server.channels.new(channel_name)
         is_new = True
 
       if channel.has_user(target):
         continue
 
-      self.check_can_join(target, channel, key)
+      self.check_can_join(server, target, channel, key)
 
       channel.join(target)
       channel.broadcast(None, target.hostmask, Join(channel.name))
-      user.server.run_hooks("after_join_channel", user, target, channel)
+      server.run_hooks("after_join_channel", user, target, channel)
       if is_new:
-        user.server.run_hooks("after_join_new_channel", user, target, channel)
+        server.run_hooks("after_join_new_channel", user, target, channel)
 
 
 @JoinFeature.register_command
@@ -61,13 +61,13 @@ class Join(_Join):
     self.channel_names = channel_names.split(",")
     self.keys = keys.split(",") if keys is not None else []
 
-  def check_can_join(self, user, channel, key):
-    user.server.run_hooks("check_join_channel", user, channel, key)
+  def check_can_join(self, server, user, channel, key):
+    server.run_hooks("check_join_channel", server, user, channel, key)
 
-  def get_target(self, user):
+  def get_target(self, server, user):
     return user
 
-  def as_params(self, user):
+  def as_params(self, server, user):
     params = [",".join(self.channel_names)]
     if self.keys:
       params.append(",".join(self.keys))
@@ -84,26 +84,26 @@ class SAJoin(_Join):
     self.channel_names = channel_names.split(",")
     self.keys = []
 
-  def check_can_join(self, user, channel, key):
+  def check_can_join(self, server, user, channel, key):
     return
 
-  def get_target(self, user):
-    return user.server.users.get(self.nickname)
+  def get_target(self, server, user):
+    return server.users.get(self.nickname)
 
   @message.Command.requires_registration
-  def handle_for(self, user, prefix):
+  def handle_for(self, server, user, prefix):
     user.check_is_irc_operator()
-    super().handle_for(user, prefix)
+    super().handle_for(server, user, prefix)
 
 
 class _Part(message.Command):
   @message.Command.requires_registration
-  def handle_for(self, user, prefix):
-    target = self.get_target(user)
+  def handle_for(self, server, user, prefix):
+    target = self.get_target(server, user)
 
     for channel_name in self.channel_names:
       try:
-        channel = user.server.channels.get(channel_name)
+        channel = server.channels.get(channel_name)
       except errors.NoSuchNick:
         raise errors.NoSuchChannel(channel_name)
       else:
@@ -125,10 +125,10 @@ class Part(_Part):
   def FORCE_TRAILING(self):
     return self.reason is not None
 
-  def get_target(self, user):
+  def get_target(self, server, user):
     return user
 
-  def as_params(self, user):
+  def as_params(self, server, user):
     params = [",".join(self.channel_names)]
     if self.reason is not None:
       params.append(self.reason)
@@ -145,8 +145,8 @@ class SAPart(_Part):
     self.channel_names = channel_names.split(",")
     self.reason = reason
 
-  def get_target(self, user):
-    return user.server.users.get(self.nickname)
+  def get_target(self, server, user):
+    return server.users.get(server, self.nickname)
 
   @message.Command.requires_registration
   def handle_for(self, user, prefix):

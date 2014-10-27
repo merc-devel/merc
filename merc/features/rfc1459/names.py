@@ -19,12 +19,12 @@ class LUserClient(message.Reply):
   NAME = "251"
   FORCE_TRAILING = True
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     num_invisible = sum(
-        user.is_invisible for user in user.server.users.all())
+        user.is_invisible for user in server.users.all())
 
     return ["There are {} users and {} invisible on {} servers".format(
-        user.server.users.count() - num_invisible,
+        server.users.count() - num_invisible,
         num_invisible,
         1)]
 
@@ -40,7 +40,7 @@ class NameReply(message.Reply):
     self.multi_prefix = False
     self.uhnames = False
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return [self.type,
             self.channel_name if self.channel_name is not None else "*",
             " ".join((target.sigils if self.multi_prefix
@@ -57,7 +57,7 @@ class EndOfNames(message.Reply):
   def __init__(self, channel_name=None):
     self.channel_name = channel_name
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return [self.channel_name if self.channel_name is not None else "*",
             "End of /NAMES list"]
 
@@ -71,17 +71,17 @@ class Names(message.Command):
     self.channel_names = channel_names.split(",") if channel_names is not None \
                                                   else None
 
-  def make_name_reply(self, user, type, channel_name, users):
+  def make_name_reply(self, server, user, type, channel_name, users):
     reply = NameReply(type, channel_name, users, False, False)
-    user.server.run_hooks("modify_name_reply", user, reply)
+    server.run_hooks("modify_name_reply", server, user, reply)
     return reply
 
   @message.Command.requires_registration
-  def handle_for(self, user, prefix):
+  def handle_for(self, server, user, prefix):
     if self.channel_names is None:
       seen_nicknames = set()
 
-      for chan in user.server.channels.all():
+      for chan in server.channels.all():
         if user.is_in_channel(chan):
           seen_nicknames.update(cu.user.normalized_nickname
                                 for cu in chan.get_visible_users_for(user))
@@ -105,7 +105,7 @@ class Names(message.Command):
 
       visible_users = []
 
-      for target in user.server.users.all():
+      for target in server.users.all():
         if target.is_invisible and target is not user:
           continue
 
@@ -114,13 +114,14 @@ class Names(message.Command):
           visible_users.append(channel.ChannelUser(None, target))
 
       if visible_users:
-        user.send_reply(self.make_name_reply(user, "*", None, visible_users))
+        user.send_reply(self.make_name_reply(server, user, "*", None,
+                                             visible_users))
 
       user.send_reply(EndOfNames(None))
     else:
       for channel_name in self.channel_names[:MAX_TARGETS]:
         try:
-          chan = user.server.channels.get(channel_name)
+          chan = server.channels.get(channel_name)
         except errors.NoSuchNick:
           pass
         else:

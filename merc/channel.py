@@ -74,9 +74,10 @@ class Channel(object):
     sigil, *_ = name
     return sigil in cls.CHANNEL_CHARS
 
-  def __init__(self, server, name):
-    self.server = server
+  def __init__(self, store, name):
+    self.store = store
     self.name = name
+
     self.creation_time = datetime.datetime.now()
 
     self.is_secret = True
@@ -125,7 +126,7 @@ class Channel(object):
     del user.channels[self.normalized_name]
 
     if not self.users:
-      self.server.channels.remove(self)
+      self.store.remove(self)
 
   def has_user(self, user):
     return user.id in self.users
@@ -206,7 +207,7 @@ class ChannelStore(object):
     return util.to_irc_lower(name) in self.channels
 
   def new(self, name):
-    c = Channel(self.server, name)
+    c = Channel(self, name)
     self.channels[c.normalized_name] = c
     return c
 

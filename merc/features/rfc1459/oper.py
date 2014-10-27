@@ -15,9 +15,8 @@ class LUserOp(message.Reply):
   NAME = "252"
   FORCE_TRAILING = True
 
-  def as_reply_params(self, user):
-    return [str(sum(user.is_irc_operator
-                    for user in user.server.users.all())),
+  def as_reply_params(self, server, user):
+    return [str(sum(user.is_irc_operator for user in server.users.all())),
             "IRC operators online"]
 
 
@@ -25,7 +24,7 @@ class YoureOper(message.Reply):
   NAME = "381"
   FORCE_TRAILING = True
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return ["You are now an IRC operator"]
 
 
@@ -39,9 +38,9 @@ class Kill(message.Command):
     self.reason = reason
 
   @message.Command.requires_registration
-  def handle_for(self, user, prefix):
+  def handle_for(self, server, user, prefix):
     user.check_is_irc_operator()
-    target = user.server.users.get(self.nickname)
+    target = server.users.get(self.nickname)
 
     disconnect_reason = "Killed by {}: {}".format(user.nickname, self.reason)
 
@@ -59,9 +58,9 @@ class Oper(message.Command):
     self.password = password
 
   @message.Command.requires_registration
-  def handle_for(self, user, prefix):
+  def handle_for(self, server, user, prefix):
     try:
-      oper_spec = user.server.config["opers"][self.username]
+      oper_spec = server.config["opers"][self.username]
     except KeyError:
       raise errors.PasswordMismatch
 
@@ -69,13 +68,12 @@ class Oper(message.Command):
                for hostmask in oper_spec["hostmasks"]):
       raise errors.PasswordMismatch
 
-    if not user.server.crypt_context.verify(self.password,
-                                              oper_spec["password"]):
+    if not server.crypt_context.verify(self.password, oper_spec["password"]):
       raise errors.PasswordMismatch
 
     user.is_irc_operator = True
     user.send_reply(YoureOper())
-    user.server.run_hooks("user_mode_change", user, [(Operator, "+", None)])
+    server.run_hooks("user_mode_change", user, [(Operator, "+", None)])
 
 
 @OperFeature.hook("luser_oper")
@@ -88,10 +86,10 @@ class Operator(mode.Mode, mode.UModeMixin):
   CHAR = "o"
   TAKES_PARAM = False
 
-  def set(self, user, param):
+  def set(self, server, user, param):
     return False
 
-  def unset(self, user, param):
+  def unset(self, server, user, param):
     if not self.target.is_irc_operator:
       return False
 

@@ -28,7 +28,7 @@ class NoTopic(message.Reply):
   def __init__(self, channel_name):
     self.channel_name = channel_name
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return [self.channel_name, "No topic set"]
 
 
@@ -40,7 +40,7 @@ class TopicReply(message.Reply):
     self.channel_name = channel_name
     self.text = text
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return [self.channel_name, self.text]
 
 
@@ -52,7 +52,7 @@ class TopicWhoTime(message.Reply):
     self.who = who
     self.time = time
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return [self.channel_name, self.who, str(int(self.time.timestamp()))]
 
 
@@ -70,8 +70,8 @@ class Topic(message.Command):
     return self.text is not None
 
   @message.Command.requires_registration
-  def handle_for(self, user, prefix):
-    chan = user.server.channels.get(self.channel_name)
+  def handle_for(self, server, user, prefix):
+    chan = server.channels.get(self.channel_name)
     locals = chan.get_feature_locals(TopicFeature)
 
     current_topic = locals.get("topic", None)
@@ -80,7 +80,7 @@ class Topic(message.Command):
       if current_topic is not None:
         user.send_reply(TopicReply(chan.name, current_topic.text))
         user.send_reply(TopicWhoTime(chan.name, current_topic.who,
-                                       current_topic.time))
+                                     current_topic.time))
       else:
         user.send_reply(NoTopic(chan.name))
     else:
@@ -99,7 +99,7 @@ class Topic(message.Command):
           Topic(chan.name,
                 locals["topic"].text if locals["topic"] is not None else ""))
 
-  def as_params(self, user):
+  def as_params(self, server, user):
     params = [self.channel_name]
     if self.text is not None:
       params.append(self.text)

@@ -17,6 +17,7 @@ class InviteOnlyChannel(errors.ParametrizedError):
   NAME = "473"
   REASON = "Cannot join channel (+i)"
 
+
 class Inviting(message.Reply):
   NAME = "341"
 
@@ -24,8 +25,9 @@ class Inviting(message.Reply):
     self.channel = channel
     self.nick = nick
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return [self.channel, self.nick]
+
 
 @InviteFeature.register_channel_mode
 class InviteOnly(mode.FlagMode, mode.ChanModeMixin):
@@ -42,9 +44,9 @@ class Invite(message.Command):
     self.channel = channel
 
   @message.Command.requires_registration
-  def handle_for(self, user, prefix):
-    target = user.server.users.get(self.target)
-    channel = user.server.channels.get(self.channel)
+  def handle_for(self, server, user, prefix):
+    target = server.users.get(self.target)
+    channel = server.channels.get(self.channel)
 
     channel_user = channel.get_channel_user_for(user)
     if InviteOnly(channel).get() and not channel_user.is_operator_equivalent:
@@ -58,24 +60,25 @@ class Invite(message.Command):
       raise errors.AlreadyOnChannel(self.target, self.channel)
 
     locals = target.get_feature_locals(InviteFeature)
-    locals.setdefault('invited_channels', set())
-    locals['invited_channels'].add(channel)
+    locals.setdefault("invited_channels", set())
+    locals["invited_channels"].add(channel)
 
     # Set timer to expire invite.
-    user.server.loop.call_later(INVITE_EXPIRATION_TIME, lambda: locals['invited_channels'].discard(channel))
+    server.loop.call_later(INVITE_EXPIRATION_TIME,
+                           lambda: locals["invited_channels"].discard(channel))
 
     target.send(user.hostmask, Invite(self.target, self.channel))
     user.send_reply(Inviting(self.channel, self.target))
-    user.server.run_hooks("after_user_invite", user, target)
+    server.run_hooks("after_user_invite", user, target)
 
-  def as_params(self, user):
+  def as_params(self, server, user):
     return [self.target, self.channel]
 
 @InviteFeature.hook("check_join_channel")
 def check_invite_status(target, channel, key):
   if InviteOnly(channel).get():
     locals = target.get_feature_locals(InviteFeature)
-    invites = locals.get('invited_channels', set())
+    invites = locals.get("invited_channels", set())
 
     if channel not in invites:
       raise InviteOnlyChannel(channel.name)

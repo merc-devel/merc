@@ -17,9 +17,9 @@ class Welcome(message.Reply):
   NAME = "001"
   FORCE_TRAILING = True
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return ["Welcome to the {} Internet Relay Chat Network, {}".format(
-        user.server.network_name,
+        server.network_name,
         user.displayed_nickname)]
 
 
@@ -27,35 +27,33 @@ class YourHost(message.Reply):
   NAME = "002"
   FORCE_TRAILING = True
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return ["Your host is {}, running {}-{}".format(
-        user.server.name,
-        merc.__name__,
-        merc.__version__)]
+        server.name, merc.__name__, server.version)]
 
 
 class Created(message.Reply):
   NAME = "003"
   FORCE_TRAILING = True
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return ["This server was created {}".format(
-        user.server.creation_time.isoformat())]
+        server.creation_time.isoformat())]
 
 
 class MyInfo(message.Reply):
   NAME = "004"
 
-  def as_reply_params(self, user):
-    return [user.server.name,
+  def as_reply_params(self, server, user):
+    return [server.name,
             "{}-{}".format(merc.__name__, merc.__version__),
             "".join(list(sorted(mode.CHAR
-                                for mode in user.server.users.modes.values()))),
+                                for mode in server.users.modes.values()))),
             "".join(list(sorted(mode.CHAR
-                                for mode in user.server.channels.modes.values()
+                                for mode in server.channels.modes.values()
                                 if not mode.TAKES_PARAM))),
             "".join(list(sorted(mode.CHAR
-                                for mode in user.server.channels.modes.values()
+                                for mode in server.channels.modes.values()
                                 if mode.TAKES_PARAM)))]
 
 
@@ -70,10 +68,10 @@ class User(message.Command):
     self.servername = servername
     self.realname = realname
 
-  def as_params(self, user):
+  def as_params(self, server, user):
     return [self.username, self.hostname, self.servername, self.realname]
 
-  def handle_for(self, user, prefix):
+  def handle_for(self, server, user, prefix):
     user.username = self.username
     user.realname = self.realname
 
@@ -94,11 +92,11 @@ class Quit(message.Command):
     return self.reason is not None
 
   @message.Command.requires_registration
-  def handle_for(self, user, prefix):
+  def handle_for(self, server, user, prefix):
     user.close("Quit: " + self.reason if self.reason is not None
                                         else "Remote host closed connection")
 
-  def as_params(self, user):
+  def as_params(self, server, user):
     params = []
     if self.reason is not None:
       params.append(self.reason)
@@ -106,13 +104,13 @@ class Quit(message.Command):
 
 
 @WelcomeFeature.hook("after_register")
-def welcome_on_register(user):
+def welcome_on_register(server, user):
   user.send_reply(Welcome())
   user.send_reply(YourHost())
   user.send_reply(Created())
   user.send_reply(MyInfo())
-  user.server.run_hooks("send_isupport", user)
-  user.server.run_hooks("after_welcome", user)
+  server.run_hooks("send_isupport", user)
+  server.run_hooks("after_welcome", user)
 
 
 @WelcomeFeature.hook("before_remove_user")

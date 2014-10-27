@@ -19,7 +19,7 @@ class VersionReply(message.Reply):
     self.server = server
     self.comment = comment
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return [self.version, self.server, self.comment]
 
 
@@ -32,11 +32,10 @@ class Version(message.Command):
     self.server = server
 
   @message.Command.requires_registration
-  def handle_for(self, user, prefix):
-    if self.server and self.server != user.server.name:
+  def handle_for(self, server, user, prefix):
+    if self.server and self.server != server.name:
       raise errors.NoSuchServer(self.server)
 
-    server = user.server
     version = 'merc-{}'.format(server.version)
     user.send_reply(VersionReply(version, server.name, "..."))
-    user.server.run_hooks("send_isupport", user)
+    server.run_hooks("send_isupport", user)

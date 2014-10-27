@@ -16,7 +16,7 @@ class MotdReply(message.Reply):
   def __init__(self, line):
     self.line = line
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return ["- {}".format(self.line)]
 
 
@@ -24,15 +24,15 @@ class MotdStart(message.Reply):
   NAME = "375"
   FORCE_TRAILING = True
 
-  def as_reply_params(self, user):
-    return ["- {} Message of the Day".format(user.server.name)]
+  def as_reply_params(self, server, user):
+    return ["- {} Message of the Day".format(server.name)]
 
 
 class EndOfMotd(message.Reply):
   NAME = "376"
   FORCE_TRAILING = True
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return ["End of /MOTD command"]
 
 
@@ -42,10 +42,10 @@ class Motd(message.Command):
   MIN_ARITY = 0
 
   @message.Command.requires_registration
-  def handle_for(self, user, prefix):
+  def handle_for(self, server, user, prefix):
     user.send_reply(MotdStart())
 
-    for line in user.server.motd.split("\n"):
+    for line in server.motd.splitlines():
       user.send_reply(MotdReply(line))
 
     user.send_reply(EndOfMotd())

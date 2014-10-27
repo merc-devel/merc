@@ -13,7 +13,7 @@ class LUserUnknown(message.Reply):
   NAME = "253"
   FORCE_TRAILING = True
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return ["0", "unknown connections"]
 
 
@@ -21,17 +21,17 @@ class LUserChannels(message.Reply):
   NAME = "254"
   FORCE_TRAILING = True
 
-  def as_reply_params(self, user):
-    return [str(user.server.channels.count()), "channels formed"]
+  def as_reply_params(self, server, user):
+    return [str(server.channels.count()), "channels formed"]
 
 
 class LUserMe(message.Reply):
   NAME = "255"
   FORCE_TRAILING = True
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return ["I have {} clients and {} servers".format(
-        user.server.users.count(), 1)]
+        server.users.count(), 1)]
 
 
 @LUsersFeature.register_command
@@ -40,9 +40,9 @@ class LUsers(message.Command):
   MIN_ARITY = 0
 
   @message.Command.requires_registration
-  def handle_for(self, user, prefix):
-    user.server.run_hooks("luser_user", user)
-    user.server.run_hooks("luser_oper", user)
+  def handle_for(self, server, user, prefix):
+    server.run_hooks("luser_user", user)
+    server.run_hooks("luser_oper", user)
     user.send_reply(LUserUnknown())
     user.send_reply(LUserChannels())
     user.send_reply(LUserMe())

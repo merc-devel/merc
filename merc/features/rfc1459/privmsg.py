@@ -24,15 +24,15 @@ class _Privmsg(message.Command):
     self.targets = targets.split(",")
     self.text = text
 
-  def as_params(self, user):
+  def as_params(self, server, user):
     return [",".join(self.targets), self.text]
 
   @message.Command.requires_registration
-  def handle_for(self, user, prefix):
+  def handle_for(self, server, user, prefix):
     for target_name in self.targets[:MAX_TARGETS]:
       if channel.Channel.is_channel_name(target_name):
         try:
-          chan = user.server.channels.get(target_name)
+          chan = server.channels.get(target_name)
         except errors.NoSuchNick:
           continue
 
@@ -42,16 +42,16 @@ class _Privmsg(message.Command):
           except errors.NoSuchNick:
             raise errors.CannotSendToChan(chan.name)
 
-          user.server.run_hooks("check_can_message_channel", user, chan)
+          server.run_hooks("check_can_message_channel", server, user, chan)
 
         if Moderated(chan).get():
           chan.check_is_voiced(user)
 
-        user.server.run_hooks("after_channel_privmsg", user, chan)
+        server.run_hooks("after_channel_privmsg", user, chan)
         user.relay_to_channel(chan, self.__class__(chan.name, self.text))
       else:
-        target = user.server.users.get(target_name)
-        user.server.run_hooks("after_user_privmsg", user, target)
+        target = server.users.get(target_name)
+        server.run_hooks("after_user_privmsg", user, target)
         user.relay_to_user(target, self.__class__(target.nickname, self.text))
 
 

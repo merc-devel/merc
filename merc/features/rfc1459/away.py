@@ -18,21 +18,21 @@ class IsAway(message.Reply):
     self.nick = nick
     self.msg = msg
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return [self.nick, self.msg]
 
 
 class NowAway(message.Reply):
   NAME = "306"
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return ["You have been marked as being away"]
 
 
 class UnAway(message.Reply):
   NAME = "305"
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return ["You are no longer marked as being away"]
 
 

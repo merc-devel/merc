@@ -11,10 +11,10 @@ class Mode(object):
   def __init__(self, target):
     self.target = target
 
-  def set(self, user, value):
+  def set(self, server, user, value):
     raise NotImplementedError
 
-  def unset(self, user, value):
+  def unset(self, server, user, value):
     raise NotImplementedError
 
   def get(self):
@@ -22,12 +22,12 @@ class Mode(object):
 
 
 class ChanModeMixin(object):
-  def check(self, user, arg):
+  def check(self, server, user, arg):
     self.target.check_is_operator(user)
 
 
 class UModeMixin(object):
-  def check(self, user, arg):
+  def check(self, server, user, arg):
     if self.target is not user:
       raise errors.UsersDontMatch
 
@@ -40,13 +40,13 @@ class FlagMode(Mode):
     self.target.modes[self.CHAR] = not self.get()
     return True
 
-  def set(self, user, value):
+  def set(self, server, user, value):
     if self.get():
       return False
 
     return self.toggle()
 
-  def unset(self, user, value):
+  def unset(self, server, user, value):
     if not self.get():
       return False
 
@@ -57,11 +57,11 @@ class ListMode(Mode):
   TAKES_PARAM = True
   MAX_ITEMS = 100
 
-  def check(self, user, arg):
+  def check(self, server, user, arg):
     if arg is not None:
-      super().check(user, arg)
+      super().check(server, user, arg)
 
-  def add(self, user, value):
+  def add(self, server, user, value):
     list = self.target.modes.setdefault(self.CHAR, {})
 
     if value in list:
@@ -70,10 +70,10 @@ class ListMode(Mode):
     if len(list) >= MAX_ITEMS:
       return False
 
-    list[value] = ListDetail(user.server.name, datetime.datetime.now())
+    list[value] = ListDetail(server.name, datetime.datetime.now())
     return True
 
-  def remove(self, user, value):
+  def remove(self, server, user, value):
     list = self.target.modes.get(self.CHAR, {})
     if value not in list:
       return False
@@ -89,13 +89,13 @@ class ListMode(Mode):
       self.list(user)
       return False
 
-    return self.add(user, value)
+    return self.add(server, user, value)
 
   def unset(self, user, value):
     if value is None:
       return False
 
-    return self.remove(user, value)
+    return self.remove(server, user, value)
 
   def get(self):
     return None
@@ -107,33 +107,33 @@ class SetWithParamMode(Mode):
   def mutate(self, user, value):
     self.target.modes[self.CHAR] = value
 
-  def set(self, user, value):
+  def set(self, server, user, value):
     if self.get() == value:
       return False
 
-    return self.mutate(user, value)
+    return self.mutate(server, user, value)
 
-  def unset(self, user, value):
+  def unset(self, server, user, value):
     if value is None:
       return False
 
     if self.get() is None:
       return False
 
-    return self.mutate(user, None)
+    return self.mutate(server, user, None)
 
 
 class ParamMode(SetWithParamMode):
   TAKES_PARAM = True
 
-  def unset(self, user, value):
+  def unset(self, server, user, value):
     if value is None:
       return False
 
     if self.get() != value:
       return False
 
-    return super().unset(user, value)
+    return super().unset(server, user, value)
 
 
 class ChannelRoleMode(Mode):
@@ -148,12 +148,12 @@ class ChannelRoleMode(Mode):
   def check_for_target(self, user, target):
     self.target.check_is_operator(user)
 
-  def check(self, user, value):
-    target = self.target.get_channel_user_for(user.server.users.get(value))
+  def check(self, server, user, value):
+    target = self.target.get_channel_user_for(server.users.get(value))
     self.check_for_target(user, target)
 
-  def set(self, user, value):
-    target = self.target.get_channel_user_for(user.server.users.get(value))
+  def set(self, server, user, value):
+    target = self.target.get_channel_user_for(server.users.get(value))
 
     if self.get_for_target(target):
       return False
@@ -162,7 +162,7 @@ class ChannelRoleMode(Mode):
     return True
 
   def unset(self, user, value):
-    target = self.target.get_channel_user_for(user.server.users.get(value))
+    target = self.target.get_channel_user_for(server.users.get(value))
 
     if not self.get_for_target(target):
       return False

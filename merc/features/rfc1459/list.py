@@ -17,7 +17,7 @@ class ListStart(message.Reply):
   NAME = "321"
   FORCE_TRAILING = True
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return ["Channels", "Users Name"]
 
 
@@ -30,7 +30,7 @@ class ListReply(message.Reply):
     self.num_visible = num_visible
     self.topic = topic
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return [self.channel_name, str(self.num_visible), self.topic]
 
 
@@ -38,7 +38,7 @@ class ListEnd(message.Reply):
   NAME = "323"
   FORCE_TRAILING = True
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return ["End of /LIST"]
 
 
@@ -51,21 +51,21 @@ class List(message.Command):
     self.target = target
 
   @message.Command.requires_registration
-  def handle_for(self, user, prefix):
+  def handle_for(self, server, user, prefix):
     user.send_reply(ListStart())
 
     try:
       if self.target is not None:
-        channels = user.server.channels.query(self.target)
+        channels = server.channels.query(self.target)
       else:
-        channels = user.server.channels.all()
+        channels = server.channels.all()
 
       for channel in channels:
         if not user.can_see_channel(channel):
           continue
 
         reply = ListReply(channel.name, len(channel.users), "")
-        user.server.run_hooks("modify_list_reply", channel, reply)
+        server.run_hooks("modify_list_reply", channel, reply)
 
         user.send_reply(reply)
     finally:

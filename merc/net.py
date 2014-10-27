@@ -20,7 +20,7 @@ class Protocol(asyncio.Protocol):
     self.user = self.server.users.local_new(transport)
     logger.info("Accepted connection from {}".format(
         self.user.transport.get_extra_info("peername")))
-    self.user.on_connect()
+    self.user.on_connect(self.server)
 
   def data_received(self, data):
     self.buffer += data
@@ -52,4 +52,4 @@ class Protocol(asyncio.Protocol):
     except parser.ParseError:
       return
 
-    self.user.on_raw_message(prefix, command, params)
+    self.user.on_raw_message(self.server, prefix, command, params)

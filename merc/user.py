@@ -13,9 +13,11 @@ from merc import util
 
 
 class User(object):
-  def __init__(self, id, server):
+  def __init__(self, id, store, server_name):
     self.id = id
-    self.server = server
+    self.store = store
+
+    self.server_name = server_name
 
     self.nickname = None
     self.username = None
@@ -67,7 +69,7 @@ class User(object):
     raise NotImplementedError
 
   def send_reply(self, message):
-    self.send(self.server.name, message)
+    self.send(self.server_name, message)
 
   def relay_to_user(self, user, message, prefix=None):
     user.send(self.hostmask if prefix is None else prefix, message)
@@ -102,8 +104,10 @@ class User(object):
 
 
 class LocalUser(User):
-  def __init__(self, server, transport):
-    super().__init__(id(self), server)
+  def __init__(self, store, server, transport):
+    super().__init__(id(self), store, server.name)
+
+    self.server = server
     self.transport = transport
     self.is_securely_connected = \
         self.transport.get_extra_info("sslcontext") is not None
@@ -111,10 +115,10 @@ class LocalUser(User):
   def send(self, prefix, msg):
     self.transport.write(msg.emit(self, prefix) + b"\r\n")
 
-  def on_connect(self):
-    asyncio.async(self.resolve_hostname_coro(), loop=self.server.loop)
+  def on_connect(self, server):
+    asyncio.async(self.resolve_hostname_coro(server), loop=self.server.loop)
 
-  def on_raw_message(self, prefix, command, params):
+  def on_raw_message(self, server, prefix, command, params):
     try:
       command_type = self.server.get_command(command)
     except KeyError:
@@ -122,29 +126,29 @@ class LocalUser(User):
         self.send_reply(errors.UnknownCommand(command))
     else:
       try:
-        self.on_message(prefix, command_type.with_params(params))
+        self.on_message(server, prefix, command_type.with_params(params))
       except errors.Error as e:
         self.send(None, e)
         self.transport.close()
       except errors.BaseError as e:
         self.send_reply(e)
 
-  def on_message(self, prefix, message):
+  def on_message(self, server, prefix, message):
     self.last_activity_time = datetime.datetime.now()
-    message.handle_for(self, prefix)
-    self.server.run_hooks("after_message", self, message, prefix)
+    message.handle_for(server, self, prefix)
+    self.server.run_hooks("after_message", server, self, message, prefix)
 
-  def on_remove(self):
+  def on_remove(self, server):
     for channel_name in list(self.channels):
-      self.server.channels.get(channel_name).part(self)
+      server.channels.get(channel_name).part(self)
     self.transport.close()
 
   @asyncio.coroutine
-  def resolve_hostname_coro(self):
+  def resolve_hostname_coro(self, server):
     host, *_ = self.transport.get_extra_info("peername")
     host, _, _ = host.partition("%")
 
-    self.server.run_hooks("send_server_notice", self,
+    self.server.run_hooks("send_server_notice", self
                           "*** Looking up your hostname...")
     ip = ipaddress.ip_address(host)
 
@@ -162,28 +166,28 @@ class LocalUser(User):
           forward, "AAAA" if not is_ipv4 else "A")
 
       if ip == ipaddress.ip_address(backward):
-        self.server.run_hooks("send_server_notice", self,
+        self.server.run_hooks("send_server_notice", self
                               "*** Found your hostname ({})".format(forward))
         self.host = forward
       else:
-        self.server.run_hooks("send_server_notice", self,
+        self.server.run_hooks("send_server_notice", self
                               "*** Hostname does not resolve correctly")
     except aiodns.error.DNSError:
-      self.server.run_hooks("send_server_notice", self,
+      self.server.run_hooks("send_server_notice", self
                             "*** Couldn't look up your hostname")
       self.host = host
 
     if self.is_ready_for_registration:
       self.register()
 
-  def register(self):
-    if self.server.users.has(self.nickname):
+  def register(self, server):
+    if self.store.has(self.nickname):
       host, *_ = self.transport.get_extra_info("peername")
       raise errors.Error("Closing Link: {} (Overridden)".format(host))
 
-    self.server.users.add(self)
+    self.store.add(self)
     self.is_registered = True
-    self.server.run_hooks("after_register", self)
+    self.server.run_hooks("after_register", server, self)
 
   def close(self, reason=None):
     self.disconnect_reason = reason
@@ -191,8 +195,8 @@ class LocalUser(User):
 
 
 class RemoteUser(User):
-  def __init__(self, id, server, remote_sid):
-    super.__init__(id, server)
+  def __init__(self, id, server_name, remote_sid):
+    super.__init__(id, server_name)
     self.remote_sid = sid
 
   def send(self, prefix, msg):
@@ -205,7 +209,7 @@ class UserStore(object):
     self.users = {}
 
   def local_new(self, transport):
-    return LocalUser(self.server, transport)
+    return LocalUser(self, self.server, transport)
 
   def add(self, user):
     self.users[user.normalized_nickname] = user
@@ -226,11 +230,11 @@ class UserStore(object):
       self.users[user.normalized_nickname] = user
 
   def remove(self, user):
-    self.server.run_hooks("before_remove_user", user)
+    self.server.run_hooks("before_remove_user", self.server, user)
     if user.is_registered:
       del self.users[user.normalized_nickname]
-    user.on_remove()
-    self.server.run_hooks("after_remove_user", user)
+    user.on_remove(self.server)
+    self.server.run_hooks("after_remove_user", self.server, user)
 
   def get(self, name):
     try:
@@ -262,7 +266,6 @@ class UserStore(object):
       modes.update(feature.USER_MODES)
 
     return modes
-
 
   @property
   def capabilities(self):

@@ -17,7 +17,7 @@ class IsOnReply(message.Reply):
   def __init__(self, nicknames):
     self.nicknames = nicknames
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return [" ".join(self.nicknames)]
 
 
@@ -30,11 +30,11 @@ class IsOn(message.Command):
     self.nicknames = nicknames
 
   @message.Command.requires_registration
-  def handle_for(self, user, prefix):
+  def handle_for(self, server, user, prefix):
     is_on = []
     for nickname in self.nicknames:
       try:
-        user.server.users.get(nickname)
+        server.users.get(nickname)
       except errors.NoSuchNick:
         pass
       else:

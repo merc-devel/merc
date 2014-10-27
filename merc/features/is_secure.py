@@ -35,7 +35,7 @@ class WhoIsSecure(message.Reply):
     self.nick = nick
     self.type = type
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return [self.nick, self.type, "is using a secure connection"]
 
 

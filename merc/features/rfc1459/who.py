@@ -19,7 +19,7 @@ class EndOfWho(message.Reply):
   def __init__(self, target):
     self.target = target
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return [self.target, "End of /WHO command"]
 
 
@@ -32,11 +32,11 @@ class WhoReply(message.Reply):
     self.is_away = is_away
     self.multi_prefix = multi_prefix
 
-  def as_reply_params(self, user):
+  def as_reply_params(self, server, user):
     return [self.target.channel.name if self.target.channel is not None
                                      else "*",
             self.target.user.username, self.target.user.host,
-            self.target.user.server.name, self.target.user.nickname,
+            self.target.user.server_name, self.target.user.nickname,
             ("H" if not self.is_away else "G") +
                 (self.target.sigils if self.multi_prefix
                                     else self.target.sigil),
@@ -58,18 +58,18 @@ class Who(message.Command):
     return True
 
   @message.Command.requires_registration
-  def handle_for(self, user, prefix):
+  def handle_for(self, server, user, prefix):
     who = []
 
     try:
       if channel.Channel.is_channel_name(self.target):
-        chan = user.server.channels.get(self.target)
+        chan = server.channels.get(self.target)
 
         if user.can_see_channel(chan):
           who = [target for target in chan.get_visible_users_for(user)
                         if self.user_matches_query_type(target.user)]
       else:
-        for target in user.server.users.query(self.target):
+        for target in server.users.query(self.target):
           if target.is_invisible and target.nickname != self.target:
             continue
 
@@ -90,7 +90,7 @@ class Who(message.Command):
 
     for cu in who:
       reply = WhoReply(cu, False, False)
-      user.server.run_hooks("modify_who_reply", user, cu, reply)
+      server.run_hooks("modify_who_reply", user, cu, reply)
       user.send_reply(reply)
 
     user.send_reply(EndOfWho(self.target))
