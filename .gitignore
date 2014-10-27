@@ -26,3 +26,4 @@ pip-delete-this-directory.txt
 /merc.conf
 /server.key
 /server.crt
+/VENV
