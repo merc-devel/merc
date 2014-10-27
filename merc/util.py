@@ -20,3 +20,21 @@ def get_version():
 class Expando(object):
   def __init__(self, **kwargs):
     self.__dict__ = kwargs
+
+
+def uidify(i):
+  BASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  MAX_LENGTH = 6
+
+  parts = []
+
+  while i > 0:
+    parts.append(BASE[i % len(BASE)])
+    i //= len(BASE)
+
+  parts.reverse()
+
+  if len(parts) > MAX_LENGTH:
+    raise ValueError("number does not convert to a uid")
+
+  return "".join(parts).rjust(MAX_LENGTH, "A")

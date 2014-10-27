@@ -9,6 +9,7 @@ import operator
 import regex
 import signal
 import ssl
+import sys
 import yaml
 
 import passlib.context
@@ -49,15 +50,24 @@ class Server(object):
 
     self.register_signal_handlers()
 
+  def check_config(self):
+    if not self.sid[0].isdigit():
+      raise ValueError("sid does not start with a digit")
+
   def rehash(self):
     self._unload_all_features()
     with open(self.config_filename, "r") as f:
       self.config = yaml.safe_load(f)
+    self.check_config()
     self._load_configured_features()
 
   @property
   def name(self):
     return self.config["server_name"]
+
+  @property
+  def sid(self):
+    return self.config["sid"]
 
   @property
   def version(self):

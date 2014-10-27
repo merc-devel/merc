@@ -4,6 +4,7 @@ import collections
 import datetime
 import fnmatch
 import ipaddress
+import itertools
 import regex
 
 from merc import errors
@@ -13,8 +14,8 @@ from merc import util
 
 
 class User(object):
-  def __init__(self, id, store, server_name):
-    self.id = id
+  def __init__(self, store, uid, server_name):
+    self.uid = uid
     self.store = store
 
     self.server_name = server_name
@@ -104,8 +105,8 @@ class User(object):
 
 
 class LocalUser(User):
-  def __init__(self, store, server_name, transport):
-    super().__init__(id(self), store, server_name)
+  def __init__(self, store, uid, server_name, transport):
+    super().__init__(store, uid, server_name)
 
     self.transport = transport
     self.is_securely_connected = \
@@ -194,8 +195,8 @@ class LocalUser(User):
 
 
 class RemoteUser(User):
-  def __init__(self, id, server_name, remote_sid):
-    super.__init__(id, server_name)
+  def __init__(self, uid, server_name, remote_sid):
+    super.__init__(uid, server_name)
     self.remote_sid = sid
 
 
@@ -203,9 +204,13 @@ class UserStore(object):
   def __init__(self, server):
     self.server = server
     self.users = {}
+    self._local_user_serial = itertools.count(0)
+
+  def _next_uid(self):
+    return self.server.sid + util.uidify(next(self._local_user_serial))
 
   def local_new(self, transport):
-    return LocalUser(self, self.server.name, transport)
+    return LocalUser(self, self._next_uid(), self.server.name, transport)
 
   def add(self, user):
     self.users[user.normalized_nickname] = user
