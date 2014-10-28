@@ -45,7 +45,7 @@ class Away(message.Command):
     self.message = message
 
   @message.Command.requires_registration
-  def handle_for(self, user, prefix):
+  def handle_for(self, app, user, prefix):
     locals = user.get_feature_locals(AwayFeature)
     locals["away"] = self.message
 
