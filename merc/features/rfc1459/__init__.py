@@ -1,7 +1,7 @@
 __all__ = ["admin", "away", "ban", "info", "invite", "ison", "join", "key",
            "kick", "limit", "list", "lusers", "mode", "motd", "names", "nick",
-           "oper", "ping", "privmsg", "rehash", "role", "topic", "userhost",
-           "version", "welcome", "who", "whois"]
+           "oper", "ping", "privmsg", "quit", "rehash", "role", "server",
+           "topic", "user", "userhost", "version", "who", "whois"]
 
 import importlib
 import imp

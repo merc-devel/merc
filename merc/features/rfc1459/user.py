@@ -6,11 +6,11 @@ from merc import message
 from merc import util
 
 
-class WelcomeFeature(feature.Feature):
+class UserFeature(feature.Feature):
   NAME = __name__
 
 
-install = WelcomeFeature.install
+install = UserFeature.install
 
 
 class Welcome(message.Reply):
@@ -70,7 +70,7 @@ class MyInfo(message.Reply):
                                      if mode.TAKES_PARAM))]
 
 
-@WelcomeFeature.register_user_command
+@UserFeature.register_user_command
 class User(message.Command):
   NAME = "USER"
   MIN_ARITY = 4
@@ -95,30 +95,7 @@ class User(message.Command):
       user.register(app)
 
 
-@WelcomeFeature.register_user_command
-class Quit(message.Command):
-  NAME = "QUIT"
-  MIN_ARITY = 0
-
-  def __init__(self, reason=None, *args):
-    self.reason = reason
-
-  @property
-  def FORCE_TRAILING(self):
-    return self.reason is not None
-
-  @message.Command.requires_registration
-  def handle_for(self, app, user, prefix):
-    user.close("Quit: " + self.reason if self.reason is not None else None)
-
-  def as_command_params(self):
-    params = []
-    if self.reason is not None:
-      params.append(self.reason)
-    return params
-
-
-@WelcomeFeature.hook("after_register")
+@UserFeature.hook("after_register")
 def welcome_on_register(app, user):
   user.send_reply(Welcome(app.network_name, user.nickname))
   user.send_reply(YourHost(app.server_name, app.version))
@@ -127,8 +104,3 @@ def welcome_on_register(app, user):
                          app.channels.modes))
   app.run_hooks("send_isupport", user)
   app.run_hooks("after_welcome", user)
-
-
-@WelcomeFeature.hook("before_remove_user")
-def broadcast_quit_on_quit(app, user):
-  user.relay_to_all(Quit(user.protocol.disconnect_reason))

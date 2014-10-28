@@ -1,4 +1,4 @@
-__all__ = ["welcome", "your_id"]
+__all__ = ["pass", "your_id"]
 
 
 import importlib
