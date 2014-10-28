@@ -10,6 +10,9 @@ class AwayFeature(feature.Feature):
 install = AwayFeature.install
 
 
+MAX_AWAY_LENGTH = 200
+
+
 class IsAway(message.Reply):
   NAME = "301"
   FORCE_TRAILING = True
@@ -47,7 +50,7 @@ class Away(message.Command):
   @message.Command.requires_registration
   def handle_for(self, app, user, prefix):
     locals = user.get_feature_locals(AwayFeature)
-    locals["away"] = self.message
+    locals["away"] = self.message[:MAX_AWAY_LENGTH]
 
     if self.message:
       user.send_reply(NowAway())
@@ -75,3 +78,8 @@ def modify_who_reply(app, user, target, reply):
 def modify_userhost_reply(app, target, entry):
   locals = target.get_feature_locals(AwayFeature)
   entry.is_away = locals.get("away", None) is not None
+
+
+@AwayFeature.hook("modify_isupport")
+def modify_isupport(app, isupport):
+  isupport["AWAYLEN"] = MAX_AWAY_LENGTH
