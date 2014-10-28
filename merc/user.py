@@ -25,6 +25,7 @@ class User(object):
     self.host = None
     self.realname = None
 
+    self.is_local = False
     self.is_negotiating_cap = False
     self.is_registered = False
 
@@ -112,6 +113,7 @@ class LocalUser(User):
     super().__init__(store, uid, server_name)
 
     self.protocol = protocol
+    self.is_local = True
     self.is_securely_connected = \
         self.protocol.transport.get_extra_info("sslcontext") is not None
 
