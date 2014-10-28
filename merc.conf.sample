@@ -50,6 +50,16 @@ bind:
     tls: false
     type: servers
 
+links:
+  irc.example.net:
+    host: 127.0.0.1
+    port: 5500
+    hub: false
+    send_password: password
+    receive_password: "$pbkdf2-sha256$20000$0nqvFcL4v/e.V2otxZgTQg$QaTfsdLzNpx0eMZqmxwCoc5q7cyvmC.UKKW.cONxNSE"
+    tls: false
+    services: false
+
 crypto:
   hash_schemes:
     - pbkdf2_sha256
