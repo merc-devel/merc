@@ -85,6 +85,9 @@ class User(message.Command):
     return [self.username, self.hostname, self.servername, self.realname]
 
   def handle_for(self, app, user, prefix):
+    if user.is_registered:
+      return
+
     user.username = self.username
     user.realname = self.realname
 
