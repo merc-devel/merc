@@ -73,4 +73,7 @@ def check_server_registration(app, server):
   if not app.crypt_context.verify(server.password, link["password"]):
     raise errors.LinkError("Bad link password")
 
+  if server.sid in app.network.sids:
+    raise errors.LinkError("SID collision")
+
   print(server)

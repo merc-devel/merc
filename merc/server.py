@@ -40,7 +40,7 @@ class Neighbor(Server):
     try:
       self.network.add_neighbor(self)
     except KeyError:
-      raise errors.LinkError("SID collision")
+      raise errors.LinkError("Name collision")
     self.is_registered = True
     app.run_hooks("after_server_register", self)
 
@@ -92,36 +92,49 @@ class Network(object):
   def name(self):
     return self.app.network_name
 
+  @property
+  def sids(self):
+    return {server.sid for server in self.all()}
+
   def new_neighbor(self, protocol):
     return Neighbor(self, protocol)
 
   def add(self, server):
-    if server.sid in self.tree.node:
-      raise KeyError(server.sid)
+    if server.name in self.tree.node:
+      raise KeyError(server.name)
 
-    self.tree.add_node(server.sid, {"server": server})
+    self.tree.add_node(server.name, {"server": server})
+
+  def all(self):
+    for name in self.tree.node:
+      yield self.get(name)
 
   def add_neighbor(self, server):
     self.add(server)
     self.link(self.current, server)
 
   def remove(self, server):
-    self.tree.remove_node(server.sid)
+    self.tree.remove_node(server.name)
+    self.app.run_hooks("after_remove_server", server)
 
-  def get(self, sid):
-    return self.tree.node[sid]["server"]
+  def get(self, name):
+    return self.tree.node[name]["server"]
 
   def link(self, origin, target):
-    self.tree.add_edge(origin.sid, target.sid)
+    self.tree.add_edge(origin.name, target.name)
 
   def find_shortest_path(self, target, start=None):
     if start is None:
       start = self.current
 
-    for sid in networkx.algorithms.shortest_path(self.tree, start.sid,
-                                                 target.sid):
-      yield self.get(sid)
+    for name in networkx.algorithms.shortest_path(self.tree, start.name,
+                                                  target.name):
+      yield self.get(name)
 
   def neighborhood(self):
-    for sid in self.tree.neighbors(self.current.sid):
-      yield self.get(sid)
+    for name in self.tree.neighbors(self.current.name):
+      yield self.get(name)
+
+  def multicast_to_neighbors(self, prefix, message):
+    for neighbor in self.neighborhood():
+      neighbor.send(prefix, message)
