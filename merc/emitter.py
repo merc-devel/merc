@@ -3,6 +3,8 @@ class EmitterError(Exception):
 
 
 def emit_hostmask(nickname, username, host):
+  if nickname is None:
+    return "{}@{}".format(username, host)
   return "{}!{}@{}".format(nickname, username, host)
 
 
