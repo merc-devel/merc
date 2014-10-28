@@ -19,5 +19,6 @@ setup(name="merc",
       entry_points="""\
       [console_scripts]
       merc = merc:main
+      merc-mkpasswd = merc.tools.mkpasswd:main
       """
       )
