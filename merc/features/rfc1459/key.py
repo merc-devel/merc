@@ -39,6 +39,10 @@ class Key(mode.ParamMode, mode.ChanModeMixin):
     locals["key"] = value
     return True
 
+  def get(self):
+    locals = self.target.get_feature_locals(KeyFeature)
+    return locals.get("key", None)
+
 
 @KeyFeature.hook("check_join_channel")
 def check_channel_key(app, target, channel, key):

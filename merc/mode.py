@@ -106,12 +106,13 @@ class SetWithParamMode(Mode):
 
   def mutate(self, user, value):
     self.target.modes[self.CHAR] = value
+    return True
 
   def set(self, app, user, value):
     if self.get() == value:
       return False
 
-    return self.mutate(app, user, value)
+    return self.mutate(user, value)
 
   def unset(self, app, user, value):
     if value is None:
@@ -120,16 +121,13 @@ class SetWithParamMode(Mode):
     if self.get() is None:
       return False
 
-    return self.mutate(app, user, None)
+    return self.mutate(user, None)
 
 
 class ParamMode(SetWithParamMode):
   TAKES_PARAM = True
 
   def unset(self, app, user, value):
-    if value is None:
-      return False
-
     if self.get() != value:
       return False
 
