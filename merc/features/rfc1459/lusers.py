@@ -52,7 +52,7 @@ class LUsers(message.Command):
     app.run_hooks("luser_oper", user)
     user.send_reply(LUserUnknown())
     user.send_reply(LUserChannels(app.channels.count()))
-    user.send_reply(LUserMe(app.users.count(), 1))
+    user.send_reply(LUserMe(app.users.count(), app.network.count()))
 
 
 @LUsersFeature.hook("after_welcome")

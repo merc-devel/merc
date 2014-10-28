@@ -153,7 +153,8 @@ def show_luser_oper(app, user):
   num_invisible = sum(
       user.is_invisible for user in app.users.all())
 
-  user.send_reply(LUserClient(app.users.count(), num_invisible, 1))
+  user.send_reply(LUserClient(app.users.count(), num_invisible,
+                              app.network.count()))
 
 
 @NamesFeature.register_user_mode

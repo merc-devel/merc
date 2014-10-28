@@ -120,6 +120,9 @@ class Network(object):
     for name in self.tree.node:
       yield self.get(name)
 
+  def count(self):
+    return len(self.tree)
+
   def add_neighbor(self, server):
     self.add(server)
     self.link(self.current, server)
