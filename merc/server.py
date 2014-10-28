@@ -80,6 +80,14 @@ class Neighbor(Server):
       self.network.remove(self)
 
 
+class NonNeighbor(Server):
+  # alternative name: ThatOneOddFamilyMemberYouNeverBotheredWithBecauseTheySeemWeirdButNotWeirdInTheGoodWay
+  def __init__(self, network, name, sid):
+    super().__init__(network)
+    self.name = name
+    self.sid = sid
+
+
 class Network(object):
   def __init__(self, app):
     self.app = app
@@ -98,6 +106,9 @@ class Network(object):
 
   def new_neighbor(self, protocol):
     return Neighbor(self, protocol)
+
+  def new_non_neighbor(self, name, sid):
+    return NonNeighbor(self, name, sid)
 
   def add(self, server):
     if server.name in self.tree.node:
