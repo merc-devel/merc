@@ -30,6 +30,17 @@ class YoureOper(message.Reply):
     return ["You are now an IRC operator"]
 
 
+class StatsOLine(message.Reply):
+  NAME = "243"
+
+  def __init__(self, hostmask, name):
+    self.hostmask = hostmask
+    self.name = name
+
+  def as_reply_params(self):
+    return ["O", self.hostmask, "*", self.name]
+
+
 @OperFeature.register_user_command
 class Kill(message.Command):
   NAME = "KILL"
@@ -82,6 +93,16 @@ class Oper(message.Command):
 def show_luser_oper(app, user):
   user.send_reply(LUserOp(sum(user.is_irc_operator
                               for user in app.users.all())))
+@OperFeature.hook("stats.o")
+def send_oper_hosts(app, user):
+  try:
+    user.check_is_irc_operator()
+  except errors.BaseError as e:
+    user.send_reply(e)
+  else:
+    for name, oper in app.config["opers"].items():
+      for mask in oper["hostmasks"]:
+        user.send_reply(StatsOLine(mask, name))
 
 
 @OperFeature.register_user_mode
