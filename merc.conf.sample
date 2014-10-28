@@ -20,34 +20,34 @@ admin:
   location: Amsterdam, the Netherlands
   location_fine: Schuberg-Philis
 
-ssl:
+tls:
   cert: server.crt
   key: server.key
 
 bind:
   - host: 0.0.0.0
     port: 6667
-    ssl: false
+    tls: false
     type: users
 
   - host: 0.0.0.0
     port: 6697
-    ssl: true
+    tls: true
     type: users
 
   - host: "::"
     port: 6667
-    ssl: false
+    tls: false
     type: users
 
   - host: "::"
     port: 6697
-    ssl: true
+    tls: true
     type: users
 
   - host: 0.0.0.0
     port: 7000
-    ssl: false
+    tls: false
     type: servers
 
 crypto:

@@ -65,10 +65,10 @@ class Admin(message.Command):
 
   @message.Command.requires_registration
   def handle_for(self, app, user, prefix):
-    if self.app is not None and self.app != app.name:
+    if self.app is not None and self.app != app.server_name:
       raise errors.NoSuchServer(self.app)
 
-    user.send_reply(AdminInfo(app.name))
+    user.send_reply(AdminInfo(app.server_name))
     user.send_reply(AdminLocation(app.admin_location))
     user.send_reply(AdminFineLocation(app.admin_location_fine))
     user.send_reply(AdminEmail(app.admin_name, app.admin_email))

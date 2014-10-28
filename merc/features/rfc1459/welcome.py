@@ -118,9 +118,9 @@ class Quit(message.Command):
 @WelcomeFeature.hook("after_register")
 def welcome_on_register(app, user):
   user.send_reply(Welcome(app.network_name, user.nickname))
-  user.send_reply(YourHost(app.name, app.version))
+  user.send_reply(YourHost(app.server_name, app.version))
   user.send_reply(Created(app.creation_time))
-  user.send_reply(MyInfo(app.name, app.users.modes,
+  user.send_reply(MyInfo(app.server_name, app.users.modes,
                          app.channels.modes))
   app.run_hooks("send_isupport", user)
   app.run_hooks("after_welcome", user)

@@ -45,14 +45,6 @@ class Application(object):
     self.crypt_context = passlib.context.CryptContext(
         schemes=self.config["crypto"]["hash_schemes"])
 
-    if "ssl" in self.config:
-      self.ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-      self.ssl_ctx.load_cert_chain(self.config["ssl"]["cert"],
-                                   self.config["ssl"]["key"])
-    else:
-      logger.warn("No SSL configuration found.")
-      self.ssl_ctx = None
-
     self.creation_time = datetime.datetime.now()
 
     self.users = user.UserStore(self)
@@ -60,6 +52,16 @@ class Application(object):
     self.network = server.Network(self)
 
     self.register_signal_handlers()
+
+  def create_tls_context(self):
+    if "tls" in self.config:
+      tls_ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+      tls_ctx.load_cert_chain(self.config["tls"]["cert"],
+                              self.config["tls"]["key"])
+      return tls_ctx
+    else:
+      logger.warn("No TLS configuration found.")
+      return None
 
   def check_config(self):
     if not self.sid[0].isdigit():
@@ -81,7 +83,7 @@ class Application(object):
     return asyncio.async(coro(), loop=self.loop)
 
   @property
-  def name(self):
+  def server_name(self):
     return self.config["server_name"]
 
   @property
@@ -196,13 +198,15 @@ class Application(object):
 
   @asyncio.coroutine
   def bind(self):
+    tls_ctx = self.create_tls_context()
+
     for bind in self.config["bind"]:
       type = bind.get("type", "users")
 
       binding = yield from self.loop.create_server(
           lambda type=type: protocol.Protocol(self, type),
           bind["host"], bind["port"],
-          ssl=self.ssl_ctx if bind.get("ssl", False) else None)
+          ssl=tls_ctx if bind.get("tls", False) else None)
       logger.info("Binding to {}: {}".format(binding.sockets[0].getsockname(),
                                              type))
 
@@ -210,7 +214,7 @@ class Application(object):
 
   def start(self):
     logger.info("Welcome to merc-{}, running for {} on network {}.".format(
-        merc.__version__, self.name, self.network_name))
+        merc.__version__, self.server_name, self.network_name))
 
     self.loop.run_until_complete(self.bind())
 

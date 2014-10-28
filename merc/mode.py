@@ -70,7 +70,7 @@ class ListMode(Mode):
     if len(list) >= MAX_ITEMS:
       return False
 
-    list[value] = ListDetail(app.name, datetime.datetime.now())
+    list[value] = ListDetail(app.server_name, datetime.datetime.now())
     return True
 
   def remove(self, app, user, value):

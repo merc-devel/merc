@@ -46,7 +46,7 @@ class Motd(message.Command):
 
   @message.Command.requires_registration
   def handle_for(self, app, user, prefix):
-    user.send_reply(MotdStart(app.name))
+    user.send_reply(MotdStart(app.server_name))
 
     for line in app.motd.splitlines():
       user.send_reply(MotdReply(line))

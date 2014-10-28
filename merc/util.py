@@ -38,3 +38,7 @@ def uidify(i):
     raise ValueError("number does not convert to a uid")
 
   return "".join(parts).rjust(MAX_LENGTH, "A")
+
+
+def is_sid(sid):
+  return len(sid) == 3 and sid[0].isdigit()

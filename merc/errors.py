@@ -16,6 +16,15 @@ class Error(Exception, message.Message):
     return [self.reason]
 
 
+class LinkError(Error):
+  NAME = "ERROR"
+  FORCE_TRAILING = True
+
+  def as_params(self, client):
+    host, *_ = client.protocol.transport.get_extra_info("peername")
+    return ["Closing link: {} ({})".format(host, self.reason)]
+
+
 class SimpleError(BaseError):
   def as_reply_params(self):
     return [self.REASON]

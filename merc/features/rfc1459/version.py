@@ -33,9 +33,9 @@ class Version(message.Command):
 
   @message.Command.requires_registration
   def handle_for(self, app, user, prefix):
-    if self.app and self.app != app.name:
+    if self.app and self.app != app.server_name:
       raise errors.NoSuchServer(self.app)
 
     version = 'merc-{}'.format(app.version)
-    user.send_reply(VersionReply(version, app.name, "..."))
+    user.send_reply(VersionReply(version, app.server_name, "..."))
     app.run_hooks("send_isupport", user)

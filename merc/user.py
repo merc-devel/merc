@@ -128,17 +128,17 @@ class LocalUser(User):
       if self.is_registered:
         self.send_reply(errors.UnknownCommand(command_name))
     else:
-      self.on_message(app, prefix, command_type.with_params(params))
+      try:
+        self.on_message(app, prefix, command_type.with_params(params))
+      except errors.Error as e:
+        self.send(None, e)
+        self.close()
+      except errors.BaseError as e:
+        self.send_reply(e)
 
   def on_message(self, app, prefix, message):
     self.last_activity_time = datetime.datetime.now()
-    try:
-      message.handle_for(app, self, prefix)
-    except errors.Error as e:
-      self.send(None, e)
-      self.close()
-    except errors.BaseError as e:
-      self.send_reply(e)
+    message.handle_for(app, self, prefix)
     app.run_hooks("after_message", self, message, prefix)
 
   def on_disconnect(self, exc):
@@ -188,8 +188,9 @@ class LocalUser(User):
   def register(self, app):
     if self.store.has(self.nickname):
       host, *_ = self.protocol.transport.get_extra_info("peername")
-      raise errors.Error("Closing Link: {} (Overridden)".format(host))
+      raise errors.LinkError("Overridden")
 
+    app.run_hooks("check_registration", self)
     self.store.add(self)
     self.is_registered = True
     app.run_hooks("after_register", self)
@@ -211,7 +212,7 @@ class UserStore(object):
                               for i in itertools.count(0))
 
   def new_local_user(self, transport):
-    return LocalUser(self, next(self._local_uid_serial), self.app.name,
+    return LocalUser(self, next(self._local_uid_serial), self.app.server_name,
                      transport)
 
   def add(self, user):
