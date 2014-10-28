@@ -72,7 +72,7 @@ class EndOfStats(message.Reply):
     return [self.type, "End of /STATS report"]
 
 
-class StatsCLine(StatsLine):
+class StatsCLine(message.Reply):
   NAME = "213"
 
   def __init__(self, host, name, port, type):
