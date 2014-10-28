@@ -126,3 +126,8 @@ class NoPrivileges(SimpleError):
 class BannedFromChannel(ParametrizedError):
   NAME = "474"
   REASON = "You are banned from the channel"
+
+
+class AlreadyRegistered(SimpleError):
+  NAME = "462"
+  REASON = "You may not reregister"

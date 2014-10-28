@@ -86,7 +86,7 @@ class User(message.Command):
 
   def handle_for(self, app, user, prefix):
     if user.is_registered:
-      return
+      raise errors.AlreadyRegistered
 
     user.username = self.username
     user.realname = self.realname
