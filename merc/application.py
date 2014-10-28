@@ -235,3 +235,22 @@ class Application(object):
 
     self.loop.run_until_complete(self.unbind())
     self.loop.close()
+
+
+def main():
+  import argparse
+  import coloredlogs
+  import logging
+  import yaml
+
+  coloredlogs.install(level=logging.INFO)
+  logging.getLogger("asyncio").setLevel(logging.WARN)
+
+  parser = argparse.ArgumentParser(
+      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+  parser.add_argument("--config", "-c", help="file to load configuration from",
+                      default="merc.conf")
+
+  args = parser.parse_args()
+
+  Application(args.config).start()
