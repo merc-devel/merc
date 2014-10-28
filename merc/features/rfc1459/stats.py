@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 import math
 
 from merc import errors
@@ -153,7 +153,7 @@ def send_links(app, user):
         continue
       mask = emitter.emit_hostmask(None, user.username, user.host)
       user.send_reply(StatsLinkInfo("{}[{}]".format(user.username, mask),
-          0, 0, 0, 0, 0, datetime.now() - user.creation_time))
+          0, 0, 0, 0, 0, datetime.datetime.now() - user.creation_time))
 
     for server in app.network.neighborhood():
       mask = "*@{}".format(app.config["links"][server.name]["host"])
@@ -168,5 +168,5 @@ def send_commands(app, user):
 
 @StatsFeature.hook("server.stats.u")
 def send_uptime(app, user):
-  user.send_reply(StatsUptime(datetime.now() - app.creation_time))
-      
+  user.send_reply(StatsUptime(datetime.datetime.now() - app.creation_time))
+
