@@ -66,16 +66,22 @@ class Application(object):
       logger.warn("No TLS configuration found.")
       return None
 
-  def check_config(self):
-    if not self.sid[0].isdigit():
+  def check_config(self, config):
+    if not config["sid"][0].isdigit():
       raise ValueError("sid does not start with a digit")
 
   def reload_config(self):
     self._unload_all_features()
     with open(self.config_filename, "r") as f:
-      self.config = yaml.safe_load(f)
-    self.check_config()
-    self._load_configured_features()
+      config = yaml.safe_load(f)
+    try:
+      self.check_config(config)
+    except:
+      raise
+    else:
+      self.config = config
+    finally:
+      self._load_configured_features()
 
   def rehash(self):
     @asyncio.coroutine
