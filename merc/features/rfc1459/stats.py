@@ -111,12 +111,12 @@ class Stats(message.Command):
     if self.server is not None and self.server != app.server_name:
       raise errors.NoSuchServer(self.server_name)
 
-    app.run_hooks("stats", user, self.type)
-    app.run_hooks("stats." + self.type, user)
+    app.run_hooks("server.stats", user, self.type)
+    app.run_hooks("server.stats." + self.type, user)
     user.send_reply(EndOfStats(self.type))
 
 
-@StatsFeature.hook("stats.c")
+@StatsFeature.hook("server.stats.c")
 def send_allowed_links(app, user):
   try:
     user.check_is_irc_operator()
@@ -127,7 +127,7 @@ def send_allowed_links(app, user):
       type = "hub" if link["hub"] else "server"
       user.send_reply(StatsCLine("*@{}".format(link["host"]), name, link["port"], type))
 
-@StatsFeature.hook("stats.h")
+@StatsFeature.hook("server.stats.h")
 def send_hubs(app, user):
   try:
     user.check_is_irc_operator()
@@ -139,7 +139,7 @@ def send_hubs(app, user):
         continue
       user.send_reply(StatsHLine("*@{}".format(link["host"]), name))
 
-@StatsFeature.hook("stats.l")
+@StatsFeature.hook("server.stats.l")
 def send_links(app, user):
   try:
     user.check_is_irc_operator()
@@ -160,13 +160,13 @@ def send_links(app, user):
       user.send_reply(StatsLinkInfo("{}[{}]".format(server.name, mask),
           0, 0, 0, 0, 0, 0))
 
-@StatsFeature.hook("stats.m")
+@StatsFeature.hook("server.stats.m")
 def send_commands(app, user):
   for feature in app.features.values():
     for command in feature.USER_COMMANDS.values():
       user.send_reply(StatsCommands(command.NAME, 0))
 
-@StatsFeature.hook("stats.u")
+@StatsFeature.hook("server.stats.u")
 def send_uptime(app, user):
   user.send_reply(StatsUptime(datetime.now() - app.creation_time))
       

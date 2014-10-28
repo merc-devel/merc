@@ -74,7 +74,7 @@ class Names(message.Command):
 
   def make_name_reply(self, app, user, type, channel_name, users):
     reply = NameReply(type, channel_name, users, False, False)
-    app.run_hooks("modify_name_reply", user, reply)
+    app.run_hooks("server.names.modify", user, reply)
     return reply
 
   @message.Command.requires_registration
@@ -138,17 +138,17 @@ class Names(message.Command):
         user.send_reply(EndOfNames(channel_name))
 
 
-@NamesFeature.hook("modify_targmax")
+@NamesFeature.hook("server.targmax.modify")
 def modify_targmax(app, targmax):
   targmax["NAMES"] = MAX_TARGETS
 
 
-@NamesFeature.hook("after_join_channel")
+@NamesFeature.hook("channel.join")
 def send_names_on_join(app, user, target, channel):
     target.on_message(app, target.hostmask, Names(channel.name))
 
 
-@NamesFeature.hook("luser_user")
+@NamesFeature.hook("server.luser.user")
 def show_luser_oper(app, user):
   num_invisible = sum(
       user.is_invisible for user in app.users.all())

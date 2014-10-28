@@ -20,6 +20,6 @@ class YourID(message.Reply):
     return [self.uid, "your unique ID"]
 
 
-@YourIDFeature.hook("after_welcome")
+@YourIDFeature.hook("user.welcome")
 def send_your_id_on_welcome(app, user):
   user.send_reply(YourID(user.uid))

@@ -68,6 +68,6 @@ class SANick(_Nick):
     super().handle_for(app, user, prefix)
 
 
-@NickFeature.hook("modify_isupport")
+@NickFeature.hook("server.isupport.modify")
 def modify_isupport(app, isupport):
   isupport["NICKLEN"] = MAX_NICKNAME_LENGTH

@@ -79,7 +79,7 @@ class BanMask(mode.ListMode, mode.ChanModeMixin):
     return True
 
 
-@BanFeature.hook("check_join_channel")
+@BanFeature.hook("channel.join.check")
 def check_channel_ban(app, target, channel, key):
   locals = channel.get_feature_locals(BanFeature)
 
@@ -87,10 +87,10 @@ def check_channel_ban(app, target, channel, key):
     if target.hostmask_matches(mask):
       raise errors.BannedFromChannel(channel.name)
 
-    app.run_hooks("check_join_ban_mask", target, channel, mask)
+    app.run_hooks("channel.join.check_ban", target, channel, mask)
 
 
-@BanFeature.hook("check_can_message_channel")
+@BanFeature.hook("channel.message.check")
 def check_can_message_channel(app, target, channel):
   locals = channel.get_feature_locals(BanFeature)
 
@@ -98,4 +98,4 @@ def check_can_message_channel(app, target, channel):
     if target.hostmask_matches(mask):
       channel.check_is_voiced(target)
 
-    app.run_hooks("check_message_ban_mask", target, channel, mask)
+    app.run_hooks("channel.message.check_ban", target, channel, mask)

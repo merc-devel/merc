@@ -58,28 +58,33 @@ class Away(message.Command):
       user.send_reply(UnAway())
 
 
-@AwayFeature.hook("after_user_invite")
-@AwayFeature.hook("after_user_privmsg")
-@AwayFeature.hook("after_user_whois")
+@AwayFeature.hook("channel.invite")
+@AwayFeature.hook("user.whois")
 def send_is_away_if_away(app, user, target):
   locals = target.get_feature_locals(AwayFeature)
 
   if locals.get("away", None) is not None:
     user.send_reply(IsAway(target.nickname, locals["away"]))
 
+@AwayFeature.hook("user.message")
+def send_is_away_if_away_message(app, user, target, message):
+  locals = target.get_feature_locals(AwayFeature)
 
-@AwayFeature.hook("modify_who_reply")
+  if locals.get("away", None) is not None:
+    user.send_reply(IsAway(target.nickname, locals["away"]))
+
+@AwayFeature.hook("server.who.modify")
 def modify_who_reply(app, user, target, reply):
   locals = target.user.get_feature_locals(AwayFeature)
   reply.is_away = locals.get("away", None) is not None
 
 
-@AwayFeature.hook("modify_userhost_entry")
+@AwayFeature.hook("server.userhost.modify")
 def modify_userhost_reply(app, target, entry):
   locals = target.get_feature_locals(AwayFeature)
   entry.is_away = locals.get("away", None) is not None
 
 
-@AwayFeature.hook("modify_isupport")
+@AwayFeature.hook("server.isupport.modify")
 def modify_isupport(app, isupport):
   isupport["AWAYLEN"] = MAX_AWAY_LENGTH

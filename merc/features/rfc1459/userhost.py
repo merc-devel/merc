@@ -46,7 +46,7 @@ class UserHost(message.Command):
         user_host = util.Expando(nickname=nickname, is_away=False,
                                  is_oper=target.is_irc_operator,
                                  hostmask=target.hostmask)
-        app.run_hooks("modify_userhost_entry", target, user_host)
+        app.run_hooks("server.userhost.modify", target, user_host)
         user_hosts.append(user_host)
 
     user.send_reply(UserHostReply(user_hosts))

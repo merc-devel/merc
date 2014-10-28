@@ -209,11 +209,12 @@ class ChannelStore(object):
   def new(self, name):
     c = Channel(self, name)
     self.channels[c.normalized_name] = c
+    self.app.run_hooks("channel.new", c)
     return c
 
   def remove(self, channel):
+    self.app.run_hooks("channel.remove", channel)
     del self.channels[channel.normalized_name]
-    self.app.run_hooks("after_remove_channel", channel)
 
   def query(self, pattern):
     return (channel for channel in self.channels.values()

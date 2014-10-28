@@ -90,7 +90,7 @@ class Who(message.Command):
 
     for cu in who:
       reply = WhoReply(cu, False, False)
-      app.run_hooks("modify_who_reply", user, cu, reply)
+      app.run_hooks("server.who.modify", user, cu, reply)
       user.send_reply(reply)
 
     user.send_reply(EndOfWho(self.target))

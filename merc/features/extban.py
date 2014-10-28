@@ -36,12 +36,12 @@ def check_ban(app, target, channel, mask):
     checker(app, target, channel, value)
 
 
-@ExtBanFeature.hook("check_join_ban_mask")
+@ExtBanFeature.hook("channel.join.check_ban")
 def check_join_ban_mask(app, target, channel, mask):
   check_ban(app, target, channel, mask)
 
 
-@ExtBanFeature.hook("check_message_ban_mask")
+@ExtBanFeature.hook("channel.message.check_ban")
 def check_message_ban_mask(app, target, channel, mask):
   try:
     check_ban(app, target, channel, mask)

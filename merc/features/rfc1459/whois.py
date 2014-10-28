@@ -123,10 +123,10 @@ class WhoIs(message.Command):
             target.creation_time))
         if channels:
           user.send_reply(WhoIsChannels(target.nickname, channels))
-        app.run_hooks("after_user_whois", user, target)
+        app.run_hooks("user.whois", user, target)
         user.send_reply(WhoIsEnd(target.nickname))
 
 
-@WhoIsFeature.hook("modify_targmax")
+@WhoIsFeature.hook("server.targmax.modify")
 def modify_targmax(app, targmax):
   targmax["WHOIS"] = MAX_TARGETS

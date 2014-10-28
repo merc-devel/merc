@@ -55,6 +55,6 @@ class HalfOp(mode.ChannelRoleMode):
     return target.is_halfop
 
 
-@ExtRoleFeature.hook("modify_isupport")
+@ExtRoleFeature.hook("server.isupport.modify")
 def modify_isupport(app, isupport):
   isupport["PREFIX"] = "(qaohv)~&@%+"

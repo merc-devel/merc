@@ -141,7 +141,7 @@ class LocalUser(User):
   def on_message(self, app, prefix, message):
     self.last_activity_time = datetime.datetime.now()
     message.handle_for(app, self, prefix)
-    app.run_hooks("after_message", self, message, prefix)
+    app.run_hooks("user.command", self, message, prefix)
 
   def on_disconnect(self, exc):
     self.store.remove(self)
@@ -155,7 +155,7 @@ class LocalUser(User):
     host, *_ = self.protocol.transport.get_extra_info("peername")
     host, _, _ = host.partition("%")
 
-    app.run_hooks("send_server_notice", self,
+    app.run_hooks("server.notify", self,
                      "*** Looking up your hostname...")
     ip = ipaddress.ip_address(host)
 
@@ -173,14 +173,14 @@ class LocalUser(User):
           forward, "AAAA" if not is_ipv4 else "A")
 
       if ip == ipaddress.ip_address(backward):
-        app.run_hooks("send_server_notice", self,
+        app.run_hooks("server.notify", self,
                          "*** Found your hostname ({})".format(forward))
         self.host = forward
       else:
-        app.run_hooks("send_server_notice", self,
+        app.run_hooks("server.notify", self,
                          "*** Hostname does not resolve correctly")
     except aiodns.error.DNSError:
-      app.run_hooks("send_server_notice", self,
+      app.run_hooks("server.notify", self,
                        "*** Couldn't look up your hostname")
       self.host = host
 
@@ -192,10 +192,10 @@ class LocalUser(User):
       host, *_ = self.protocol.transport.get_extra_info("peername")
       raise errors.LinkError("Overridden")
 
-    app.run_hooks("check_registration", self)
+    app.run_hooks("user.register.check", self)
     self.store.add(self)
     self.is_registered = True
-    app.run_hooks("after_register", self)
+    app.run_hooks("user.register", self)
 
   def close(self, reason=None):
     self.protocol.close(reason)
@@ -236,11 +236,11 @@ class UserStore(object):
       self.users[user.normalized_nickname] = user
 
   def remove(self, user):
-    self.app.run_hooks("before_remove_user", user)
+    self.app.run_hooks("user.remove.check", user)
     if user.is_registered:
       del self.users[user.normalized_nickname]
     user.on_remove(self.app)
-    self.app.run_hooks("after_remove_user", user)
+    self.app.run_hooks("user.remove", user)
 
   def get(self, name):
     try:

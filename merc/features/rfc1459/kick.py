@@ -52,6 +52,6 @@ class Kick(message.Command):
     return params
 
 
-@KickFeature.hook("modify_targmax")
+@KickFeature.hook("server.targmax.modify")
 def modify_targmax(app, targmax):
   targmax["KICK"] = MAX_TARGETS

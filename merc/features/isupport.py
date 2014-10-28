@@ -22,10 +22,10 @@ class ISupport(message.Reply):
         ["are supported by this server"]
 
 
-@ISupportFeature.hook("send_isupport")
+@ISupportFeature.hook("server.isupport.send")
 def send_isupport(app, user):
   targmax = {}
-  app.run_hooks("modify_targmax", targmax)
+  app.run_hooks("server.targmax.modify", targmax)
 
   isupport = {
       "NETWORK": app.network_name,
@@ -34,7 +34,7 @@ def send_isupport(app, user):
       "TARGMAX": ",".join("{}:{}".format(k, v if v is not None else "")
                           for k, v in targmax.items())
   }
-  app.run_hooks("modify_isupport", isupport)
+  app.run_hooks("server.isupport.modify", isupport)
 
   reply = ISupport({})
 

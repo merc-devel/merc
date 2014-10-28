@@ -33,7 +33,7 @@ class Pass(message.Command):
     server.sid = self.sid
 
 
-@PassFeature.hook("check_server_registration")
+@PassFeature.hook("server.register.check")
 def check_server_registration(app, server):
   if server.sid is None:
     raise errors.LinkError("Non-TS server")

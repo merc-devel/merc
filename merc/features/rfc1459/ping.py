@@ -62,7 +62,7 @@ class Pong(message.Command):
     pass
 
 
-@PingFeature.hook("after_register")
+@PingFeature.hook("user.register")
 def reschedule_ping_check(app, user):
   if not user.is_registered:
     return
@@ -86,6 +86,6 @@ def reschedule_ping_check(app, user):
       PING_TIMEOUT.total_seconds(), ping_check)
 
 
-@PingFeature.hook("after_message")
+@PingFeature.hook("user.command")
 def reschedule_ping_check_after_message(app, user, message, prefix):
   reschedule_ping_check(app, user)

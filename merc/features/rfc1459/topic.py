@@ -106,7 +106,7 @@ class Topic(message.Command):
     return params
 
 
-@TopicFeature.hook("after_join_channel")
+@TopicFeature.hook("channel.join")
 def send_topic_on_join(app, user, target, channel):
   locals = channel.get_feature_locals(TopicFeature)
   current_topic = locals.get("topic", None)
@@ -121,7 +121,7 @@ class TopicLock(mode.FlagMode, mode.ChanModeMixin):
   DEFAULT = True
 
 
-@TopicFeature.hook("modify_list_reply")
+@TopicFeature.hook("server.list.modify")
 def modify_list_reply(app, channel, reply):
   locals = channel.get_feature_locals(TopicFeature)
 
@@ -131,6 +131,6 @@ def modify_list_reply(app, channel, reply):
     reply.topic = current_topic.text
 
 
-@TopicFeature.hook("modify_isupport")
+@TopicFeature.hook("server.isupport.modify")
 def modify_isupport(app, isupport):
   isupport["TOPICLEN"] = MAX_TOPIC_LENGTH

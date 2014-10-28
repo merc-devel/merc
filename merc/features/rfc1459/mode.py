@@ -241,31 +241,31 @@ class SAMode(_Mode):
     return app.server_name
 
 
-@ModeFeature.hook("after_welcome")
+@ModeFeature.hook("user.welcome")
 def send_modes_on_welcome(app, user):
   flags, args = show_modes(user, app.users.modes)
   if flags != "+":
     user.relay_to_self(Mode(user.nickname, flags, *args))
 
 
-@ModeFeature.hook("after_join_channel")
+@ModeFeature.hook("channel.join")
 def send_timestamp_on_join(app, user, target, channel):
   target.send_reply(CreationTime(channel.name, channel.creation_time))
 
 
-@ModeFeature.hook("after_join_new_channel")
+@ModeFeature.hook("channel.join_new")
 def send_channel_modes_on_new_join(app, user, target, channel):
   flags, args = show_modes(channel, app.channels.modes)
   target.send_reply(Mode(channel.name, flags, *args))
 
 
-@ModeFeature.hook("user_mode_change")
+@ModeFeature.hook("user.mode_change")
 def send_mode_on_user_mode_change(app, user, applied):
   flags, args = Mode._coalesce_modes(applied)
   user.relay_to_self(Mode(user.nickname, flags, *args))
 
 
-@ModeFeature.hook("modify_isupport")
+@ModeFeature.hook("server.isupport.modify")
 def modify_isupport(app, isupport):
   list_modes = set()
   param_modes = set()

@@ -42,16 +42,16 @@ class _Privmsg(message.Command):
           except errors.NoSuchNick:
             raise errors.CannotSendToChan(chan.name)
 
-          app.run_hooks("check_can_message_channel", user, chan)
+          app.run_hooks("channel.message.check", user, chan)
 
         if Moderated(chan).get():
           chan.check_is_voiced(user)
 
-        app.run_hooks("after_channel_privmsg", user, chan)
+        app.run_hooks("channel.message", user, chan, self.text)
         user.relay_to_channel(chan, self.__class__(chan.name, self.text))
       else:
         target = app.users.get(target_name)
-        app.run_hooks("after_user_privmsg", user, target)
+        app.run_hooks("user.message", user, target, self.text)
         user.relay_to_user(target, self.__class__(target.nickname, self.text))
 
 
@@ -76,12 +76,12 @@ class Moderated(mode.FlagMode, mode.ChanModeMixin):
   CHAR = "m"
 
 
-@PrivmsgFeature.hook("send_server_notice")
+@PrivmsgFeature.hook("server.notify")
 def send_server_notice(app, user, text):
   user.send_reply(Notice("*", text))
 
 
-@PrivmsgFeature.hook("modify_targmax")
+@PrivmsgFeature.hook("server.targmax.modify")
 def modify_targmax(app, targmax):
   targmax["PRIVMSG"] = MAX_TARGETS
   targmax["NOTICE"] = MAX_TARGETS

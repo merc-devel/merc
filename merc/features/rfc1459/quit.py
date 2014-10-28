@@ -32,6 +32,6 @@ class Quit(message.Command):
     return params
 
 
-@QuitFeature.hook("before_remove_user")
+@QuitFeature.hook("user.remove.check")
 def broadcast_quit_on_quit(app, user):
   user.relay_to_all(Quit(user.protocol.disconnect_reason))

@@ -54,6 +54,6 @@ class Motd(message.Command):
     user.send_reply(EndOfMotd())
 
 
-@MotdFeature.hook("after_welcome")
+@MotdFeature.hook("user.welcome")
 def send_motd_on_welcome(app, user):
   user.on_message(app, user.hostmask, Motd())

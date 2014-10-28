@@ -65,7 +65,7 @@ class List(message.Command):
           continue
 
         reply = ListReply(channel.name, len(channel.users), "")
-        app.run_hooks("modify_list_reply", channel, reply)
+        app.run_hooks("server.list.modify", channel, reply)
 
         user.send_reply(reply)
     finally:
@@ -85,6 +85,6 @@ class Secret(mode.FlagMode, mode.ChanModeMixin):
     return self.target.is_secret
 
 
-@ListFeature.hook("modify_targmax")
+@ListFeature.hook("server.targmax.modify")
 def modify_targmax(app, targmax):
   targmax["LIST"] = MAX_TARGETS

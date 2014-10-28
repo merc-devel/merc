@@ -86,14 +86,14 @@ class Oper(message.Command):
 
     user.is_irc_operator = True
     user.send_reply(YoureOper())
-    app.run_hooks("user_mode_change", user, [(Operator, "+", None)])
+    app.run_hooks("user.mode_change", user, [(Operator, "+", None)])
 
 
-@OperFeature.hook("luser_oper")
+@OperFeature.hook("server.luser.oper")
 def show_luser_oper(app, user):
   user.send_reply(LUserOp(sum(user.is_irc_operator
                               for user in app.users.all())))
-@OperFeature.hook("stats.o")
+@OperFeature.hook("server.stats.o")
 def send_oper_hosts(app, user):
   try:
     user.check_is_irc_operator()

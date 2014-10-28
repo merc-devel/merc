@@ -36,13 +36,13 @@ class Neighbor(Server):
     self.is_registered = False
 
   def register(self, app):
-    app.run_hooks("check_server_registration", self)
+    app.run_hooks("server.register.check", self)
     try:
       self.network.add_neighbor(self)
     except KeyError:
       raise errors.LinkError("Name collision")
     self.is_registered = True
-    app.run_hooks("after_server_register", self)
+    app.run_hooks("server.register", self)
 
   @property
   def displayed_nickname(self):
@@ -129,7 +129,7 @@ class Network(object):
 
   def remove(self, server):
     self.tree.remove_node(server.name)
-    self.app.run_hooks("after_remove_server", server)
+    self.app.run_hooks("server.remove", server)
 
   def get(self, name):
     return self.tree.node[name]["server"]

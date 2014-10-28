@@ -38,4 +38,4 @@ class Version(message.Command):
 
     version = 'merc-{}'.format(app.version)
     user.send_reply(VersionReply(version, app.server_name, "..."))
-    app.run_hooks("send_isupport", user)
+    app.run_hooks("server.isupport.send", user)

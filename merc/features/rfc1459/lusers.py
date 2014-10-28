@@ -48,13 +48,13 @@ class LUsers(message.Command):
 
   @message.Command.requires_registration
   def handle_for(self, app, user, prefix):
-    app.run_hooks("luser_user", user)
-    app.run_hooks("luser_oper", user)
+    app.run_hooks("server.luser.user", user)
+    app.run_hooks("server.luser.oper", user)
     user.send_reply(LUserUnknown())
     user.send_reply(LUserChannels(app.channels.count()))
     user.send_reply(LUserMe(app.users.count(), app.network.count()))
 
 
-@LUsersFeature.hook("after_welcome")
+@LUsersFeature.hook("user.welcome")
 def send_lusers_on_welcome(app, user):
   user.on_message(app, user.hostmask, LUsers())

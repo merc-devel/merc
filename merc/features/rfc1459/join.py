@@ -47,9 +47,9 @@ class _Join(message.Command):
 
       channel.join(target)
       channel.broadcast(None, target.hostmask, Join(channel.name))
-      app.run_hooks("after_join_channel", user, target, channel)
+      app.run_hooks("channel.join", user, target, channel)
       if is_new:
-        app.run_hooks("after_join_new_channel", user, target, channel)
+        app.run_hooks("channel.join_new", user, target, channel)
 
 
 @JoinFeature.register_user_command
@@ -62,7 +62,7 @@ class Join(_Join):
     self.keys = keys.split(",") if keys is not None else []
 
   def check_can_join(self, app, user, channel, key):
-    app.run_hooks("check_join_channel", user, channel, key)
+    app.run_hooks("channel.join.check", user, channel, key)
 
   def get_target(self, app, user):
     return user
@@ -154,7 +154,7 @@ class SAPart(_Part):
     super().handle_for(user, prefix)
 
 
-@JoinFeature.hook("modify_isupport")
+@JoinFeature.hook("server.isupport.modify")
 def modify_isupport(app, isupport):
   isupport["CHANTYPES"] = "".join(channel.Channel.CHANNEL_CHARS)
   isupport["CHANNELLEN"] = MAX_CHANNEL_NAME_LENGTH

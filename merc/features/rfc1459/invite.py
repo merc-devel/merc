@@ -59,6 +59,8 @@ class Invite(message.Command):
     else:
       raise errors.AlreadyOnChannel(self.target, self.channel)
 
+    app.run_hooks("channel.invite.check", user, target)
+
     locals = target.get_feature_locals(InviteFeature)
     locals.setdefault("invited_channels", set())
     locals["invited_channels"].add(channel)
@@ -69,13 +71,13 @@ class Invite(message.Command):
 
     target.send(user.hostmask, Invite(self.target, self.channel))
     user.send_reply(Inviting(self.channel, self.target))
-    app.run_hooks("after_user_invite", user, target)
+    app.run_hooks("channel.invite", user, target)
 
   def as_command_params(self):
     return [self.target, self.channel]
 
 
-@InviteFeature.hook("check_join_channel")
+@InviteFeature.hook("channel.join.check")
 def check_invite_status(app, target, channel, key):
   if InviteOnly(channel).get():
     locals = target.get_feature_locals(InviteFeature)
