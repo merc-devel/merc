@@ -56,17 +56,19 @@ links:
     port: 5500
     hub: false
     send_password: password
-    receive_password: "$pbkdf2-sha256$20000$0nqvFcL4v/e.V2otxZgTQg$QaTfsdLzNpx0eMZqmxwCoc5q7cyvmC.UKKW.cONxNSE"
+    receive_password: "$pbkdf2-sha512$19000$bg1BSGmtlRLifI8xhtBaKw$Rw6XSH0fABWtLC9Q3T5CbVkA3Vh3miHrWUalqXfPycVHhHLU24e0FvolyRw.e40.sWAFcTtXf6/szo.6FcSjcA"
     tls: false
     services: false
 
 crypto:
   hash_schemes:
-    - pbkdf2_sha256
+    - pbkdf2_sha512
 
+# These passwords are generated with merc-mkpasswd. See merc-mkpasswd --help for
+# details.
 opers:
   operator:
-    password: "$pbkdf2-sha256$20000$0nqvFcL4v/e.V2otxZgTQg$QaTfsdLzNpx0eMZqmxwCoc5q7cyvmC.UKKW.cONxNSE"
+    password: "$pbkdf2-sha512$19000$bg1BSGmtlRLifI8xhtBaKw$Rw6XSH0fABWtLC9Q3T5CbVkA3Vh3miHrWUalqXfPycVHhHLU24e0FvolyRw.e40.sWAFcTtXf6/szo.6FcSjcA"
     hostmasks:
       - "*!*@*"
 

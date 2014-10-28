@@ -5,7 +5,7 @@ import passlib.context
 
 parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument("--scheme", "-s", default="pbkdf2_sha256",
+parser.add_argument("--scheme", "-s", default="pbkdf2_sha512",
                     help="password scheme to use")
 parser.add_argument("--stdin", "-i", action="store_true",
                     help="read the password from stdin instead of getpass")
