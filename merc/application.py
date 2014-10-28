@@ -60,7 +60,8 @@ class Application(object):
                               self.config["tls"]["key"])
 
       # We disable SSLv2, SSLv3, and compression (CRIME).
-      tls_ctx.options |= ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3
+      tls_ctx.options |= ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3 | \
+                         getattr(ssl, "OP_NO_COMPRESSION", 0)
       return tls_ctx
     else:
       logger.warn("No TLS configuration found.")
