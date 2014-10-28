@@ -14,7 +14,7 @@ class VersionReply(message.Reply):
   NAME = "351"
   FORCE_TRAILING = True
 
-  def __init__(self, version, app, comment):
+  def __init__(self, version, server_name, comment):
     self.version = version
     self.server_name = server_name
     self.comment = comment
@@ -28,13 +28,13 @@ class Version(message.Command):
   NAME = "VERSION"
   MIN_ARITY = 0
 
-  def __init__(self, app=None):
-    self.app = app
+  def __init__(self, server_name=None):
+    self.server_name = server_name
 
   @message.Command.requires_registration
   def handle_for(self, app, user, prefix):
-    if self.app and self.app != app.server_name:
-      raise errors.NoSuchServer(self.app)
+    if self.server_name is not None and self.server_name != app.server_name:
+      raise errors.NoSuchServer(self.server_name)
 
     version = 'merc-{}'.format(app.version)
     user.send_reply(VersionReply(version, app.server_name, "..."))

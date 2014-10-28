@@ -19,7 +19,7 @@ class ISupport(message.Reply):
 
   def as_reply_params(self):
     return ["{}={}".format(k, v) for k, v in self.support_params.items()] + \
-        ["are supported by this app"]
+        ["are supported by this server"]
 
 
 @ISupportFeature.hook("send_isupport")
