@@ -1,6 +1,7 @@
-server_name: irc.example.org
-network_name: ExampleNet
-sid: 0AA
+server:
+  name: irc.example.org
+  network_name: ExampleNet
+  sid: 0AA
 
 motd: |
   Welcome to...

@@ -28,9 +28,10 @@ class Oper(config.Section):
   hostmasks = [str]
 
 class Config(config.Section):
-  server_name = str
-  network_name = str
-  sid = config.constrained(str, lambda x: (util.is_sid(x), "not in SID format"))
+  class server(config.Section):
+    name = str
+    network_name = str
+    sid = config.constrained(str, lambda x: (util.is_sid(x), "not in SID format"))
 
   motd = str
 

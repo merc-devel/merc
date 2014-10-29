@@ -95,11 +95,11 @@ class Application(object):
 
   @property
   def server_name(self):
-    return self.config["server_name"]
+    return self.config["server"]["name"]
 
   @property
   def sid(self):
-    return self.config["sid"]
+    return self.config["server"]["sid"]
 
   @property
   def version(self):
@@ -107,7 +107,7 @@ class Application(object):
 
   @property
   def network_name(self):
-    return self.config["network_name"]
+    return self.config["server"]["network_name"]
 
   @property
   def motd(self):
