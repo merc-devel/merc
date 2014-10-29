@@ -195,6 +195,11 @@ class Application(object):
     for feature_name in self.config["features"]:
       self.load_feature(feature_name)
 
+  def _autoconnect_links(self):
+    for server_name, link_spec in self.config["links"].items():
+      if link_spec["autoconnect"]:
+        self.network.connect(server_name)
+
   @asyncio.coroutine
   def unbind(self):
     wait_for = []
@@ -232,6 +237,7 @@ class Application(object):
         merc.__version__, self.server_name, self.sid, self.network_name))
 
     self.loop.run_until_complete(self.bind())
+    self._autoconnect_links()
 
     try:
       self.loop.run_forever()

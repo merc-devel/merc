@@ -22,6 +22,7 @@ class Link(config.Section):
   tls = config.optional(bool, False)
   hub = config.optional(bool, False)
   services = config.optional(bool, False)
+  autoconnect = config.optional(bool, False)
 
 class Oper(config.Section):
   password = str

@@ -131,10 +131,17 @@ class Network(object):
 
   def connect(self, server_name):
     link_spec = self.app.config["links"][server_name]
-    coro = self.app.loop.create_connection(
-        lambda: protocol.LinkProtocol(self.app), link_spec["host"],
-        link_spec["port"])
-    return asyncio.async(coro, loop=self.app.loop)
+
+    @asyncio.coroutine
+    def coro():
+      transport, proto = yield from self.app.loop.create_connection(
+          lambda: protocol.LinkProtocol(self.app), link_spec["host"],
+          link_spec["port"])
+      server = proto.client
+      server.name = server_name
+      self.app.run_hooks("link.connect", server)
+
+    return asyncio.async(coro(), loop=self.app.loop)
 
   def all(self):
     for name in self.tree.node:
