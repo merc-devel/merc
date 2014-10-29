@@ -70,7 +70,13 @@ class optional(object):
     self.default = default
 
 def any(values):
-  return constrained(anything, lambda x: (x in values, "must be any of {}".format(', ' .join(repr(x) for x in values))))
+  def check_any(structure):
+    if structure in values:
+      return (True, None)
+    message = "must be any of {}".format(', '.join(repr(x) for x in values))
+    return (False, message)
+
+  return constrained(anything, check_any)
 
 
 def validate(structure, schema):
