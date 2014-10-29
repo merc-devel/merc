@@ -63,3 +63,8 @@ def on_register(app, server):
 @PassFeature.hook("server.pass")
 def send_pass(app, server, password, sid):
   server.send(None, Pass(password, "TS", "6", sid))
+
+
+@PassFeature.hook("server.version.modify")
+def modify_version_link_protocol(app, reply):
+  reply.link_protocol = "TS6ow"
