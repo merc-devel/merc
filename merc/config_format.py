@@ -30,6 +30,7 @@ class Oper(config.Section):
 class Config(config.Section):
   class server(config.Section):
     name = str
+    description = str
     network_name = str
     sid = config.constrained(str, lambda x: (util.is_sid(x), "not in SID format"))
 

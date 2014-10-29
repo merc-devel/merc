@@ -22,15 +22,17 @@ class Expando(object):
     self.__dict__ = kwargs
 
 
+ID_BASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+
 def uidify(i):
-  BASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
   MAX_LENGTH = 6
 
   parts = []
 
   while i > 0:
-    parts.append(BASE[i % len(BASE)])
-    i //= len(BASE)
+    parts.append(ID_BASE[i % len(ID_BASE)])
+    i //= len(ID_BASE)
 
   parts.reverse()
 
@@ -41,4 +43,4 @@ def uidify(i):
 
 
 def is_sid(sid):
-  return len(sid) == 3 and sid[0].isdigit()
+  return len(sid) == 3 and sid[0].isdigit() and all(c in ID_BASE for c in sid)
