@@ -23,7 +23,7 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # Own stuff.
-/merc.conf
+/*.conf
 /server.key
 /server.crt
 /VENV

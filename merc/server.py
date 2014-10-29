@@ -1,7 +1,13 @@
+import asyncio
+import logging
 import networkx
 import networkx.algorithms
 
 from merc import errors
+from merc import protocol
+
+
+logger = logging.getLogger(__name__)
 
 
 class Server(object):
@@ -19,8 +25,15 @@ class CurrentServer(Server):
     return self.app.server_name
 
   @property
+  def description(self):
+    return self.app.config["server"]["description"]
+
+  @property
   def sid(self):
     return self.app.sid
+
+  def get_send_password(self, target):
+    return self.app.config["links"][target.name]["send_password"]
 
 
 class Neighbor(Server):
@@ -116,6 +129,13 @@ class Network(object):
 
     self.tree.add_node(server.name, {"server": server})
 
+  def connect(self, server_name):
+    link_spec = self.app.config["links"][server_name]
+    coro = self.app.loop.create_connection(
+        lambda: protocol.Protocol(self.app, "servers"),
+        link_spec["host"], link_spec["port"])
+    return asyncio.async(coro, loop=self.app.loop)
+
   def all(self):
     for name in self.tree.node:
       yield self.get(name)
@@ -135,6 +155,7 @@ class Network(object):
     return self.tree.node[name]["server"]
 
   def link(self, origin, target):
+    logging.info("Connected {} to {}".format(origin.name, target.name))
     self.tree.add_edge(origin.name, target.name)
 
   def find_shortest_path(self, target, start=None):

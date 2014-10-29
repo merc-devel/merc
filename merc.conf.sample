@@ -1,5 +1,6 @@
 server:
   name: irc.example.org
+  description: ExampleNet Client Server
   network_name: ExampleNet
   sid: 0AA
 
@@ -47,7 +48,7 @@ bind:
     type: users
 
   - host: 0.0.0.0
-    port: 7000
+    port: 5500
     tls: false
     type: servers
 

@@ -32,6 +32,9 @@ class Pass(message.Command):
     server.password = self.password
     server.sid = self.sid
 
+  def as_command_params(self):
+    return [self.password, self.ts, self.ts_version, self.sid]
+
 
 @PassFeature.hook("server.register.check")
 def check_server_registration(app, server):
@@ -52,3 +55,8 @@ def check_server_registration(app, server):
     raise errors.LinkError("Bad link password")
 
   print(server)
+
+
+@PassFeature.hook("server.pass")
+def send_pass(app, server, password, sid):
+  server.send(None, Pass(password, "TS", "6", sid))

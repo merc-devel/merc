@@ -33,3 +33,11 @@ class Server(message.Command):
     server.description = self.description
 
     server.register(app)
+
+  def as_command_params(self):
+    return [self.name, self.hopcount, self.description]
+
+
+@ServerFeature.hook("server.server")
+def send_server(app, server, name, hopcount, description):
+  server.send(None, Server(name, hopcount, description))

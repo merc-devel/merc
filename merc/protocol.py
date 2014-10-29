@@ -29,7 +29,7 @@ class Protocol(asyncio.Protocol):
     self.transport = transport
     self.client = self.local_new()
 
-    logger.info("Accepted connection from {} (type: {})".format(
+    logger.info("Connection made on {} (type: {})".format(
         self.transport.get_extra_info("peername"), self.type))
     self.client.on_connect(self.app)
 
