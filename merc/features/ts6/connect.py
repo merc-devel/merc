@@ -18,3 +18,4 @@ def on_connect(app, server):
                 current_server.sid)
   app.run_hooks("server.server", server, current_server.name, "1",
                 current_server.description)
+  app.run_hooks("server.svinfo", server)

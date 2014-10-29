@@ -24,7 +24,7 @@ class Pass(message.Command):
 
   def handle_for(self, app, server, prefix):
     if server.is_registered:
-      return
+      raise errors.LinkError("Server already registered")
 
     if self.ts != "TS" or self.ts_version != "6" or not util.is_sid(self.sid):
       raise errors.LinkError("Non-TS server")
@@ -57,7 +57,8 @@ def check_server_registration(app, server):
 
 @PassFeature.hook("server.register")
 def on_register(app, server):
-  app.run_hooks("link.connect", server)
+  if not server.was_proposed:
+    app.run_hooks("link.connect", server)
 
 
 @PassFeature.hook("server.pass")

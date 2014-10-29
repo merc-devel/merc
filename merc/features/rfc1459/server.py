@@ -22,7 +22,7 @@ class Server(message.Command):
 
   def handle_for(self, app, server, prefix):
     if server.is_registered:
-      return
+      raise errors.LinkError("Server already registered")
 
     try:
       server.hopcount = int(self.hopcount)

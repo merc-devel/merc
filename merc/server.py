@@ -20,6 +20,8 @@ class CurrentServer(Server):
     super().__init__(network)
     self.app = app
 
+    self.was_proposed = True
+
   @property
   def name(self):
     return self.app.server_name
@@ -44,6 +46,7 @@ class Neighbor(Server):
     self.hopcount = None
 
     self.is_registered = False
+    self.was_proposed = False
 
   def register(self, app):
     app.run_hooks("server.register.check", self)
@@ -51,8 +54,8 @@ class Neighbor(Server):
       self.network.add_neighbor(self)
     except KeyError:
       raise errors.LinkError("Name collision")
-    self.is_registered = True
     app.run_hooks("server.register", self)
+    self.is_registered = True
 
   @property
   def displayed_nickname(self):
@@ -139,6 +142,7 @@ class Network(object):
           link_spec["port"])
       server = proto.client
       server.name = server_name
+      server.was_proposed = True
       self.app.run_hooks("link.connect", server)
 
     return asyncio.async(coro(), loop=self.app.loop)
@@ -146,6 +150,10 @@ class Network(object):
   def all(self):
     for name in self.tree.node:
       yield self.get(name)
+
+  def all_links(self):
+    for origin, target in self.tree.edges_iter():
+      yield (self.get(origin), self.get(target))
 
   def count(self):
     return len(self.tree)
@@ -163,7 +171,7 @@ class Network(object):
     return self.tree.node[name]["server"]
 
   def link(self, origin, target):
-    logger.info("Connected {} ({}) to {} ({})".format(origin.name, origin.sid,
+    logger.info("Connected {} ({}) -> {} ({})".format(origin.name, origin.sid,
                                                       target.name, target.sid))
     self.tree.add_edge(origin.name, target.name)
 
@@ -171,8 +179,10 @@ class Network(object):
     if start is None:
       start = self.current
 
-    for name in networkx.algorithms.shortest_path(self.tree, start.name,
-                                                  target.name):
+    _, *path = networkx.algorithms.shortest_path(self.tree, start.name,
+                                                 target.name)
+
+    for name in path:
       yield self.get(name)
 
   def neighborhood(self):
