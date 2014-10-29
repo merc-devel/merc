@@ -56,7 +56,7 @@ class Application(object):
     self.register_signal_handlers()
 
   def create_tls_context(self):
-    if "tls" in self.config:
+    if self.config["tls"]:
       tls_ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
       tls_ctx.load_cert_chain(self.config["tls"]["cert"],
                               self.config["tls"]["key"])
@@ -209,16 +209,16 @@ class Application(object):
 
   @asyncio.coroutine
   def bind(self):
-    if any(bind.get("tls") for bind in self.config["bind"]):
+    if any(bind["tls"] for bind in self.config["bind"]):
       tls_ctx = self.create_tls_context()
 
     for bind in self.config["bind"]:
-      type = bind.get("type", "users")
+      type = bind["type"]
 
       binding = yield from self.loop.create_server(
           lambda type=type: protocol.Protocol(self, type),
           bind["host"], bind["port"],
-          ssl=tls_ctx if bind.get("tls", False) else None)
+          ssl=tls_ctx if bind["tls"] else None)
       logger.info("Binding to {}: {}".format(binding.sockets[0].getsockname(),
                                              type))
 
