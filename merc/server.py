@@ -155,7 +155,7 @@ class Network(object):
     return self.tree.node[name]["server"]
 
   def link(self, origin, target):
-    logging.info("Connected {} to {}".format(origin.name, target.name))
+    logger.info("Connected {} to {}".format(origin.name, target.name))
     self.tree.add_edge(origin.name, target.name)
 
   def find_shortest_path(self, target, start=None):
