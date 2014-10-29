@@ -29,7 +29,7 @@ class Sid(message.Command):
     print(prefix, self.server_name)
 
 
-@SidFeature.hook("link.burst.sid")
+@SidFeature.hook("network.burst.sid")
 def burst_sids(app, server):
   for source, target in app.network.all_links():
     server.send(source.name, Sid(target.name, "1", target.sid,

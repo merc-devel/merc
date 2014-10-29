@@ -10,7 +10,7 @@ class ConnectFeature(feature.Feature):
 install = ConnectFeature.install
 
 
-@ConnectFeature.hook("link.connect")
+@ConnectFeature.hook("network.connect")
 def on_connect(app, server):
   current_server = app.network.current
   app.run_hooks("server.pass", server,

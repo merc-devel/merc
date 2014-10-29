@@ -58,7 +58,7 @@ def check_server_registration(app, server):
 @PassFeature.hook("server.register")
 def on_register(app, server):
   if not server.was_proposed:
-    app.run_hooks("link.connect", server)
+    app.run_hooks("network.connect", server)
 
 
 @PassFeature.hook("server.pass")

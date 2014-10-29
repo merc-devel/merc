@@ -143,7 +143,7 @@ class Network(object):
       server = proto.client
       server.name = server_name
       server.was_proposed = True
-      self.app.run_hooks("link.connect", server)
+      self.app.run_hooks("network.connect", server)
 
     return asyncio.async(coro(), loop=self.app.loop)
 
