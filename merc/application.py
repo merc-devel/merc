@@ -228,8 +228,8 @@ class Application(object):
       self.bindings.append(binding)
 
   def start(self):
-    logger.info("Welcome to merc-{}, running for {} on network {}.".format(
-        merc.__version__, self.server_name, self.network_name))
+    logger.info("Welcome to merc-{}, running for {} ({}) on network {}.".format(
+        merc.__version__, self.server_name, self.sid, self.network_name))
 
     self.loop.run_until_complete(self.bind())
 
