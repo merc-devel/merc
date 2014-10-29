@@ -84,7 +84,7 @@ def validate(structure, schema):
     if not isinstance(structure, dict):
       raise ParseError("Expected dict, but got {}: {!r}.".format(structure.__class__.__name__, structure))
     if len(schema) != 1:
-      raise SchemaError("Expected dict with a single element as type, but dict with {} items.".format(len(schema)))
+      raise SchemaError("Expected dict with a single element as type, but got dict with {} items.".format(len(schema)))
 
     kschema, vschema = next(iter(schema.items()))
     for k, v in structure.items():
