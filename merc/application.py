@@ -62,7 +62,8 @@ class Application(object):
                               self.config["tls"]["key"])
 
       # We disable SSLv2, SSLv3, and compression (CRIME).
-      tls_ctx.options |= ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3
+      tls_ctx.options |= ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3 | \
+                         getattr(ssl, "OP_NO_COMPRESSION", 0)
       return tls_ctx
     else:
       logger.warn("No TLS configuration found.")
@@ -236,3 +237,22 @@ class Application(object):
 
     self.loop.run_until_complete(self.unbind())
     self.loop.close()
+
+
+def main():
+  import argparse
+  import coloredlogs
+  import logging
+  import yaml
+
+  coloredlogs.install(level=logging.INFO)
+  logging.getLogger("asyncio").setLevel(logging.WARN)
+
+  parser = argparse.ArgumentParser(
+      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+  parser.add_argument("--config", "-c", help="file to load configuration from",
+                      default="merc.conf")
+
+  args = parser.parse_args()
+
+  Application(args.config).start()

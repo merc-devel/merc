@@ -1,2 +1,4 @@
-import merc
-merc.main()
+import merc.application
+
+
+merc.application.main()

@@ -18,7 +18,7 @@ setup(name="merc",
       install_requires=requires,
       entry_points="""\
       [console_scripts]
-      merc = merc:main
+      merc = merc.application:main
       merc-mkpasswd = merc.tools.mkpasswd:main
       """
       )

@@ -2,24 +2,3 @@ from merc import util
 
 
 __version__ = util.get_version()
-
-
-def main():
-  import argparse
-  import coloredlogs
-  import logging
-  import yaml
-
-  from merc import application
-
-  coloredlogs.install(level=logging.INFO)
-  logging.getLogger("asyncio").setLevel(logging.WARN)
-
-  parser = argparse.ArgumentParser(
-      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-  parser.add_argument("--config", "-c", help="file to load configuration from",
-                      default="merc.conf")
-
-  args = parser.parse_args()
-
-  application.Application(args.config).start()
