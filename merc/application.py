@@ -16,6 +16,8 @@ import passlib.context
 
 import merc
 
+from merc import config
+from merc import config_format
 from merc import channel
 from merc import errors
 from merc import features
@@ -66,9 +68,8 @@ class Application(object):
       logger.warn("No TLS configuration found.")
       return None
 
-  def check_config(self, config):
-    if not config["sid"][0].isdigit():
-      raise ValueError("sid does not start with a digit")
+  def check_config(self, cfg):
+    config.validate(cfg, config_format.Config)
 
   def reload_config(self):
     self._unload_all_features()
@@ -207,7 +208,8 @@ class Application(object):
 
   @asyncio.coroutine
   def bind(self):
-    tls_ctx = self.create_tls_context()
+    if any(bind.get("tls") for bind in self.config["bind"]):
+      tls_ctx = self.create_tls_context()
 
     for bind in self.config["bind"]:
       type = bind.get("type", "users")
