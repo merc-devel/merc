@@ -32,9 +32,6 @@ class CurrentServer(Server):
   def sid(self):
     return self.app.sid
 
-  def get_send_password(self, target):
-    return self.app.config["links"][target.name]["send_password"]
-
 
 class Neighbor(Server):
   def __init__(self, network, protocol):
@@ -117,6 +114,9 @@ class Network(object):
   def sids(self):
     return {server.sid for server in self.all()}
 
+  def get_send_password(self, target):
+    return self.app.config["links"][target.name]["send_password"]
+
   def new_neighbor(self, protocol):
     return Neighbor(self, protocol)
 
@@ -132,8 +132,8 @@ class Network(object):
   def connect(self, server_name):
     link_spec = self.app.config["links"][server_name]
     coro = self.app.loop.create_connection(
-        lambda: protocol.Protocol(self.app, "servers"),
-        link_spec["host"], link_spec["port"])
+        lambda: protocol.LinkProtocol(self.app), link_spec["host"],
+        link_spec["port"])
     return asyncio.async(coro, loop=self.app.loop)
 
   def all(self):
@@ -148,6 +148,7 @@ class Network(object):
     self.link(self.current, server)
 
   def remove(self, server):
+    logger.warn("Lost server link to {} ({})".format(server.name, server.sid))
     self.tree.remove_node(server.name)
     self.app.run_hooks("server.remove", server)
 
@@ -155,7 +156,8 @@ class Network(object):
     return self.tree.node[name]["server"]
 
   def link(self, origin, target):
-    logger.info("Connected {} to {}".format(origin.name, target.name))
+    logger.info("Connected {} ({}) to {} ({})".format(origin.name, origin.sid,
+                                                      target.name, target.sid))
     self.tree.add_edge(origin.name, target.name)
 
   def find_shortest_path(self, target, start=None):

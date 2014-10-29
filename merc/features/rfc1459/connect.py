@@ -21,16 +21,16 @@ class Connect(message.Command):
   @message.Command.requires_registration
   def handle_for(self, app, user, prefix):
     user.check_is_irc_operator()
-
     try:
       fut = app.network.connect(self.server_name)
     except KeyError:
       raise errors.NoSuchServer(self.server_name)
+
+    current_server = app.network.current
 
     @fut.add_done_callback
     def on_connect(fut):
       transport, proto = fut.result()
       server = proto.client
       server.name = self.server_name
-      app.run_hooks("link.connect", proto.client)
-      app.network.add_neighbor(server)
+      app.run_hooks("link.connect", server)

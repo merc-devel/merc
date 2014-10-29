@@ -213,14 +213,17 @@ class Application(object):
       tls_ctx = self.create_tls_context()
 
     for bind in self.config["bind"]:
-      type = bind["type"]
+      protocol_factory = {
+          "users": protocol.UserProtocol,
+          "servers": protocol.LinkProtocol
+      }[bind["type"]]
 
       binding = yield from self.loop.create_server(
-          lambda type=type: protocol.Protocol(self, type),
+          lambda protocol_factory=protocol_factory: protocol_factory(self),
           bind["host"], bind["port"],
           ssl=tls_ctx if bind["tls"] else None)
       logger.info("Binding to {}: {}".format(binding.sockets[0].getsockname(),
-                                             type))
+                                             protocol_factory.__name__))
 
       self.bindings.append(binding)
 

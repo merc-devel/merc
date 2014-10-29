@@ -54,7 +54,10 @@ def check_server_registration(app, server):
   if not app.crypt_context.verify(server.password, link["receive_password"]):
     raise errors.LinkError("Bad link password")
 
-  print(server)
+
+@PassFeature.hook("server.register")
+def on_register(app, server):
+  app.run_hooks("link.connect", server)
 
 
 @PassFeature.hook("server.pass")

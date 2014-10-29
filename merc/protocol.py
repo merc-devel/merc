@@ -11,26 +11,19 @@ logger = logging.getLogger(__name__)
 class Protocol(asyncio.Protocol):
   MAX_BUFFER_SIZE = 2048
 
-  def __init__(self, app, type):
+  def __init__(self, app):
     self.app = app
-    self.type = type
     self.buffer = b""
 
     self.client = None
     self.disconnect_reason = None
-
-  def local_new(self):
-    return {
-        "users": self.app.users.new_local_user,
-        "servers": self.app.network.new_neighbor
-    }[self.type](self)
 
   def connection_made(self, transport):
     self.transport = transport
     self.client = self.local_new()
 
     logger.info("Connection made on {} (type: {})".format(
-        self.transport.get_extra_info("peername"), self.type))
+        self.transport.get_extra_info("peername"), self.__class__.__name__))
     self.client.on_connect(self.app)
 
   def data_received(self, data):
@@ -71,3 +64,13 @@ class Protocol(asyncio.Protocol):
   def close(self, reason=None):
     self.disconnect_reason = reason
     self.transport.close()
+
+
+class UserProtocol(Protocol):
+  def local_new(self):
+    return self.app.users.new_local_user(self)
+
+
+class LinkProtocol(Protocol):
+  def local_new(self):
+    return self.app.network.new_neighbor(self)
