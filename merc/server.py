@@ -77,10 +77,10 @@ class Neighbor(Server):
         self.on_message(app, prefix, command_type.with_params(params))
       except errors.Error as e:
         self.send(None, e)
-        self.protocol.close()
+        self.protocol.close(e.reason)
       except errors.BaseError as e:
         self.send(None, errors.LinkError(e.REASON))
-        self.protocol.close()
+        self.protocol.close(e.REASON)
 
   def on_message(self, app, prefix, message):
     message.handle_for(app, self, prefix)
