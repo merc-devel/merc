@@ -254,14 +254,16 @@ def main():
   import logging
   import yaml
 
-  coloredlogs.install(level=logging.INFO)
-  logging.getLogger("asyncio").setLevel(logging.WARN)
-
   parser = argparse.ArgumentParser(
       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
   parser.add_argument("--config", "-c", help="file to load configuration from",
                       default="merc.conf")
+  parser.add_argument("--verbose", "-v", help="enable verbose (debug) logging",
+                      action="store_true", default=False)
 
   args = parser.parse_args()
+
+  coloredlogs.install(level=logging.DEBUG if args.verbose else logging.INFO)
+  logging.getLogger("asyncio").setLevel(logging.WARN)
 
   Application(args.config).start()

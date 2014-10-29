@@ -14,6 +14,10 @@ class Server(object):
   def __init__(self, network):
     self.network = network
 
+  @property
+  def debug_id(self):
+    return "server:" + (self.sid if self.sid is not None else "?")
+
 
 class CurrentServer(Server):
   def __init__(self, network, app):

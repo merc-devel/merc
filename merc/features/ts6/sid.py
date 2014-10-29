@@ -26,11 +26,11 @@ class Sid(message.Command):
     return [self.server_name, self.hopcount, self.sid, self.description]
 
   def handle_for(self, app, server, prefix):
-    print(prefix, self.server_name)
+    # TODO: handle me!
 
 
 @SidFeature.hook("network.burst.sid")
 def burst_sids(app, server):
   for source, target in app.network.all_links():
-    server.send(source.name, Sid(target.name, "1", target.sid,
-                                 target.description))
+    server.send(source.sid, Sid(target.name, "1", target.sid,
+                                target.description))

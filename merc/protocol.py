@@ -51,6 +51,7 @@ class Protocol(asyncio.Protocol):
         self.disconnect_reason))
 
   def handle_line(self, line):
+    logger.debug("[{}] <- {}".format(self.client.debug_id, line))
     try:
       prefix, command_name, params = parser.parse_message(line)
     except parser.ParseError:
@@ -59,7 +60,9 @@ class Protocol(asyncio.Protocol):
     self.client.on_raw_message(self.app, prefix, command_name, params)
 
   def send(self, prefix, msg):
-    self.transport.write(msg.emit(self.client, prefix) + b"\r\n")
+    raw = msg.emit(self.client, prefix)
+    logger.debug("[{}] -> {}".format(self.client.debug_id, raw))
+    self.transport.write(raw + b"\r\n")
 
   def close(self, reason=None):
     self.disconnect_reason = reason

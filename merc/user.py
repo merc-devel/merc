@@ -49,6 +49,10 @@ class User(object):
     return self.uid[:3]
 
   @property
+  def debug_id(self):
+    return "user:" + self.uid
+
+  @property
   def hostmask(self):
     return emitter.emit_hostmask(self.nickname, self.username, self.host)
 
