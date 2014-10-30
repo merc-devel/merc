@@ -40,6 +40,7 @@ class Application(object):
     self.features = {}
     self.bindings = []
 
+    self.config = None
     self.config_filename = config_filename
     self.reload_config()
 
@@ -83,7 +84,8 @@ class Application(object):
     else:
       self.config = config
     finally:
-      self._load_configured_features()
+      if self.config:
+        self._load_configured_features()
 
   def rehash(self):
     @asyncio.coroutine
@@ -266,4 +268,12 @@ def main():
   coloredlogs.install(level=logging.DEBUG if args.verbose else logging.INFO)
   logging.getLogger("asyncio").setLevel(logging.WARN)
 
-  Application(args.config).start()
+  try:
+    app = Application(args.config)
+    app.start()
+  except config.ParseError as e:
+    logging.fatal('Could not load configuration file, aborting.')
+    logging.fatal(e)
+  except Exception as e:
+    logging.fatal('Could not initialize merc, aborting.')
+    logging.fatal(e)
