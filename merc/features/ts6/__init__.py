@@ -1,4 +1,4 @@
-__all__ = ["burst", "connect", "pass", "sid", "svinfo", "your_id"]
+__all__ = ["burst", "connect", "pass", "sid", "svinfo", "uid", "your_id"]
 
 
 import importlib

@@ -26,7 +26,6 @@ class User(object):
     self.realname = None
 
     self.is_negotiating_cap = False
-    self.is_registered = False
 
     self.channels = {}
     self.modes = {}
@@ -73,7 +72,7 @@ class User(object):
     raise NotImplementedError
 
   def send_reply(self, message):
-    self.send(self.server_name, message)
+    self.send(self.server_prefix, message)
 
   def relay_to_user(self, user, message, prefix=None):
     user.send(self.prefix if prefix is None else prefix, message)
@@ -111,10 +110,16 @@ class LocalUser(User):
   def __init__(self, store, uid, server_name, protocol):
     super().__init__(store, uid, server_name)
 
+    self.is_registered = False
+
     self.protocol = protocol
     self.is_local = True
     self.is_securely_connected = \
         self.protocol.transport.get_extra_info("sslcontext") is not None
+
+  @property
+  def hopcount(self):
+    return 0
 
   @property
   def displayed_nickname(self):
@@ -123,6 +128,10 @@ class LocalUser(User):
   @property
   def prefix(self):
     return self.hostmask
+
+  @property
+  def server_prefix(self):
+    return self.server_name
 
   def send(self, prefix, msg):
     self.protocol.send(prefix, msg)
@@ -211,23 +220,33 @@ class LocalUser(User):
 
 
 class RemoteUser(User):
-  def __init__(self, store, uid, server_name, network):
-    super.__init__(store, uid, server_name)
+  def __init__(self, store, uid, server_name, hopcount, network):
+    super().__init__(store, uid, server_name)
 
     self.network = network
+    self.hopcount = hopcount
     self.is_local = False
+
+  @property
+  def is_registered(self):
+    return True
 
   @property
   def prefix(self):
     return self.uid
 
   @property
+  def server_prefix(self):
+    return self.sid
+
+  @property
   def displayed_nickname(self):
     return self.uid
 
   def send(self, prefix, msg):
-    target, *_ = self.network.find_shortest_path(self.server_name)
-    target.send(prefix, msg)
+    target, *_ = self.network.find_shortest_path(
+        self.network.get(self.server_name))
+    target.send(prefix, msg, self)
 
 
 class UserStore(object):
@@ -242,8 +261,8 @@ class UserStore(object):
     return LocalUser(self, next(self._local_uid_serial), self.app.server_name,
                      protocol)
 
-  def new_remote_user(self, uid, server_name):
-    return RemoteUser(self, uid, server_name, self.app.network)
+  def new_remote_user(self, uid, server_name, hopcount):
+    return RemoteUser(self, uid, server_name, hopcount, self.app.network)
 
   def add(self, user):
     self.users[user.normalized_nickname] = user

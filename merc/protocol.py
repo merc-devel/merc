@@ -59,8 +59,11 @@ class Protocol(asyncio.Protocol):
 
     self.client.on_raw_message(self.app, prefix, command_name, params)
 
-  def send(self, prefix, msg):
-    raw = msg.emit(self.client, prefix)
+  def send(self, prefix, msg, source=None):
+    if source is None:
+      source = self.client
+
+    raw = msg.emit(source, prefix)
     logger.debug("[{}] -> {}".format(self.client.debug_id, raw))
     self.transport.write(raw + b"\r\n")
 
