@@ -27,6 +27,7 @@ class Sid(message.Command):
 
   def handle_for(self, app, server, prefix):
     # TODO: handle me!
+    pass
 
 
 @SidFeature.hook("network.burst.sid")
