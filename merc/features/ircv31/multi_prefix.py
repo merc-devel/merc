@@ -9,7 +9,7 @@ class MultiPrefixFeature(feature.Feature):
 install = MultiPrefixFeature.install
 
 
-@MultiPrefixFeature.register_capability
+@MultiPrefixFeature.register_user_capability
 class MultiPrefix(capability.Capability):
   NAME = "multi-prefix"
 

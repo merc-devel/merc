@@ -9,7 +9,7 @@ class UHNamesFeature(feature.Feature):
 install = UHNamesFeature.install
 
 
-@UHNamesFeature.register_capability
+@UHNamesFeature.register_user_capability
 class UHNames(capability.Capability):
   NAME = "uhnames"
 

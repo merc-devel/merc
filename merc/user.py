@@ -282,6 +282,6 @@ class UserStore(object):
     capabilities = {}
 
     for feature in self.app.features.values():
-      capabilities.update(feature.CAPABILITIES)
+      capabilities.update(feature.USER_CAPABILITIES)
 
     return capabilities
