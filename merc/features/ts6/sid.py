@@ -26,8 +26,7 @@ class Sid(message.Command):
     return [self.server_name, self.hopcount, self.sid, self.description]
 
   def handle_for(self, app, server, prefix):
-    # TODO: handle me!
-    pass
+    print(server)
 
 
 @SidFeature.hook("network.burst.servers")

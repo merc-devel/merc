@@ -13,7 +13,7 @@ class BurstFeature(feature.Feature):
 install = BurstFeature.install
 
 
-@BurstFeature.hook("server.register")
+@BurstFeature.hook("network.burst")
 def on_register(app, server):
   logger.info("Sending netburst to {} ({})".format(server.name, server.sid))
   app.run_hooks("network.burst.servers", server)
