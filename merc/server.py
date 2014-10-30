@@ -123,7 +123,7 @@ class NonNeighbor(Server):
     self.hopcount = hopcount
 
   def send(self, prefix, msg, source=None):
-    target, *_ = self.network.find_shortest_path(self.network.get(self.name))
+    target = self.network.get_next_hop(self.network.get(self.name))
     target.send(prefix, msg, source)
 
 
@@ -220,6 +220,9 @@ class Network(object):
 
     for name in path:
       yield self.get(name)
+
+  def get_next_hop(self, target, start=None):
+    return next(self.find_shortest_path(target, start))
 
   def neighborhood(self):
     for name in self.tree.neighbors(self.current.name):

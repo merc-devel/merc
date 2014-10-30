@@ -244,8 +244,7 @@ class RemoteUser(User):
     return self.uid
 
   def send(self, prefix, msg):
-    target, *_ = self.network.find_shortest_path(
-        self.network.get(self.server_name))
+    target = self.network.get_next_hop(self.network.get(self.server_name))
     target.send(prefix, msg, self)
 
 
