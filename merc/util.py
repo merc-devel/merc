@@ -44,3 +44,10 @@ def uidify(i):
 
 def is_sid(sid):
   return len(sid) == 3 and sid[0].isdigit() and all(c in ID_BASE for c in sid)
+
+
+def is_uid(uid):
+  if len(uid) != 9:
+    return False
+
+  return is_sid(uid[:3]) and all(c in ID_BASE for c in uid)

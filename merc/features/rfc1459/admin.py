@@ -63,12 +63,22 @@ class Admin(message.Command):
   def __init__(self, server_name=None, *args):
     self.server_name = server_name
 
+  def as_command_params(self):
+    if self.server_name is not None:
+      return [self.server_name]
+    return []
+
   @message.Command.requires_registration
   def handle_for(self, app, user, prefix):
-    if self.server_name is not None and self.server_name != app.server_name:
+    if self.server_name == app.server_name or self.server_name is None:
+      user.send_reply(AdminInfo(app.server_name))
+      user.send_reply(AdminLocation(app.admin_location))
+      user.send_reply(AdminFineLocation(app.admin_location_fine))
+      user.send_reply(AdminEmail(app.admin_name, app.admin_email))
+      return
+
+    if not app.network.has(self.server_name):
       raise errors.NoSuchServer(self.server_name)
 
-    user.send_reply(AdminInfo(app.server_name))
-    user.send_reply(AdminLocation(app.admin_location))
-    user.send_reply(AdminFineLocation(app.admin_location_fine))
-    user.send_reply(AdminEmail(app.admin_name, app.admin_email))
+    app.network.get(self.server_name).send(
+        prefix if prefix is not None else user.uid, self)

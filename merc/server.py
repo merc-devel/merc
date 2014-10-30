@@ -5,6 +5,7 @@ import networkx.algorithms
 
 from merc import errors
 from merc import protocol
+from merc import util
 
 
 logger = logging.getLogger(__name__)
@@ -72,16 +73,28 @@ class Neighbor(Server):
     pass
 
   def on_raw_message(self, app, prefix, command_name, params):
+    # TODO: handle numerics
     try:
-      command_type = app.get_server_command(command_name)
+      if prefix is not None and util.is_uid(prefix):
+        command_type = app.get_user_command(command_name)
+      else:
+        command_type = app.get_server_command(command_name)
     except KeyError:
       host, *_ = self.protocol.transport.get_extra_info("peername")
       self.send(None,
                 errors.LinkError("Unknown command: {}".format(command_name)))
       self.protocol.close()
     else:
+      if prefix is not None and util.is_uid(prefix):
+        target = app.users.get_by_uid(prefix)
+      else:
+        if prefix is not None and util.is_sid(prefix):
+          target = app.network.get_by_sid(prefix)
+        else:
+          target = self
+
       try:
-        self.on_message(app, prefix, command_type.with_params(params))
+        self.on_message(app,target,  prefix, command_type.with_params(params))
       except errors.Error as e:
         self.send(None, e)
         self.protocol.close(e.reason)
@@ -89,8 +102,8 @@ class Neighbor(Server):
         self.send(None, errors.LinkError(e.REASON))
         self.protocol.close(e.REASON)
 
-  def on_message(self, app, prefix, message):
-    message.handle_for(app, self, prefix)
+  def on_message(self, app, target, prefix, message):
+    message.handle_for(app, target, prefix)
 
   def on_disconnect(self, exc):
     if self.is_registered:
@@ -104,11 +117,17 @@ class NonNeighbor(Server):
     self.name = name
     self.sid = sid
 
+  def send(self, prefix, msg):
+    target, *_ = self.network.find_shortest_path(self.server_name)
+    target.send(prefix, msg)
+
 
 class Network(object):
   def __init__(self, app):
     self.app = app
+
     self.tree = networkx.Graph()
+    self.servers_by_sid = {}
 
     self.current = CurrentServer(self, app)
     self.add(self.current)
@@ -119,7 +138,7 @@ class Network(object):
 
   @property
   def sids(self):
-    return {server.sid for server in self.all()}
+    return self.servers_by_sid.keys()
 
   def get_send_password(self, target):
     return self.app.config["links"][target.name]["send_password"]
@@ -135,6 +154,10 @@ class Network(object):
       raise KeyError(server.name)
 
     self.tree.add_node(server.name, {"server": server})
+    self.servers_by_sid[server.sid] = server
+
+  def has(self, name):
+    return name in self.tree
 
   def connect(self, server_name):
     link_spec = self.app.config["links"][server_name]
@@ -169,10 +192,14 @@ class Network(object):
   def remove(self, server):
     logger.warn("Lost server link to {} ({})".format(server.name, server.sid))
     self.tree.remove_node(server.name)
+    del self.servers_by_sid[server.sid]
     self.app.run_hooks("server.remove", server)
 
   def get(self, name):
     return self.tree.node[name]["server"]
+
+  def get_by_sid(self, sid):
+    return self.servers_by_sid[sid]
 
   def link(self, origin, target):
     logger.info("Connected {} ({}) -> {} ({})".format(origin.name, origin.sid,

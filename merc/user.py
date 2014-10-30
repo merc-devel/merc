@@ -25,7 +25,6 @@ class User(object):
     self.host = None
     self.realname = None
 
-    self.is_local = False
     self.is_negotiating_cap = False
     self.is_registered = False
 
@@ -61,10 +60,6 @@ class User(object):
                        util.to_irc_lower(self.hostmask)) is not None
 
   @property
-  def displayed_nickname(self):
-    return self.nickname if self.is_registered else "*"
-
-  @property
   def normalized_nickname(self):
     return util.to_irc_lower(self.nickname) if self.nickname is not None \
                                             else None
@@ -81,13 +76,13 @@ class User(object):
     self.send(self.server_name, message)
 
   def relay_to_user(self, user, message, prefix=None):
-    user.send(self.hostmask if prefix is None else prefix, message)
+    user.send(self.prefix if prefix is None else prefix, message)
 
   def relay_to_self(self, message, prefix=None):
-    self.send(self.hostmask if prefix is None else prefix, message)
+    self.send(self.prefix if prefix is None else prefix, message)
 
   def relay_to_channel(self, channel, message, prefix=None):
-    channel.broadcast(self, self.hostmask if prefix is None else prefix,
+    channel.broadcast(self, self.prefix if prefix is None else prefix,
                       message)
 
   def relay_to_all(self, message, prefix=None):
@@ -121,6 +116,14 @@ class LocalUser(User):
     self.is_securely_connected = \
         self.protocol.transport.get_extra_info("sslcontext") is not None
 
+  @property
+  def displayed_nickname(self):
+    return self.nickname if self.is_registered else "*"
+
+  @property
+  def prefix(self):
+    return self.hostmask
+
   def send(self, prefix, msg):
     self.protocol.send(prefix, msg)
 
@@ -144,8 +147,10 @@ class LocalUser(User):
 
   def on_message(self, app, prefix, message):
     self.last_activity_time = datetime.datetime.now()
-    message.handle_for(app, self, prefix)
-    app.run_hooks("user.command", self, message, prefix)
+
+    # users are never allowed to send prefixes
+    message.handle_for(app, self, None)
+    app.run_hooks("user.command", self, message, None)
 
   def on_disconnect(self, exc):
     self.store.remove(self)
@@ -206,23 +211,43 @@ class LocalUser(User):
 
 
 class RemoteUser(User):
-  def __init__(self, uid):
-    super.__init__(uid, server_name)
+  def __init__(self, store, uid, server_name, network):
+    super.__init__(store, uid, server_name)
+
+    self.network = network
+    self.is_local = False
+
+  @property
+  def prefix(self):
+    return self.uid
+
+  @property
+  def displayed_nickname(self):
+    return self.uid
+
+  def send(self, prefix, msg):
+    target, *_ = self.network.find_shortest_path(self.server_name)
+    target.send(prefix, msg)
 
 
 class UserStore(object):
   def __init__(self, app):
     self.app = app
     self.users = {}
+    self.users_by_uid = {}
     self._local_uid_serial = (self.app.sid + util.uidify(i)
                               for i in itertools.count(0))
 
-  def new_local_user(self, transport):
+  def new_local_user(self, protocol):
     return LocalUser(self, next(self._local_uid_serial), self.app.server_name,
-                     transport)
+                     protocol)
+
+  def new_remote_user(self, uid, server_name):
+    return RemoteUser(self, uid, server_name, self.app.network)
 
   def add(self, user):
     self.users[user.normalized_nickname] = user
+    self.users_by_uid[user.uid] = user
 
   def rename(self, user, new_nickname):
     normalized_new_nickname = util.to_irc_lower(new_nickname)
@@ -243,6 +268,7 @@ class UserStore(object):
     self.app.run_hooks("user.remove.check", user)
     if user.is_registered:
       del self.users[user.normalized_nickname]
+      del self.users_by_uid[user.uid]
     user.on_remove(self.app)
     self.app.run_hooks("user.remove", user)
 
@@ -251,6 +277,9 @@ class UserStore(object):
       return self.users[util.to_irc_lower(name)]
     except KeyError:
       raise errors.NoSuchNick(name)
+
+  def get_by_uid(self, uid):
+    return self.users_by_uid[uid]
 
   def has(self, name):
     return util.to_irc_lower(name) in self.users
