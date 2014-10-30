@@ -30,7 +30,7 @@ class Sid(message.Command):
     pass
 
 
-@SidFeature.hook("network.burst.sid")
+@SidFeature.hook("network.burst.servers")
 def burst_sids(app, server):
   for source, target in app.network.all_links():
     server.send(source.sid, Sid(target.name, "1", target.sid,
