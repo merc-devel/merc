@@ -13,9 +13,11 @@ class UserFeature(feature.Feature):
 install = UserFeature.install
 
 
+@UserFeature.register_server_command
 class Welcome(message.Reply):
   NAME = "001"
   FORCE_TRAILING = True
+  MIN_ARITY = 1
 
   def __init__(self, reason, *args):
     self.reason = reason
@@ -24,10 +26,11 @@ class Welcome(message.Reply):
     return [self.reason]
 
 
+@UserFeature.register_server_command
 class YourHost(message.Reply):
   NAME = "002"
   FORCE_TRAILING = True
-
+  MIN_ARITY = 1
 
   def __init__(self, reason, *args):
     self.reason = reason
@@ -36,9 +39,11 @@ class YourHost(message.Reply):
     return [self.reason]
 
 
+@UserFeature.register_server_command
 class Created(message.Reply):
   NAME = "003"
   FORCE_TRAILING = True
+  MIN_ARITY = 1
 
   def __init__(self, reason, *args):
     self.reason = reason
@@ -47,8 +52,10 @@ class Created(message.Reply):
     return [self.reason]
 
 
+@UserFeature.register_server_command
 class MyInfo(message.Reply):
   NAME = "004"
+  MIN_ARITY = 5
 
   def __init__(self, server_name, version, umodes, chanmodes_no_param,
                chanmodes_param, *args):
@@ -61,6 +68,7 @@ class MyInfo(message.Reply):
   def as_reply_params(self):
     return [self.server_name, self.version, self.umodes,
             self.chanmodes_no_param, self.chanmodes_param]
+
 
 @UserFeature.register_user_command
 class User(message.Command):

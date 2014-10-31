@@ -11,9 +11,11 @@ class OperFeature(feature.Feature):
 install = OperFeature.install
 
 
+@OperFeature.register_server_command
 class LUserOp(message.Reply):
   NAME = "252"
   FORCE_TRAILING = True
+  MIN_ARITY = 2
 
   def __init__(self, num_irc_operators, reason="IRC operators online", *args):
     self.num_irc_operators = num_irc_operators
@@ -23,9 +25,11 @@ class LUserOp(message.Reply):
     return [self.num_irc_operators, self.reason]
 
 
+@OperFeature.register_server_command
 class YoureOper(message.Reply):
   NAME = "381"
   FORCE_TRAILING = True
+  MIN_ARITY = 1
 
   def __init__(self, reason="You are now an IRC operator", *args):
     self.reason = reason
@@ -34,8 +38,10 @@ class YoureOper(message.Reply):
     return [self.reason]
 
 
+@OperFeature.register_server_command
 class StatsOLine(message.Reply):
   NAME = "243"
+  MIN_ARITY = 4
 
   def __init__(self, o, hostmask, star, name, *args):
     self.o = o

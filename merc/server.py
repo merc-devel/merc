@@ -77,10 +77,6 @@ class Neighbor(Server):
     pass
 
   def on_raw_message(self, app, prefix, command_name, params):
-    if all(c.isdigit() for c in command_name):
-      # TODO: handle numerics
-      return
-
     try:
       if prefix is not None and util.is_uid(prefix):
         command_type = app.get_user_command(command_name)

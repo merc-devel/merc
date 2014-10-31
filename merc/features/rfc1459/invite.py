@@ -18,8 +18,10 @@ class InviteOnlyChannel(errors.ParametrizedError):
   REASON = "Cannot join channel (+i)"
 
 
+@InviteFeature.register_server_command
 class Inviting(message.Reply):
   NAME = "341"
+  MIN_ARITY = 2
 
   def __init__(self, channel, nick, *args):
     self.channel = channel

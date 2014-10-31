@@ -16,9 +16,11 @@ install = NamesFeature.install
 MAX_TARGETS = 1
 
 
+@NamesFeature.register_server_command
 class LUserClient(message.Reply):
   NAME = "251"
   FORCE_TRAILING = True
+  MIN_ARITY = 1
 
   def __init__(self, reason, *args):
     self.reason = reason
@@ -27,9 +29,11 @@ class LUserClient(message.Reply):
     return [self.reason]
 
 
+@NamesFeature.register_server_command
 class NameReply(message.Reply):
   NAME = "353"
   FORCE_TRAILING = True
+  MIN_ARITY = 3
 
   def __init__(self, type, channel_name, users, *args):
     self.type = type
@@ -40,9 +44,11 @@ class NameReply(message.Reply):
     return [self.type, self.channel_name, self.users]
 
 
+@NamesFeature.register_server_command
 class EndOfNames(message.Reply):
   NAME = "366"
   FORCE_TRAILING = True
+  MIN_ARITY = 2
 
   def __init__(self, channel_name, reason="End of /NAMES list", *args):
     self.channel_name = channel_name

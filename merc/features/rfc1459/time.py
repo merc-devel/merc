@@ -12,9 +12,11 @@ class TimeFeature(feature.Feature):
 install = TimeFeature.install
 
 
+@TimeFeature.register_server_command
 class TimeReply(message.Reply):
   NAME = "391"
   FORCE_TRAILING = True
+  MIN_ARITY = 2
 
   def __init__(self, server_name, time, *args):
     self.server_name = server_name

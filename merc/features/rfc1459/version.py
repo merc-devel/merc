@@ -11,9 +11,11 @@ class VersionFeature(feature.Feature):
 install = VersionFeature.install
 
 
+@VersionFeature.register_server_command
 class VersionReply(message.Reply):
   NAME = "351"
   FORCE_TRAILING = True
+  MIN_ARITY = 3
 
   def __init__(self, version, server_name, description, *args):
     self.version = version

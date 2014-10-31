@@ -9,9 +9,11 @@ class LUsersFeature(feature.Feature):
 install = LUsersFeature.install
 
 
+@LUsersFeature.register_server_command
 class LUserUnknown(message.Reply):
   NAME = "253"
   FORCE_TRAILING = True
+  MIN_ARITY = 2
 
   def __init__(self, num_unknown, reason="unknown connections", *args):
     self.num_unknown = num_unknown
@@ -21,9 +23,11 @@ class LUserUnknown(message.Reply):
     return [self.num_unknown, self.reason]
 
 
+@LUsersFeature.register_server_command
 class LUserChannels(message.Reply):
   NAME = "254"
   FORCE_TRAILING = True
+  MIN_ARITY = 2
 
   def __init__(self, num_channels, reason="channels formed", *args):
     self.num_channels = num_channels
@@ -33,9 +37,11 @@ class LUserChannels(message.Reply):
     return [self.num_channels, self.reason]
 
 
+@LUsersFeature.register_server_command
 class LUserMe(message.Reply):
   NAME = "255"
   FORCE_TRAILING = True
+  MIN_ARITY = 1
 
   def __init__(self, reason, *args):
     self.reason = reason

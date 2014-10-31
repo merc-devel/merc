@@ -13,9 +13,11 @@ install = AwayFeature.install
 MAX_AWAY_LENGTH = 200
 
 
+@AwayFeature.register_server_command
 class IsAway(message.Reply):
   NAME = "301"
   FORCE_TRAILING = True
+  MIN_ARITY = 2
 
   def __init__(self, nick, msg):
     self.nick = nick
@@ -25,8 +27,10 @@ class IsAway(message.Reply):
     return [self.nick, self.msg]
 
 
+@AwayFeature.register_server_command
 class NowAway(message.Reply):
   NAME = "306"
+  MIN_ARITY = 1
 
   def __init__(self, reason="You have been marked as being away", *args):
     self.reason = reason
@@ -35,8 +39,10 @@ class NowAway(message.Reply):
     return [self.reason]
 
 
+@AwayFeature.register_server_command
 class UnAway(message.Reply):
   NAME = "305"
+  MIN_ARITY = 1
 
   def __init__(self, reason="You are no longer marked as being away", *args):
     self.reason = reason

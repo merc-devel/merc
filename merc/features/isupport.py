@@ -10,9 +10,11 @@ class ISupportFeature(feature.Feature):
 install = ISupportFeature.install
 
 
+@ISupportFeature.register_server_command
 class ISupport(message.Reply):
   NAME = "005"
   FORCE_TRAILING = True
+  MIN_ARITY = 1
 
   def __init__(self, *args):
     self.args = list(args)

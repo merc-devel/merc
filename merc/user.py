@@ -71,8 +71,8 @@ class User(object):
   def send(self):
     raise NotImplementedError
 
-  def send_reply(self, message):
-    self.send(self.server_prefix, message)
+  def send_reply(self, message, prefix=None):
+    self.send(self.server_prefix if prefix is None else prefix, message)
 
   def relay_to_user(self, user, message, prefix=None):
     user.send(self.prefix if prefix is None else prefix, message)
@@ -245,7 +245,7 @@ class RemoteUser(User):
 
   def send(self, prefix, msg):
     target = self.network.get_next_hop(self.network.get(self.server_name))
-    target.send(prefix, msg, self)
+    target.send(self.network.current.sid, msg, self)
 
 
 class UserStore(object):

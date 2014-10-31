@@ -15,9 +15,11 @@ install = WhoIsFeature.install
 MAX_TARGETS = 1
 
 
+@WhoIsFeature.register_server_command
 class WhoIsUser(message.Reply):
   NAME = "311"
   FORCE_TRAILING = True
+  MIN_ARITY = 5
 
   def __init__(self, nick, user, host, star, realname, *args):
     self.nick = nick
@@ -30,9 +32,11 @@ class WhoIsUser(message.Reply):
     return [self.nick, self.user, self.host, self.star, self.realname]
 
 
+@WhoIsFeature.register_server_command
 class WhoIsServer(message.Reply):
   NAME = "312"
   FORCE_TRAILING = True
+  MIN_ARITY = 3
 
   def __init__(self, nick, server_name, server_info="", *args):
     self.nick = nick
@@ -43,9 +47,11 @@ class WhoIsServer(message.Reply):
     return [self.nick, self.server_name, self.server_info]
 
 
+@WhoIsFeature.register_server_command
 class WhoIsOperator(message.Reply):
   NAME = "313"
   FORCE_TRAILING = True
+  MIN_ARITY = 2
 
   def __init__(self, nick, reason="is an IRC operator", *args):
     self.nick = nick
@@ -55,9 +61,11 @@ class WhoIsOperator(message.Reply):
     return [self.nick, self.reason]
 
 
+@WhoIsFeature.register_server_command
 class WhoIsIdle(message.Reply):
   NAME = "317"
   FORCE_TRAILING = True
+  MIN_ARITY = 4
 
   def __init__(self, nick, idle_time, signon_time,
                reason="seconds idle, signon time", *args):
@@ -70,9 +78,11 @@ class WhoIsIdle(message.Reply):
     return [self.nick, self.idle_time, self.signon_time, self.reason]
 
 
+@WhoIsFeature.register_server_command
 class WhoIsEnd(message.Reply):
   NAME = "318"
   FORCE_TRAILING = True
+  MIN_ARITY = 2
 
   def __init__(self, nick, reason="End of /WHOIS list", *args):
     self.nick = nick
@@ -81,9 +91,12 @@ class WhoIsEnd(message.Reply):
   def as_reply_params(self):
     return [self.nick, self.reason]
 
+
+@WhoIsFeature.register_server_command
 class WhoIsChannels(message.Reply):
   NAME = "319"
   FORCE_TRAILING = True
+  MIN_ARITY = 2
 
   def __init__(self, nick, channels, *args):
     self.nick = nick

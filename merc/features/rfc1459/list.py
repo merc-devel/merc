@@ -13,9 +13,11 @@ install = ListFeature.install
 MAX_TARGETS = 1
 
 
+@ListFeature.register_server_command
 class ListStart(message.Reply):
   NAME = "321"
   FORCE_TRAILING = True
+  MIN_ARITY = 2
 
   def __init__(self, heading="Channels", subheading="Users Name", *args):
     self.heading = heading
@@ -25,9 +27,11 @@ class ListStart(message.Reply):
     return [self.heading, self.subheading]
 
 
+@ListFeature.register_server_command
 class ListReply(message.Reply):
   NAME = "322"
   FORCE_TRAILING = True
+  MIN_ARITY = 3
 
   def __init__(self, channel_name, num_visible, topic, *args):
     self.channel_name = channel_name
@@ -38,9 +42,11 @@ class ListReply(message.Reply):
     return [self.channel_name, self.num_visible, self.topic]
 
 
+@ListFeature.register_server_command
 class ListEnd(message.Reply):
   NAME = "323"
   FORCE_TRAILING = True
+  MIN_ARITY = 1
 
   def __init__(self, reason="End of /LIST", *args):
     self.reason = reason

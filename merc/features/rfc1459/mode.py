@@ -34,8 +34,10 @@ def show_modes(target, modes):
   return "+" + "".join(flags), args
 
 
+@ModeFeature.register_server_command
 class UmodeIs(message.Reply):
   NAME = "221"
+  MIN_ARITY = 1
 
   def __init__(self, flags, *args):
     self.flags = flags
@@ -45,8 +47,10 @@ class UmodeIs(message.Reply):
     return [self.flags] + self.args
 
 
+@ModeFeature.register_server_command
 class ChannelModeIs(message.Reply):
   NAME = "324"
+  MIN_ARITY = 2
 
   def __init__(self, channel_name, flags, *args):
     self.channel_name = channel_name
@@ -57,10 +61,12 @@ class ChannelModeIs(message.Reply):
     return [self.channel_name, self.flags] + self.args
 
 
+@ModeFeature.register_server_command
 class CreationTime(message.Reply):
   NAME = "329"
+  MIN_ARITY = 2
 
-  def __init__(self, channel_name, time):
+  def __init__(self, channel_name, time, *args):
     self.channel_name = channel_name
     self.time = time
 

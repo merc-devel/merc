@@ -9,9 +9,11 @@ class RehashFeature(feature.Feature):
 install = RehashFeature.install
 
 
+@RehashFeature.register_server_command
 class Rehashing(message.Reply):
   NAME = "382"
   FORCE_TRAILING = True
+  MIN_ARITY = 2
 
   def __init__(self, config_filename, reason="Rehashing configuration", *args):
     self.config_filename = config_filename

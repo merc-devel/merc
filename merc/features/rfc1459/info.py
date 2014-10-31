@@ -42,9 +42,11 @@ class InfoFeature(feature.Feature):
 install = InfoFeature.install
 
 
+@InfoFeature.register_server_command
 class InfoReply(message.Reply):
   NAME = "371"
   FORCE_TRAILING = True
+  MIN_ARITY = 1
 
   def __init__(self, line):
     self.line = line
@@ -53,8 +55,10 @@ class InfoReply(message.Reply):
     return [self.line]
 
 
+@InfoFeature.register_server_command
 class EndOfInfo(message.Reply):
   NAME = "374"
+  MIN_ARITY = 2
 
   def __init__(self, line, reason="End of /INFO list", *args):
     self.line = line

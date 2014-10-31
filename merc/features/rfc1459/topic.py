@@ -21,9 +21,11 @@ class TopicFeature(feature.Feature):
 install = TopicFeature.install
 
 
+@TopicFeature.register_server_command
 class NoTopic(message.Reply):
   NAME = "331"
   FORCE_TRAILING = True
+  MIN_ARITY = 2
 
   def __init__(self, channel_name, reason="No topic set", *args):
     self.channel_name = channel_name
@@ -33,9 +35,11 @@ class NoTopic(message.Reply):
     return [self.channel_name, self.reason]
 
 
+@TopicFeature.register_server_command
 class TopicReply(message.Reply):
   NAME = "332"
   FORCE_TRAILING = True
+  MIN_ARITY = 2
 
   def __init__(self, channel_name, text, *args):
     self.channel_name = channel_name
@@ -45,8 +49,10 @@ class TopicReply(message.Reply):
     return [self.channel_name, self.text]
 
 
+@TopicFeature.register_server_command
 class TopicWhoTime(message.Reply):
   NAME = "333"
+  MIN_ARITY = 3
 
   def __init__(self, channel_name, who, time, *args):
     self.channel_name = channel_name

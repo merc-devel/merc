@@ -11,9 +11,11 @@ class UserHostFeature(feature.Feature):
 install = UserHostFeature.install
 
 
+@UserHostFeature.register_server_command
 class UserHostReply(message.Reply):
   NAME = "302"
   FORCE_TRAILING = True
+  MIN_ARITY = 1
 
   def __init__(self, user_hosts, *args):
     self.user_hosts = user_hosts

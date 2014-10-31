@@ -27,9 +27,11 @@ class SecurelyConnected(mode.FlagMode, mode.UModeMixin):
     return self.target.is_securely_connected
 
 
+@IsSecureFeature.register_server_command
 class WhoIsSecure(message.Reply):
   NAME = "671"
   FORCE_TRAILING = True
+  MIN_ARITY = 3
 
   def __init__(self, nick, type, reason="is using a secure connection", *args):
     self.nick = nick

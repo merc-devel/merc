@@ -18,8 +18,10 @@ class BanFeature(feature.Feature):
 install = BanFeature.install
 
 
+@BanFeature.register_server_command
 class BanList(message.Reply):
   NAME = "367"
+  MIN_ARITY = 4
 
   def __init__(self, channel_name, mask, server_name, creation_time, *args):
     self.channel_name = channel_name
@@ -32,9 +34,11 @@ class BanList(message.Reply):
             self.creation_time]
 
 
+@BanFeature.register_server_command
 class EndOfBanList(message.Reply):
   NAME = "368"
   FORCE_TRAILING = True
+  MIN_ARITY = 2
 
   def __init__(self, channel_name, reason="End of channel ban list", *args):
     self.channel_name = channel_name

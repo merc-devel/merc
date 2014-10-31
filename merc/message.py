@@ -23,6 +23,15 @@ class Message(object):
   def as_params(self, client):
     raise NotImplementedError
 
+  @classmethod
+  def with_params(cls, params):
+    from merc import errors
+
+    if len(params) < cls.MIN_ARITY:
+      raise errors.NeedMoreParams(cls.NAME)
+
+    return cls(*params)
+
 
 class Reply(Message):
   def as_params(self, client):
@@ -30,6 +39,17 @@ class Reply(Message):
 
   def as_reply_params(self):
     raise NotImplementedError
+
+  def handle_for(self, app, server, prefix):
+    target = app.users.get_by_uid(self.client_target)
+    target.send_reply(self, app.network.get_by_sid(prefix).name)
+
+  @classmethod
+  def with_params(cls, params):
+    target, *params = params
+    reply = cls(*params)
+    reply.client_target = target
+    return reply
 
 
 class Command(Message):
@@ -41,15 +61,6 @@ class Command(Message):
 
   def as_command_params(self):
     raise NotImplementedError
-
-  @classmethod
-  def with_params(cls, params):
-    from merc import errors
-
-    if len(params) < cls.MIN_ARITY:
-      raise errors.NeedMoreParams(cls.NAME)
-
-    return cls(*params)
 
   def handle_for(self, app, client, prefix):
     raise NotImplementedError

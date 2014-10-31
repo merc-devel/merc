@@ -12,9 +12,11 @@ class WhoFeature(feature.Feature):
 install = WhoFeature.install
 
 
+@WhoFeature.register_server_command
 class EndOfWho(message.Reply):
   NAME = "315"
   FORCE_TRAILING = True
+  MIN_ARITY = 2
 
   def __init__(self, target, reason="End of /WHO command", *args):
     self.target = target
@@ -24,9 +26,11 @@ class EndOfWho(message.Reply):
     return [self.target, self.reason]
 
 
+@WhoFeature.register_server_command
 class WhoReply(message.Reply):
   NAME = "352"
   FORCE_TRAILING = True
+  MIN_ARITY = 7
 
   def __init__(self, channel_name, username, host, server_name, nickname,
                sigils, realname, *args):
