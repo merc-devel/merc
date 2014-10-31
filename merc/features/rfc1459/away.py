@@ -56,7 +56,8 @@ class Away(message.Command):
   @message.Command.requires_registration
   def handle_for(self, app, user, prefix):
     locals = user.get_feature_locals(AwayFeature)
-    locals["away"] = self.message[:MAX_AWAY_LENGTH]
+    locals["away"] = self.message[:MAX_AWAY_LENGTH] \
+                     if self.message is not None else None
 
     if self.message:
       user.send_reply(NowAway())
