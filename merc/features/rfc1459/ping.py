@@ -1,5 +1,6 @@
 import datetime
 
+from merc import errors
 from merc import feature
 from merc import message
 
@@ -32,9 +33,17 @@ class Ping(message.Command):
     return params
 
   def handle_for(self, app, user, prefix):
-    user.send_reply(Pong(
-        self.server_name if self.server_name is not None else app.server_name,
-        self.value))
+    if self.server_name == app.server_name or self.server_name is None:
+      user.send_reply(PongReply(
+          self.server_name if self.server_name is not None else app.server_name,
+          self.value))
+      return
+
+    if not app.network.has(self.server_name):
+      raise errors.NoSuchServer(self.server_name)
+
+    app.network.get(self.server_name).send(
+        prefix if prefix is not None else user.uid, self)
 
 
 @PingFeature.register_user_command
@@ -60,6 +69,28 @@ class Pong(message.Command):
 
   def handle_for(self, app, user, prefix):
     pass
+
+
+@PingFeature.register_server_command
+class PongReply(message.Reply):
+  NAME = "PONG"
+  MIN_ARITY = 1
+
+  @property
+  def FORCE_TRAILING(self):
+    return self.value is not None
+
+  def __init__(self, server_name, value=None, *args):
+    self.server_name = server_name
+    self.value = value
+
+  def as_reply_params(self):
+    params = [self.server_name]
+
+    if self.value is not None:
+      params.append(self.value)
+
+    return params
 
 
 @PingFeature.hook("user.register")
