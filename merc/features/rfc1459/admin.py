@@ -94,4 +94,4 @@ class Admin(message.Command):
       raise errors.NoSuchServer(self.server_name)
 
     app.network.get(self.server_name).send(
-        prefix if prefix is not None else user.uid, self)
+        prefix if prefix is not None else user.link_prefix, self)

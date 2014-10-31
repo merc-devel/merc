@@ -43,15 +43,27 @@ class Uid(message.Command):
                                      int(self.hopcount) + 1)
     app.users.add(user)
 
+    # TODO: broadcast this
+
+
+def send_uid(app, server, user):
+  host = user.host
+  if host[0] == ":":
+    host = "0" + host
+
+  server.send(app.sid, Uid(user.nickname, str(user.hopcount),
+                           str(int(user.creation_time.timestamp())),
+                           "+", user.username, host, "0", user.uid,
+                           user.realname))
+
 
 @UidFeature.hook("network.burst.users")
 def burst_uids(app, server):
   for user in app.users.all():
-    host = user.host
-    if host[0] == ":":
-      host = "0" + host
+    send_uid(app, server, user)
 
-    server.send(app.sid, Uid(user.nickname, str(user.hopcount),
-                             str(int(user.creation_time.timestamp())),
-                             "+", user.username, host, "0", user.uid,
-                             user.realname))
+
+@UidFeature.hook("user.register")
+def send_uids_on_register(app, user):
+  for neighbor in app.network.neighborhood():
+    send_uid(app, neighbor, user)

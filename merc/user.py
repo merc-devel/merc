@@ -51,6 +51,10 @@ class User(object):
     return "user:" + self.uid
 
   @property
+  def link_prefix(self):
+    return self.uid
+
+  @property
   def hostmask(self):
     return emitter.emit_hostmask(self.nickname, self.username, self.host)
 
