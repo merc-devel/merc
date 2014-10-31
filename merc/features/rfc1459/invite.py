@@ -21,7 +21,7 @@ class InviteOnlyChannel(errors.ParametrizedError):
 class Inviting(message.Reply):
   NAME = "341"
 
-  def __init__(self, channel, nick):
+  def __init__(self, channel, nick, *args):
     self.channel = channel
     self.nick = nick
 

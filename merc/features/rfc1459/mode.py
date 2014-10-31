@@ -37,9 +37,9 @@ def show_modes(target, modes):
 class UmodeIs(message.Reply):
   NAME = "221"
 
-  def __init__(self, flags, args):
+  def __init__(self, flags, *args):
     self.flags = flags
-    self.args = args
+    self.args = list(args)
 
   def as_reply_params(self):
     return [self.flags] + self.args
@@ -48,10 +48,10 @@ class UmodeIs(message.Reply):
 class ChannelModeIs(message.Reply):
   NAME = "324"
 
-  def __init__(self, channel_name, flags, args):
+  def __init__(self, channel_name, flags, *args):
     self.channel_name = channel_name
     self.flags = flags
-    self.args = args
+    self.args = list(args)
 
   def as_reply_params(self):
     return [self.channel_name, self.flags] + self.args
@@ -65,14 +65,14 @@ class CreationTime(message.Reply):
     self.time = time
 
   def as_reply_params(self):
-    return [self.channel_name, str(int(self.time.timestamp()))]
+    return [self.channel_name, self.time]
 
 
 class _Mode(message.Command):
   def __init__(self, target, flags=None, *args):
     self.target = target
     self.flags = flags
-    self.args = args
+    self.args = list(args)
 
   def as_command_params(self):
     return [self.target, self.flags] + list(self.args)
@@ -195,14 +195,14 @@ class Mode(_Mode):
           raise errors.NoSuchChannel(self.target)
 
         flags, args = show_modes(chan, app.channels.modes)
-        user.send_reply(ChannelModeIs(chan.name, flags, args))
+        user.send_reply(ChannelModeIs(chan.name, flags, *args))
       else:
         target = app.users.get(self.target)
         if target is not user:
           raise errors.UsersDontMatch
 
         flags, args = show_modes(target, app.users.modes)
-        user.send_reply(UmodeIs(flags, args))
+        user.send_reply(UmodeIs(flags, *args))
     else:
         super().handle_for(app, user, prefix)
 
@@ -250,7 +250,8 @@ def send_modes_on_welcome(app, user):
 
 @ModeFeature.hook("channel.join")
 def send_timestamp_on_join(app, user, target, channel):
-  target.send_reply(CreationTime(channel.name, channel.creation_time))
+  target.send_reply(CreationTime(channel.name,
+                                 str(int(channel.creation_time.timestamp()))))
 
 
 @ModeFeature.hook("channel.join_new")

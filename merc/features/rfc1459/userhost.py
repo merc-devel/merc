@@ -15,15 +15,11 @@ class UserHostReply(message.Reply):
   NAME = "302"
   FORCE_TRAILING = True
 
-  def __init__(self, user_hosts):
+  def __init__(self, user_hosts, *args):
     self.user_hosts = user_hosts
 
   def as_reply_params(self):
-    return [" ".join("{}{}={}{}".format(user_host.nickname,
-                                        "*" if user_host.is_oper else "",
-                                        "+" if not user_host.is_away else "-",
-                                        user_host.hostmask)
-            for user_host in self.user_hosts)]
+    return [self.user_hosts]
 
 
 @UserHostFeature.register_user_command
@@ -49,4 +45,9 @@ class UserHost(message.Command):
         app.run_hooks("server.userhost.modify", target, user_host)
         user_hosts.append(user_host)
 
-    user.send_reply(UserHostReply(user_hosts))
+    user.send_reply(UserHostReply(
+        " ".join("{}{}={}{}".format(user_host.nickname,
+                                    "*" if user_host.is_oper else "",
+                                    "+" if not user_host.is_away else "-",
+                                    user_host.hostmask)
+                 for user_host in user_hosts)))

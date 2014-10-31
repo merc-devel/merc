@@ -13,11 +13,12 @@ class Rehashing(message.Reply):
   NAME = "382"
   FORCE_TRAILING = True
 
-  def __init__(self, config_filename):
+  def __init__(self, config_filename, reason="Rehashing configuration", *args):
     self.config_filename = config_filename
+    self.reason = reason
 
   def as_reply_params(self):
-    return [self.config_filename, "Rehashing configuration"]
+    return [self.config_filename, self.reason]
 
 
 @RehashFeature.register_user_command

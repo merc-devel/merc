@@ -17,29 +17,36 @@ class ListStart(message.Reply):
   NAME = "321"
   FORCE_TRAILING = True
 
+  def __init__(self, heading="Channels", subheading="Users Name", *args):
+    self.heading = heading
+    self.subheading = subheading
+
   def as_reply_params(self):
-    return ["Channels", "Users Name"]
+    return [self.heading, self.subheading]
 
 
 class ListReply(message.Reply):
   NAME = "322"
   FORCE_TRAILING = True
 
-  def __init__(self, channel_name, num_visible, topic):
+  def __init__(self, channel_name, num_visible, topic, *args):
     self.channel_name = channel_name
     self.num_visible = num_visible
     self.topic = topic
 
   def as_reply_params(self):
-    return [self.channel_name, str(self.num_visible), self.topic]
+    return [self.channel_name, self.num_visible, self.topic]
 
 
 class ListEnd(message.Reply):
   NAME = "323"
   FORCE_TRAILING = True
 
+  def __init__(self, reason="End of /LIST", *args):
+    self.reason = reason
+
   def as_reply_params(self):
-    return ["End of /LIST"]
+    return [self.reason]
 
 
 @ListFeature.register_user_command
@@ -64,7 +71,7 @@ class List(message.Command):
         if not user.can_see_channel(channel):
           continue
 
-        reply = ListReply(channel.name, len(channel.users), "")
+        reply = ListReply(channel.name, str(len(channel.users)), "")
         app.run_hooks("server.list.modify", channel, reply)
 
         user.send_reply(reply)

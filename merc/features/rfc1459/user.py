@@ -17,58 +17,50 @@ class Welcome(message.Reply):
   NAME = "001"
   FORCE_TRAILING = True
 
-  def __init__(self, network_name, nickname):
-    self.network_name = network_name
-    self.nickname = nickname
+  def __init__(self, reason, *args):
+    self.reason = reason
 
   def as_reply_params(self):
-    return ["Welcome to the {} Internet Relay Chat Network, {}".format(
-        self.network_name,
-        self.nickname)]
+    return [self.reason]
 
 
 class YourHost(message.Reply):
   NAME = "002"
   FORCE_TRAILING = True
 
-  def __init__(self, server_name, server_version):
-    self.server_name = server_name
-    self.server_version = server_version
+
+  def __init__(self, reason, *args):
+    self.reason = reason
 
   def as_reply_params(self):
-    return ["Your host is {}, running {}-{}".format(
-        self.server_name, merc.__name__, self.server_version)]
+    return [self.reason]
 
 
 class Created(message.Reply):
   NAME = "003"
   FORCE_TRAILING = True
 
-  def __init__(self, creation_time):
-    self.creation_time = creation_time
+  def __init__(self, reason, *args):
+    self.reason = reason
 
   def as_reply_params(self):
-    return ["This app was created {}".format(
-        self.creation_time.isoformat())]
+    return [self.reason]
 
 
 class MyInfo(message.Reply):
   NAME = "004"
 
-  def __init__(self, server_name, umodes, chanmodes):
+  def __init__(self, server_name, version, umodes, chanmodes_no_param,
+               chanmodes_param, *args):
     self.server_name = server_name
+    self.version = version
     self.umodes = umodes
-    self.chanmodes = chanmodes
+    self.chanmodes_no_param = chanmodes_no_param
+    self.chanmodes_param = chanmodes_param
 
   def as_reply_params(self):
-    return [self.server_name,
-            "{}-{}".format(merc.__name__, merc.__version__),
-            "".join(sorted(mode.CHAR for mode in self.umodes.values())),
-            "".join(sorted(mode.CHAR for mode in self.chanmodes.values()
-                                     if not mode.TAKES_PARAM)),
-            "".join(sorted(mode.CHAR for mode in self.chanmodes.values()
-                                     if mode.TAKES_PARAM))]
-
+    return [self.server_name, self.version, self.umodes,
+            self.chanmodes_no_param, self.chanmodes_param]
 
 @UserFeature.register_user_command
 class User(message.Command):
@@ -97,10 +89,19 @@ class User(message.Command):
 
 @UserFeature.hook("user.register")
 def welcome_on_register(app, user):
-  user.send_reply(Welcome(app.network_name, user.nickname))
-  user.send_reply(YourHost(app.server_name, app.version))
-  user.send_reply(Created(app.creation_time))
-  user.send_reply(MyInfo(app.server_name, app.users.modes,
-                         app.channels.modes))
+  user.send_reply(Welcome(
+      "Welcome to the {} Internet Relay Chat Network, {}".format(
+          app.network_name, user.nickname)))
+  user.send_reply(YourHost("Your host is {}, running {}-{}".format(
+      app.server_name, merc.__name__, app.version)))
+  user.send_reply(Created("This server was created {}".format(
+      app.creation_time.isoformat())))
+  user.send_reply(MyInfo(
+      app.server_name, "{}-{}".format(merc.__name__, merc.__version__),
+      "".join(sorted(mode.CHAR for mode in app.users.modes.values())),
+      "".join(sorted(mode.CHAR for mode in app.channels.modes.values()
+                               if not mode.TAKES_PARAM)),
+      "".join(sorted(mode.CHAR for mode in app.channels.modes.values()
+                               if mode.TAKES_PARAM))))
   app.run_hooks("server.isupport.send", user)
   app.run_hooks("user.welcome", user)

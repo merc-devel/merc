@@ -31,12 +31,13 @@ class WhoIsSecure(message.Reply):
   NAME = "671"
   FORCE_TRAILING = True
 
-  def __init__(self, nick, type):
+  def __init__(self, nick, type, reason="is using a secure connection", *args):
     self.nick = nick
     self.type = type
+    self.reason = reason
 
   def as_reply_params(self):
-    return [self.nick, self.type, "is using a secure connection"]
+    return [self.nick, self.type, self.reason]
 
 
 @IsSecureFeature.hook("user.whois")

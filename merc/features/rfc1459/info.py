@@ -56,8 +56,12 @@ class InfoReply(message.Reply):
 class EndOfInfo(message.Reply):
   NAME = "374"
 
+  def __init__(self, line, reason="End of /INFO list", *args):
+    self.line = line
+    self.reason = reason
+
   def as_reply_params(self):
-    return ["End of /INFO list"]
+    return [self.reason]
 
 
 @InfoFeature.register_user_command

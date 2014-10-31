@@ -16,31 +16,31 @@ class EndOfWho(message.Reply):
   NAME = "315"
   FORCE_TRAILING = True
 
-  def __init__(self, target):
+  def __init__(self, target, reason="End of /WHO command", *args):
     self.target = target
+    self.reason = reason
 
   def as_reply_params(self):
-    return [self.target, "End of /WHO command"]
+    return [self.target, self.reason]
 
 
 class WhoReply(message.Reply):
   NAME = "352"
   FORCE_TRAILING = True
 
-  def __init__(self, target, is_away, multi_prefix):
-    self.target = target
-    self.is_away = is_away
-    self.multi_prefix = multi_prefix
+  def __init__(self, channel_name, username, host, server_name, nickname,
+               sigils, realname, *args):
+    self.channel_name = channel_name
+    self.username = username
+    self.host = host
+    self.server_name = server_name
+    self.nickname = nickname
+    self.sigils = sigils
+    self.realname = realname
 
   def as_reply_params(self):
-    return [self.target.channel.name if self.target.channel is not None
-                                     else "*",
-            self.target.user.username, self.target.user.host,
-            self.target.user.server_name, self.target.user.nickname,
-            ("H" if not self.is_away else "G") +
-                (self.target.sigils if self.multi_prefix
-                                    else self.target.sigil),
-            str(0) + " " + self.target.user.realname]
+    return [self.channel_name, self.username, self.host, self.server_name,
+            self.nickname, self.sigils, self.realname]
 
 
 @WhoFeature.register_user_command
@@ -89,8 +89,16 @@ class Who(message.Command):
       pass
 
     for cu in who:
-      reply = WhoReply(cu, False, False)
+      reply = util.Expando(target=cu, is_away=False, multi_prefix=False)
       app.run_hooks("server.who.modify", user, cu, reply)
-      user.send_reply(reply)
+      user.send_reply(WhoReply(
+          reply.target.channel.name if reply.target.channel is not None
+                                    else "*",
+          reply.target.user.username, reply.target.user.host,
+          reply.target.user.server_name, reply.target.user.nickname,
+          ("H" if not reply.is_away else "G") +
+              (reply.target.sigils if reply.multi_prefix
+                                   else reply.target.sigil),
+          str(0) + " " + reply.target.user.realname))
 
     user.send_reply(EndOfWho(self.target))

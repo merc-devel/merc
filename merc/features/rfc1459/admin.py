@@ -13,46 +13,45 @@ install = AdminFeature.install
 class AdminInfo(message.Reply):
   NAME = "256"
 
-  def __init__(self, server_name):
+  def __init__(self, server_name, reason="Administrative info", *args):
     self.server_name = server_name
+    self.reason = reason
 
   def as_reply_params(self):
-    return [self.server_name, "Administrative info"]
+    return [self.server_name, self.reason]
+
 
 class AdminLocation(message.Reply):
   NAME = "257"
   FORCE_TRAILING = True
 
-  def __init__(self, location):
+  def __init__(self, location, *args):
     self.location = location
 
   def as_reply_params(self):
     return [self.location]
+
 
 class AdminFineLocation(message.Reply):
   NAME = "258"
   FORCE_TRAILING = True
 
-  def __init__(self, location):
+  def __init__(self, location, *args):
     self.location = location
 
   def as_reply_params(self):
     return [self.location]
 
+
 class AdminEmail(message.Reply):
   NAME = "259"
   FORCE_TRAILING = True
 
-  def __init__(self, name, email):
-    self.name = name
+  def __init__(self, email, *args):
     self.email = email
 
   def as_reply_params(self):
-    if self.name:
-      email = '{} <{}>'.format(self.name, self.email)
-    else:
-      email = self.email
-    return [email]
+    return [self.email]
 
 
 @AdminFeature.register_user_command
@@ -74,7 +73,13 @@ class Admin(message.Command):
       user.send_reply(AdminInfo(app.server_name))
       user.send_reply(AdminLocation(app.admin_location))
       user.send_reply(AdminFineLocation(app.admin_location_fine))
-      user.send_reply(AdminEmail(app.admin_name, app.admin_email))
+
+      if app.admin_name:
+        email = '{} <{}>'.format(app.admin_name, app.admin_email)
+      else:
+        email = app.admin_email
+
+      user.send_reply(AdminEmail(email))
       return
 
     if not app.network.has(self.server_name):

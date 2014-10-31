@@ -1,6 +1,7 @@
 from merc import errors
 from merc import feature
 from merc import message
+from merc import util
 
 
 class VersionFeature(feature.Feature):
@@ -14,19 +15,13 @@ class VersionReply(message.Reply):
   NAME = "351"
   FORCE_TRAILING = True
 
-  def __init__(self, version, server_name, link_info, link_protocol, sid):
+  def __init__(self, version, server_name, description, *args):
     self.version = version
     self.server_name = server_name
-    self.link_info = link_info
-    self.link_protocol = link_protocol
-    self.sid = sid
+    self.description = description
 
   def as_reply_params(self):
-    return [self.version, self.server_name, "{} {} {}".format(
-        "".join(sorted(self.link_info, key=lambda c: c.lower()))
-            if self.link_info is not None else "",
-        self.link_protocol if self.link_protocol is not None else "",
-        self.sid)]
+    return [self.version, self.server_name, self.description]
 
 
 @VersionFeature.register_user_command
@@ -42,8 +37,16 @@ class Version(message.Command):
     if self.server_name is not None and self.server_name != app.server_name:
       raise errors.NoSuchServer(self.server_name)
 
-    version = 'merc-{}'.format(app.version)
-    reply = VersionReply(version, app.server_name, set(["6"]), None, app.sid)
+    reply = util.Expando(version="merc-{}".format(app.version),
+                         server_name=app.server_name,
+                         link_info={"6"}, link_protocol=None, sid=app.sid)
     app.run_hooks("server.version.modify", reply)
-    user.send_reply(reply)
+
+    user.send_reply(VersionReply(
+        reply.version, reply.server_name,
+        "{} {} {}".format(
+            "".join(sorted(reply.link_info, key=lambda c: c.lower()))
+                if reply.link_info is not None else "",
+            reply.link_protocol if reply.link_protocol is not None else "",
+            reply.sid)))
     app.run_hooks("server.isupport.send", user)

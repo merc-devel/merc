@@ -3,6 +3,7 @@ from merc import errors
 from merc import feature
 from merc import message
 from merc import mode
+from merc import util
 
 
 class NamesFeature(feature.Feature):
@@ -19,48 +20,36 @@ class LUserClient(message.Reply):
   NAME = "251"
   FORCE_TRAILING = True
 
-  def __init__(self, num_users, num_invisible, num_servers):
-    self.num_users = num_users
-    self.num_invisible = num_invisible
-    self.num_servers = num_servers
+  def __init__(self, reason, *args):
+    self.reason = reason
 
   def as_reply_params(self):
-    return ["There are {} users and {} invisible on {} servers".format(
-        self.num_users - self.num_invisible,
-        self.num_invisible, self.num_servers)]
+    return [self.reason]
 
 
 class NameReply(message.Reply):
   NAME = "353"
   FORCE_TRAILING = True
 
-  def __init__(self, type, channel_name, users, multi_prefix, uhnames):
+  def __init__(self, type, channel_name, users, *args):
     self.type = type
     self.channel_name = channel_name
     self.users = users
-    self.multi_prefix = False
-    self.uhnames = False
 
   def as_reply_params(self):
-    return [self.type,
-            self.channel_name if self.channel_name is not None else "*",
-            " ".join((target.sigils if self.multi_prefix
-                                    else target.sigil) +
-                     (target.user.hostmask if self.uhnames
-                                           else target.user.nickname)
-                     for target in self.users)]
+    return [self.type, self.channel_name, self.users]
 
 
 class EndOfNames(message.Reply):
   NAME = "366"
   FORCE_TRAILING = True
 
-  def __init__(self, channel_name=None):
+  def __init__(self, channel_name, reason="End of /NAMES list", *args):
     self.channel_name = channel_name
+    self.reason = reason
 
   def as_reply_params(self):
-    return [self.channel_name if self.channel_name is not None else "*",
-            "End of /NAMES list"]
+    return [self.channel_name, self.reason]
 
 
 @NamesFeature.register_user_command
@@ -73,9 +62,17 @@ class Names(message.Command):
                                                   else None
 
   def make_name_reply(self, app, user, type, channel_name, users):
-    reply = NameReply(type, channel_name, users, False, False)
+    reply = util.Expando(type=type, channel_name=channel_name, users=users,
+                         multi_prefix=False, uhnames=False)
     app.run_hooks("server.names.modify", user, reply)
-    return reply
+
+    return NameReply(
+        reply.type,
+        reply.channel_name if reply.channel_name is not None else "*",
+        " ".join((target.sigils if reply.multi_prefix else target.sigil) +
+                 (target.user.hostmask if reply.uhnames
+                                       else target.user.nickname)
+                 for target in reply.users))
 
   @message.Command.requires_registration
   def handle_for(self, app, user, prefix):
@@ -118,7 +115,7 @@ class Names(message.Command):
         user.send_reply(self.make_name_reply(app, user, "*", None,
                                              visible_users))
 
-      user.send_reply(EndOfNames(None))
+      user.send_reply(EndOfNames("*"))
     else:
       for channel_name in self.channel_names[:MAX_TARGETS]:
         try:
@@ -135,7 +132,8 @@ class Names(message.Command):
               app, user,
               "@" if user.is_in_channel(chan) else "*",
               chan.name, chan.get_visible_users_for(user)))
-        user.send_reply(EndOfNames(channel_name))
+        user.send_reply(EndOfNames(channel_name if channel_name is not None
+                                                else "*"))
 
 
 @NamesFeature.hook("server.targmax.modify")
@@ -153,8 +151,10 @@ def show_luser_oper(app, user):
   num_invisible = sum(
       user.is_invisible for user in app.users.all())
 
-  user.send_reply(LUserClient(app.users.count(), num_invisible,
-                              app.network.count()))
+  user.send_reply(LUserClient(
+      "There are {} users and {} invisible on {} servers".format(
+          app.users.count() - num_invisible, num_invisible,
+          app.network.count())))
 
 
 @NamesFeature.register_user_mode

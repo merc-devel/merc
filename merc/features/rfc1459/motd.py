@@ -13,30 +13,33 @@ class MotdReply(message.Reply):
   NAME = "372"
   FORCE_TRAILING = True
 
-  def __init__(self, line):
+  def __init__(self, line, *args):
     self.line = line
 
   def as_reply_params(self):
-    return ["- {}".format(self.line)]
+    return [self.line]
 
 
 class MotdStart(message.Reply):
   NAME = "375"
   FORCE_TRAILING = True
 
-  def __init__(self, server_name):
-    self.server_name = server_name
+  def __init__(self, reason, *args):
+    self.reason = reason
 
   def as_reply_params(self):
-    return ["- {} Message of the Day".format(self.server_name)]
+    return [self.reason]
 
 
 class EndOfMotd(message.Reply):
   NAME = "376"
   FORCE_TRAILING = True
 
+  def __init__(self, reason="End of /MOTD command", *args):
+    self.reason = reason
+
   def as_reply_params(self):
-    return ["End of /MOTD command"]
+    return [self.reason]
 
 
 @MotdFeature.register_user_command
@@ -46,10 +49,11 @@ class Motd(message.Command):
 
   @message.Command.requires_registration
   def handle_for(self, app, user, prefix):
-    user.send_reply(MotdStart(app.server_name))
+    user.send_reply(MotdStart(
+        "- {} Message of the Day".format(app.server_name)))
 
     for line in app.motd.splitlines():
-      user.send_reply(MotdReply(line))
+      user.send_reply(MotdReply("- " + line))
 
     user.send_reply(EndOfMotd())
 

@@ -25,18 +25,19 @@ class NoTopic(message.Reply):
   NAME = "331"
   FORCE_TRAILING = True
 
-  def __init__(self, channel_name):
+  def __init__(self, channel_name, reason="No topic set", *args):
     self.channel_name = channel_name
+    self.reason = reason
 
   def as_reply_params(self):
-    return [self.channel_name, "No topic set"]
+    return [self.channel_name, self.reason]
 
 
 class TopicReply(message.Reply):
   NAME = "332"
   FORCE_TRAILING = True
 
-  def __init__(self, channel_name, text):
+  def __init__(self, channel_name, text, *args):
     self.channel_name = channel_name
     self.text = text
 
@@ -47,13 +48,13 @@ class TopicReply(message.Reply):
 class TopicWhoTime(message.Reply):
   NAME = "333"
 
-  def __init__(self, channel_name, who, time):
+  def __init__(self, channel_name, who, time, *args):
     self.channel_name = channel_name
     self.who = who
     self.time = time
 
   def as_reply_params(self):
-    return [self.channel_name, self.who, str(int(self.time.timestamp()))]
+    return [self.channel_name, self.who, self.time]
 
 
 @TopicFeature.register_user_command
@@ -80,7 +81,7 @@ class Topic(message.Command):
       if current_topic is not None:
         user.send_reply(TopicReply(chan.name, current_topic.text))
         user.send_reply(TopicWhoTime(chan.name, current_topic.who,
-                                     current_topic.time))
+                                     str(int(current_topic.time.timestamp()))))
       else:
         user.send_reply(NoTopic(chan.name))
     else:

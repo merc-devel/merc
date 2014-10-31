@@ -15,30 +15,36 @@ class LUserOp(message.Reply):
   NAME = "252"
   FORCE_TRAILING = True
 
-  def __init__(self, num_irc_operators):
+  def __init__(self, num_irc_operators, reason="IRC operators online", *args):
     self.num_irc_operators = num_irc_operators
+    self.reason = reason
 
   def as_reply_params(self):
-    return [str(self.num_irc_operators), "IRC operators online"]
+    return [self.num_irc_operators, self.reason]
 
 
 class YoureOper(message.Reply):
   NAME = "381"
   FORCE_TRAILING = True
 
+  def __init__(self, reason="You are now an IRC operator", *args):
+    self.reason = reason
+
   def as_reply_params(self):
-    return ["You are now an IRC operator"]
+    return [self.reason]
 
 
 class StatsOLine(message.Reply):
   NAME = "243"
 
-  def __init__(self, hostmask, name):
+  def __init__(self, o, hostmask, star, name, *args):
+    self.o = o
     self.hostmask = hostmask
+    self.star = star
     self.name = name
 
   def as_reply_params(self):
-    return ["O", self.hostmask, "*", self.name]
+    return [self.o, self.hostmask, self.star, self.name]
 
 
 @OperFeature.register_user_command
@@ -91,8 +97,8 @@ class Oper(message.Command):
 
 @OperFeature.hook("server.luser.oper")
 def show_luser_oper(app, user):
-  user.send_reply(LUserOp(sum(user.is_irc_operator
-                              for user in app.users.all())))
+  user.send_reply(LUserOp(str(sum(user.is_irc_operator
+                                  for user in app.users.all()))))
 @OperFeature.hook("server.stats.o")
 def send_oper_hosts(app, user):
   try:
@@ -102,7 +108,7 @@ def send_oper_hosts(app, user):
   else:
     for name, oper in app.config["opers"].items():
       for mask in oper["hostmasks"]:
-        user.send_reply(StatsOLine(mask, name))
+        user.send_reply(StatsOLine("O", mask, "*", name))
 
 
 @OperFeature.register_user_mode

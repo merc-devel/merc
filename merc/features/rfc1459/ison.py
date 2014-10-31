@@ -14,11 +14,11 @@ class IsOnReply(message.Reply):
   NAME = "303"
   FORCE_TRAILING = True
 
-  def __init__(self, nicknames):
+  def __init__(self, nicknames, *args):
     self.nicknames = nicknames
 
   def as_reply_params(self):
-    return [" ".join(self.nicknames)]
+    return [self.nicknames]
 
 
 @IsOnFeature.register_user_command
@@ -40,4 +40,4 @@ class IsOn(message.Command):
       else:
         is_on.append(nickname)
 
-    user.send_reply(IsOnReply(is_on))
+    user.send_reply(IsOnReply(" ".join(is_on)))

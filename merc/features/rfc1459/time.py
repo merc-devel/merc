@@ -16,12 +16,12 @@ class TimeReply(message.Reply):
   NAME = "391"
   FORCE_TRAILING = True
 
-  def __init__(self, server_name, time):
+  def __init__(self, server_name, time, *args):
     self.server_name = server_name
     self.time = time
 
   def as_reply_params(self):
-    return [self.server_name, self.time.isoformat()]
+    return [self.server_name, self.time]
 
 
 @TimeFeature.register_user_command
@@ -37,4 +37,5 @@ class Time(message.Command):
     if self.server_name is not None and self.server_name != app.server_name:
       raise errors.NoSuchServer(self.server_name)
 
-    user.send_reply(TimeReply(app.server_name, datetime.datetime.now()))
+    user.send_reply(TimeReply(app.server_name,
+                              datetime.datetime.now().isoformat()))

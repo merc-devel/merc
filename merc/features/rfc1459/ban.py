@@ -21,7 +21,7 @@ install = BanFeature.install
 class BanList(message.Reply):
   NAME = "367"
 
-  def __init__(self, channel_name, mask, server_name, creation_time):
+  def __init__(self, channel_name, mask, server_name, creation_time, *args):
     self.channel_name = channel_name
     self.mask = mask
     self.server_name = server_name
@@ -29,18 +29,19 @@ class BanList(message.Reply):
 
   def as_reply_params(self):
     return [self.channel_name, self.mask, self.server_name,
-            str(int(self.creation_time.timestamp()))]
+            self.creation_time]
 
 
 class EndOfBanList(message.Reply):
   NAME = "368"
   FORCE_TRAILING = True
 
-  def __init__(self, channel_name):
+  def __init__(self, channel_name, reason="End of channel ban list", *args):
     self.channel_name = channel_name
+    self.reason = reason
 
   def as_reply_params(self):
-    return [self.channel_name, "End of channel ban list"]
+    return [self.channel_name, self.reason]
 
 
 @BanFeature.register_channel_mode
@@ -55,7 +56,7 @@ class BanMask(mode.ListMode, mode.ChanModeMixin):
                                key=lambda v: v[1].creation_time,
                                reverse=True):
       user.send_reply(BanList(self.target.name, mask, detail.app,
-                                detail.creation_time))
+                               str(int(detail.creation_time.timestamp()))))
     user.send_reply(EndOfBanList(self.target.name))
 
   def add(self, app, user, value):

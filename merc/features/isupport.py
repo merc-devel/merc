@@ -14,12 +14,17 @@ class ISupport(message.Reply):
   NAME = "005"
   FORCE_TRAILING = True
 
-  def __init__(self, support_params):
-    self.support_params = support_params
+  def __init__(self, *args):
+    self.args = list(args)
 
   def as_reply_params(self):
-    return ["{}={}".format(k, v) for k, v in self.support_params.items()] + \
-        ["are supported by this server"]
+    return self.args
+
+
+def make_isupport_reply(params):
+  return ISupport(*(
+    ["{}={}".format(k, v) for k, v in params.items()] + \
+    ["are supported by this server"]))
 
 
 @ISupportFeature.hook("server.isupport.send")
@@ -36,17 +41,18 @@ def send_isupport(app, user):
   }
   app.run_hooks("server.isupport.modify", isupport)
 
-  reply = ISupport({})
+  params = {}
 
   for k, v in isupport.items():
-    reply.support_params[k] = v
+    params[k] = v
 
     try:
+      reply = make_isupport_reply(params)
       reply.emit(user, app.server_name)
     except message.MessageTooLongError:
       del reply.support_params[k]
       user.send_reply(reply)
-      reply.support_params = {}
+      params = {}
 
-  if reply.support_params:
-    user.send_reply(reply)
+  if params:
+    user.send_reply(make_isupport_reply(params))

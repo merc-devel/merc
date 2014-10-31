@@ -13,32 +13,35 @@ class LUserUnknown(message.Reply):
   NAME = "253"
   FORCE_TRAILING = True
 
+  def __init__(self, num_unknown, reason="unknown connections", *args):
+    self.num_unknown = num_unknown
+    self.reason = reason
+
   def as_reply_params(self):
-    return ["0", "unknown connections"]
+    return [self.num_unknown, self.reason]
 
 
 class LUserChannels(message.Reply):
   NAME = "254"
   FORCE_TRAILING = True
 
-  def __init__(self, num_channels):
+  def __init__(self, num_channels, reason="channels formed", *args):
     self.num_channels = num_channels
+    self.reason = reason
 
   def as_reply_params(self):
-    return [str(self.num_channels), "channels formed"]
+    return [self.num_channels, self.reason]
 
 
 class LUserMe(message.Reply):
   NAME = "255"
   FORCE_TRAILING = True
 
-  def __init__(self, num_users, num_servers):
-    self.num_users = num_users
-    self.num_servers = num_servers
+  def __init__(self, reason, *args):
+    self.reason = reason
 
   def as_reply_params(self):
-    return ["I have {} clients and {} servers".format(
-        self.num_users, self.num_servers)]
+    return [self.reason]
 
 
 @LUsersFeature.register_user_command
@@ -50,9 +53,10 @@ class LUsers(message.Command):
   def handle_for(self, app, user, prefix):
     app.run_hooks("server.luser.user", user)
     app.run_hooks("server.luser.oper", user)
-    user.send_reply(LUserUnknown())
-    user.send_reply(LUserChannels(app.channels.count()))
-    user.send_reply(LUserMe(app.users.count(), app.network.count()))
+    user.send_reply(LUserUnknown(str(0)))
+    user.send_reply(LUserChannels(str(app.channels.count())))
+    user.send_reply(LUserMe("I have {} clients and {} servers".format(
+        app.users.count(), app.network.count())))
 
 
 @LUsersFeature.hook("user.welcome")

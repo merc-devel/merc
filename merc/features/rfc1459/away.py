@@ -28,15 +28,21 @@ class IsAway(message.Reply):
 class NowAway(message.Reply):
   NAME = "306"
 
+  def __init__(self, reason="You have been marked as being away", *args):
+    self.reason = reason
+
   def as_reply_params(self):
-    return ["You have been marked as being away"]
+    return [self.reason]
 
 
 class UnAway(message.Reply):
   NAME = "305"
 
+  def __init__(self, reason="You are no longer marked as being away", *args):
+    self.reason = reason
+
   def as_reply_params(self):
-    return ["You are no longer marked as being away"]
+    return [self.reason]
 
 
 @AwayFeature.register_user_command
