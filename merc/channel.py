@@ -230,7 +230,7 @@ class ChannelStore(object):
   def modes(self):
     modes = {}
 
-    for feature in self.app.features.values():
+    for feature in self.app.features.all():
       modes.update(feature.CHANNEL_MODES)
 
     return modes

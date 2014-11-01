@@ -1,5 +1,12 @@
 import collections
 import weakref
+import logging
+import imp
+import importlib
+
+from merc import features
+
+logger = logging.getLogger(__name__)
 
 
 class FeatureMeta(type):
@@ -21,7 +28,7 @@ class Feature(object, metaclass=FeatureMeta):
 
   @classmethod
   def install(cls, app):
-    app.install_feature(cls(app))
+    app.features.install(cls(app))
 
   @classmethod
   def register_user_command(cls, command):
@@ -63,3 +70,64 @@ class Feature(object, metaclass=FeatureMeta):
   def run_hooks(self, name, app, *args, **kwargs):
     for hook in self.HOOKS[name]:
       hook(app, *args, **kwargs)
+
+
+class FeatureLoader(object):
+  def __init__(self, app):
+    self.features = {}
+    self.app = app
+
+  def all(self):
+    yield from self.features.values()
+
+  def load(self, name):
+    if name[0] == ".":
+      name = features.__name__ + name
+
+    try:
+      module = imp.reload(importlib.import_module(name))
+
+      try:
+        install = module.install
+      except AttributeError:
+        logger.critical("{} does not name a merc feature!".format(name))
+        return
+
+      install(self.app)
+    except Exception:
+      logger.critical("{} could not be loaded.".format(name), exc_info=True)
+      return
+
+  def install(self, feature):
+    self.features[feature.NAME] = feature
+    logger.info("{} installed.".format(feature.NAME))
+
+  def unload(self, name):
+    if name[0] == ".":
+      name = features.__name__ + name
+
+    try:
+      feature = self.features[name]
+    except KeyError:
+      logging.warn("{} could not be loaded as it was not loaded.".format(name))
+    else:
+      del self.features[name]
+      logger.info("{} unloaded.".format(feature.NAME))
+
+  def unload_all(self):
+    for feature_name in list(self.features.keys()):
+      self.unload_feature(feature_name)
+
+  def get_user_command(self, name):
+    for feature in self.all():
+      if name in feature.USER_COMMANDS:
+        return feature.USER_COMMANDS[name]
+
+    raise KeyError(name)
+
+  def get_server_command(self, name):
+    for feature in self.all():
+      if name in feature.SERVER_COMMANDS:
+        return feature.SERVER_COMMANDS[name]
+
+    raise KeyError(name)

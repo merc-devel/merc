@@ -2,8 +2,6 @@ import aiodns
 import argparse
 import asyncio
 import datetime
-import imp
-import importlib
 import logging
 import operator
 import regex
@@ -20,7 +18,7 @@ from merc import config
 from merc import config_format
 from merc import channel
 from merc import errors
-from merc import features
+from merc import feature
 from merc import message
 from merc import protocol
 from merc import server
@@ -36,23 +34,22 @@ class Application(object):
       loop = asyncio.get_event_loop()
 
     self.loop = loop
-
-    self.features = {}
     self.bindings = []
+
+    self.creation_time = datetime.datetime.now()
+
+    self.features = feature.FeatureLoader(self)
+    self.users = user.UserStore(self)
+    self.channels = channel.ChannelStore(self)
+    self.network = server.Network(self)
+    self.crypt_context = None
 
     self.config = None
     self.config_filename = config_filename
     self.reload_config()
 
+    self.network.add_self()
     self.resolver = aiodns.DNSResolver(loop=loop)
-    self.crypt_context = passlib.context.CryptContext(
-        schemes=self.config["crypto"]["hash_schemes"])
-
-    self.creation_time = datetime.datetime.now()
-
-    self.users = user.UserStore(self)
-    self.channels = channel.ChannelStore(self)
-    self.network = server.Network(self)
 
     self.register_signal_handlers()
 
@@ -70,11 +67,12 @@ class Application(object):
       logger.warn("No TLS configuration found.")
       return None
 
+
   def check_config(self, cfg):
     config.validate(cfg, config_format.Config)
 
   def reload_config(self):
-    self._unload_all_features()
+    self.features.unload_all()
     with open(self.config_filename, "r") as f:
       config = yaml.safe_load(f)
     try:
@@ -85,7 +83,10 @@ class Application(object):
       self.config = config
     finally:
       if self.config:
-        self._load_configured_features()
+        self.crypt_context = passlib.context.CryptContext(
+            schemes=self.config["crypto"]["hash_schemes"])
+        for feature_name in self.config["features"]:
+          self.features.load(feature_name)
 
   def rehash(self):
     @asyncio.coroutine
@@ -94,6 +95,7 @@ class Application(object):
       yield from self.unbind()
       yield from self.bind()
     return asyncio.async(coro(), loop=self.loop)
+
 
   @property
   def server_name(self):
@@ -131,88 +133,17 @@ class Application(object):
   def admin_email(self):
     return self.config["admin"]["email"]
 
+
   def register_signal_handlers(self):
     signal.signal(signal.SIGHUP, lambda signum, frame: self.rehash())
 
   def run_hooks(self, hook_name, *args, **kwargs):
-    for feature in self.features.values():
+    for feature in self.features.all():
       feature.run_hooks(hook_name, self, *args, **kwargs)
-
-  def get_user_command(self, name):
-    for feature in self.features.values():
-      if name in feature.USER_COMMANDS:
-        return feature.USER_COMMANDS[name]
-
-    raise KeyError(name)
-
-  def get_server_command(self, name):
-    for feature in self.features.values():
-      if name in feature.SERVER_COMMANDS:
-        return feature.SERVER_COMMANDS[name]
-
-    raise KeyError(name)
 
   def get_feature_locals(self, feature):
     return self.features[feature.NAME].server_locals
 
-  def load_feature(self, name):
-    if name[0] == ".":
-      name = features.__name__ + name
-
-    try:
-      module = imp.reload(importlib.import_module(name))
-
-      try:
-        install = module.install
-      except AttributeError:
-        logger.critical("{} does not name a merc feature!".format(name))
-        return
-
-      install(self)
-    except Exception:
-      logger.critical("{} could not be loaded.".format(name), exc_info=True)
-      return
-
-  def install_feature(self, feature):
-    self.features[feature.NAME] = feature
-    logger.info("{} installed.".format(feature.NAME))
-
-  def unload_feature(self, name):
-    if name[0] == ".":
-      name = features.__name__ + name
-
-    try:
-      feature = self.features[name]
-    except KeyError:
-      logging.warn("{} could not be loaded as it was not loaded.".format(name))
-    else:
-      del self.features[name]
-      logger.info("{} unloaded.".format(feature.NAME))
-
-  def _unload_all_features(self):
-    for feature_name in list(self.features.keys()):
-      self.unload_feature(feature_name)
-
-  def _load_configured_features(self):
-    for feature_name in self.config["features"]:
-      self.load_feature(feature_name)
-
-  def _autoconnect_links(self):
-    for server_name, link_spec in self.config["links"].items():
-      if link_spec["autoconnect"]:
-        self.network.connect(server_name)
-
-  @asyncio.coroutine
-  def unbind(self):
-    wait_for = []
-
-    while self.bindings:
-      binding = self.bindings.pop()
-      logger.info("Unbinding from {}".format(binding.sockets[0].getsockname()))
-      binding.close()
-      wait_for.append(binding.wait_closed())
-
-    yield from asyncio.gather(*wait_for)
 
   @asyncio.coroutine
   def bind(self):
@@ -234,6 +165,19 @@ class Application(object):
 
       self.bindings.append(binding)
 
+  @asyncio.coroutine
+  def unbind(self):
+    wait_for = []
+
+    while self.bindings:
+      binding = self.bindings.pop()
+      logger.info("Unbinding from {}".format(binding.sockets[0].getsockname()))
+      binding.close()
+      wait_for.append(binding.wait_closed())
+
+    yield from asyncio.gather(*wait_for)
+
+
   def start(self):
     logger.info("Welcome to merc-{}, running for {} ({}) on network {}.".format(
         merc.__version__, self.server_name, self.sid, self.network_name))
@@ -249,12 +193,15 @@ class Application(object):
     self.loop.run_until_complete(self.unbind())
     self.loop.close()
 
+  def _autoconnect_links(self):
+    for server_name, link_spec in self.config["links"].items():
+      if link_spec["autoconnect"]:
+        self.network.connect(server_name)
+
 
 def main():
   import argparse
   import coloredlogs
-  import logging
-  import yaml
 
   parser = argparse.ArgumentParser(
       formatter_class=argparse.ArgumentDefaultsHelpFormatter)

@@ -79,9 +79,9 @@ class Neighbor(Server):
   def on_raw_message(self, app, prefix, command_name, params):
     try:
       if prefix is not None and util.is_uid(prefix):
-        command_type = app.get_user_command(command_name)
+        command_type = app.features.get_user_command(command_name)
       else:
-        command_type = app.get_server_command(command_name)
+        command_type = app.features.get_server_command(command_name)
     except KeyError:
       host, *_ = self.protocol.transport.get_extra_info("peername")
       self.send(None, errors.UnknownCommand(command_name))
@@ -130,7 +130,10 @@ class Network(object):
     self.tree = networkx.Graph()
     self.servers_by_sid = {}
 
-    self.current = CurrentServer(self, app)
+    self.current = None
+
+  def add_self(self):
+    self.current = CurrentServer(self, self.app)
     self.add(self.current)
 
   @property
