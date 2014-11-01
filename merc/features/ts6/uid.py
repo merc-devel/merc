@@ -51,7 +51,7 @@ def send_uid(app, server, user):
   if host[0] == ":":
     host = "0" + host
 
-  server.send(app.network.current.sid,
+  server.send(app.network.local.sid,
     Uid(user.nickname, str(user.hopcount),
     str(int(user.creation_time.timestamp())),
     "+", user.username, host, "0", user.uid,

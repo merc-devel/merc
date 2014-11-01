@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import ssl
 import networkx
 import networkx.algorithms
 
@@ -20,15 +21,61 @@ class Server(object):
     return "server:" + (self.sid if self.sid is not None else "?")
 
 
-class CurrentServer(Server):
-  def __init__(self, network, name, desc, sid):
+class LocalServer(Server):
+  def __init__(self, network, loop, name, desc, sid):
     super().__init__(network)
 
+    self.loop = loop
     self.name = name
     self.description = desc
     self.sid = sid
     self.hopcount = 0
+    self.bindings = []
     self.was_proposed = True
+
+
+  def create_tls_context(self, params):
+    tls_ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+    tls_ctx.load_cert_chain(self.config["tls"]["cert"],
+                              self.config["tls"]["key"])
+
+    # We disable SSLv2, SSLv3, and compression (CRIME).
+    tls_ctx.options |= ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3 | \
+                         getattr(ssl, "OP_NO_COMPRESSION", 0)
+    return tls_ctx
+
+
+  @asyncio.coroutine
+  def bind(self, app, binds):
+    for bind in binds:
+      if bind["tls"]:
+        tls_ctx = self.create_tls_ctx(bind["tls"])
+
+      protocol_factory = {
+          "users": protocol.UserProtocol,
+          "servers": protocol.LinkProtocol
+      }[bind["type"]]
+
+      binding = yield from self.loop.create_server(
+          lambda protocol_factory=protocol_factory: protocol_factory(app),
+          bind["host"], bind["port"],
+          ssl=tls_ctx if bind["tls"] else None)
+      logger.info("Binding to {}: {}".format(binding.sockets[0].getsockname(),
+                                             protocol_factory.__name__))
+
+      self.bindings.append(binding)
+
+  @asyncio.coroutine
+  def unbind(self):
+    wait_for = []
+
+    while self.bindings:
+      binding = self.bindings.pop()
+      logger.info("Unbinding from {}".format(binding.sockets[0].getsockname()))
+      binding.close()
+      wait_for.append(binding.wait_closed())
+
+    yield from asyncio.gather(*wait_for)
 
 
 class Neighbor(Server):
@@ -117,13 +164,13 @@ class Network(object):
     self.tree = networkx.Graph()
     self.servers_by_sid = {}
 
-    self.current = None
+    self.local = None
 
-  def update_current(self, name, desc, sid):
-    if self.current:
+  def update_local(self, loop, name, desc, sid):
+    if self.local:
       self.remove(self.current)
-    self.current = CurrentServer(self, name, desc, sid)
-    self.add(self.current)
+    self.local = LocalServer(self, loop, name, desc, sid)
+    self.add(self.local)
 
   @property
   def name(self):

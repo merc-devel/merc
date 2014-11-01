@@ -249,7 +249,7 @@ class RemoteUser(User):
 
   def send(self, prefix, msg):
     target = self.network.get_next_hop(self.network.get(self.server_name))
-    target.send(self.network.current.sid, msg, self)
+    target.send(self.network.local.sid, msg, self)
 
 
 class UserStore(object):
@@ -257,7 +257,7 @@ class UserStore(object):
     self.app = app
     self.users = {}
     self.users_by_uid = {}
-    self._local_uid_serial = (self.app.network.current.sid + util.uidify(i)
+    self._local_uid_serial = (self.app.network.local.sid + util.uidify(i)
                               for i in itertools.count(0))
 
   def new_local_user(self, protocol):

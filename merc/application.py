@@ -3,7 +3,6 @@ import asyncio
 import datetime
 import logging
 import signal
-import ssl
 import yaml
 
 import passlib.context
@@ -25,12 +24,11 @@ class Application(object):
   def __init__(self, config_filename, loop=None):
     if loop is None:
       loop = asyncio.get_event_loop()
-
     self.loop = loop
-    self.bindings = []
 
     self.creation_time = datetime.datetime.now()
 
+    self.resolver = aiodns.DNSResolver(loop=loop)
     self.features = feature.FeatureLoader(self)
     self.users = user.UserStore(self)
     self.channels = channel.ChannelStore(self)
@@ -41,23 +39,7 @@ class Application(object):
     self.config_filename = config_filename
     self.reload_config()
 
-    self.resolver = aiodns.DNSResolver(loop=loop)
-
     self.register_signal_handlers()
-
-  def create_tls_context(self):
-    if self.config["tls"]:
-      tls_ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-      tls_ctx.load_cert_chain(self.config["tls"]["cert"],
-                              self.config["tls"]["key"])
-
-      # We disable SSLv2, SSLv3, and compression (CRIME).
-      tls_ctx.options |= ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3 | \
-                         getattr(ssl, "OP_NO_COMPRESSION", 0)
-      return tls_ctx
-    else:
-      logger.warn("No TLS configuration found.")
-      return None
 
 
   def check_config(self, cfg):
@@ -75,22 +57,36 @@ class Application(object):
       self.config = config
     finally:
       if self.config:
-        self.network.update_current(
-            self.config["server"]["name"],
-            self.config["server"]["description"],
-            self.config["server"]["sid"])
-        self.crypt_context = passlib.context.CryptContext(
-            schemes=self.config["crypto"]["hash_schemes"])
-        for feature_name in self.config["features"]:
-          self.features.load(feature_name)
+        self.update_from_config()
+
+  def update_from_config(self):
+    self.network.update_local(
+        self.loop,
+        self.config["server"]["name"],
+        self.config["server"]["description"],
+        self.config["server"]["sid"])
+
+    self.crypt_context = passlib.context.CryptContext(
+        schemes=self.config["crypto"]["hash_schemes"])
+
+    for feature_name in self.config["features"]:
+      self.features.load(feature_name)
 
   def rehash(self):
     @asyncio.coroutine
     def coro():
-      self.reload_config()
       yield from self.unbind()
+      self.reload_config()
       yield from self.bind()
     return asyncio.async(coro(), loop=self.loop)
+
+  @asyncio.coroutine
+  def bind(self):
+    yield from self.network.local.bind(self, self.config["bind"])
+
+  @asyncio.coroutine
+  def unbind(self):
+    yield from self.network.local.unbind()
 
 
   @property
@@ -135,39 +131,6 @@ class Application(object):
 
   def get_feature_locals(self, feature):
     return self.features[feature.NAME].server_locals
-
-
-  @asyncio.coroutine
-  def bind(self):
-    if any(bind["tls"] for bind in self.config["bind"]):
-      tls_ctx = self.create_tls_context()
-
-    for bind in self.config["bind"]:
-      protocol_factory = {
-          "users": protocol.UserProtocol,
-          "servers": protocol.LinkProtocol
-      }[bind["type"]]
-
-      binding = yield from self.loop.create_server(
-          lambda protocol_factory=protocol_factory: protocol_factory(self),
-          bind["host"], bind["port"],
-          ssl=tls_ctx if bind["tls"] else None)
-      logger.info("Binding to {}: {}".format(binding.sockets[0].getsockname(),
-                                             protocol_factory.__name__))
-
-      self.bindings.append(binding)
-
-  @asyncio.coroutine
-  def unbind(self):
-    wait_for = []
-
-    while self.bindings:
-      binding = self.bindings.pop()
-      logger.info("Unbinding from {}".format(binding.sockets[0].getsockname()))
-      binding.close()
-      wait_for.append(binding.wait_closed())
-
-    yield from asyncio.gather(*wait_for)
 
 
   def start(self):

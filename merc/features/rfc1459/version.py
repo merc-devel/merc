@@ -41,7 +41,7 @@ class Version(message.Command):
 
     reply = util.Expando(version="merc-{}".format(app.version),
                          server_name=app.server_name,
-                         link_info={"6"}, link_protocol=None, sid=app.network.current.sid)
+                         link_info={"6"}, link_protocol=None, sid=app.network.local.sid)
     app.run_hooks("server.version.modify", reply)
 
     user.send_reply(VersionReply(
