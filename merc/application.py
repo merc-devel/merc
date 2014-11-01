@@ -1,25 +1,18 @@
 import aiodns
-import argparse
 import asyncio
 import datetime
 import logging
-import operator
-import regex
 import signal
 import ssl
-import sys
 import yaml
 
 import passlib.context
 
-import merc
 
 from merc import config
 from merc import config_format
 from merc import channel
-from merc import errors
 from merc import feature
-from merc import message
 from merc import protocol
 from merc import server
 from merc import user
@@ -179,7 +172,7 @@ class Application(object):
 
   def start(self):
     logger.info("Welcome to merc-{}, running for {} ({}) on network {}.".format(
-        merc.__version__, self.config["server"]["name"],
+        util.get_version(), self.config["server"]["name"],
         self.config["server"]["sid"], self.config["server"]["network_name"]))
 
     self.loop.run_until_complete(self.bind())
