@@ -48,7 +48,6 @@ class Application(object):
     self.config_filename = config_filename
     self.reload_config()
 
-    self.network.add_self()
     self.resolver = aiodns.DNSResolver(loop=loop)
 
     self.register_signal_handlers()
@@ -83,6 +82,10 @@ class Application(object):
       self.config = config
     finally:
       if self.config:
+        self.network.update_current(
+            self.config["server"]["name"],
+            self.config["server"]["description"],
+            self.config["server"]["sid"])
         self.crypt_context = passlib.context.CryptContext(
             schemes=self.config["crypto"]["hash_schemes"])
         for feature_name in self.config["features"]:
@@ -100,10 +103,6 @@ class Application(object):
   @property
   def server_name(self):
     return self.config["server"]["name"]
-
-  @property
-  def sid(self):
-    return self.config["server"]["sid"]
 
   @property
   def version(self):
@@ -180,7 +179,8 @@ class Application(object):
 
   def start(self):
     logger.info("Welcome to merc-{}, running for {} ({}) on network {}.".format(
-        merc.__version__, self.server_name, self.sid, self.network_name))
+        merc.__version__, self.config["server"]["name"],
+        self.config["server"]["sid"], self.config["server"]["network_name"]))
 
     self.loop.run_until_complete(self.bind())
     self._autoconnect_links()

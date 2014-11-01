@@ -21,27 +21,14 @@ class Server(object):
 
 
 class CurrentServer(Server):
-  def __init__(self, network, app):
+  def __init__(self, network, name, desc, sid):
     super().__init__(network)
-    self.app = app
 
+    self.name = name
+    self.description = desc
+    self.sid = sid
+    self.hopcount = 0
     self.was_proposed = True
-
-  @property
-  def name(self):
-    return self.app.server_name
-
-  @property
-  def description(self):
-    return self.app.config["server"]["description"]
-
-  @property
-  def sid(self):
-    return self.app.sid
-
-  @property
-  def hopcount(self):
-    return 0
 
 
 class Neighbor(Server):
@@ -132,8 +119,10 @@ class Network(object):
 
     self.current = None
 
-  def add_self(self):
-    self.current = CurrentServer(self, self.app)
+  def update_current(self, name, desc, sid):
+    if self.current:
+      self.remove(self.current)
+    self.current = CurrentServer(self, name, desc, sid)
     self.add(self.current)
 
   @property
