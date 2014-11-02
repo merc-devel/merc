@@ -70,7 +70,7 @@ class BanMask(mode.ListMode, mode.ChanModeMixin):
     if value in bans:
       return False
 
-    bans[value] = BanDetail(app.server_name, datetime.datetime.now())
+    bans[value] = BanDetail(app.server.name, datetime.datetime.now())
     return True
 
   def remove(self, user, value):

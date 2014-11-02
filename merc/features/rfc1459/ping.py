@@ -33,9 +33,9 @@ class Ping(message.Command):
     return params
 
   def handle_for(self, app, user, prefix):
-    if self.server_name == app.server_name or self.server_name is None:
+    if self.server_name == app.server.name or self.server_name is None:
       user.send_reply(PongReply(
-          self.server_name if self.server_name is not None else app.server_name,
+          self.server_name if self.server_name is not None else app.server.name,
           self.value))
       return
 
@@ -105,7 +105,7 @@ def reschedule_ping_check(app, user):
     user.pong_check_handle.cancel()
 
   def ping_check():
-    user.send(None, Ping(app.server_name))
+    user.send(None, Ping(app.server.name))
     user.pong_check_handle = app.loop.call_later(
         PONG_TIMEOUT.total_seconds(), pong_check)
 

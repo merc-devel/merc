@@ -244,7 +244,7 @@ class SAMode(_Mode):
     user.check_is_irc_operator()
 
   def get_prefix(self, app, user):
-    return app.server_name
+    return app.server.name
 
 
 @ModeFeature.hook("user.welcome")

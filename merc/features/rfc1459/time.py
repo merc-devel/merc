@@ -36,8 +36,8 @@ class Time(message.Command):
 
   @message.Command.requires_registration
   def handle_for(self, app, user, prefix):
-    if self.server_name is not None and self.server_name != app.server_name:
+    if self.server_name is not None and self.server_name != app.server.name:
       raise errors.NoSuchServer(self.server_name)
 
-    user.send_reply(TimeReply(app.server_name,
+    user.send_reply(TimeReply(app.server.name,
                               datetime.datetime.now().isoformat()))

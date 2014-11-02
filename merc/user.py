@@ -261,7 +261,7 @@ class UserStore(object):
                               for i in itertools.count(0))
 
   def new_local_user(self, protocol):
-    return LocalUser(self, next(self._local_uid_serial), self.app.server_name,
+    return LocalUser(self, next(self._local_uid_serial), self.app.server.name,
                      protocol)
 
   def new_remote_user(self, uid, server_name, hopcount):

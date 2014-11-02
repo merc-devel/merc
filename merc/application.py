@@ -33,6 +33,7 @@ class Application(object):
     self.users = user.UserStore(self)
     self.channels = channel.ChannelStore(self)
     self.network = server.Network(self)
+    self.server = None
     self.crypt_context = None
 
     self.config = None
@@ -65,6 +66,7 @@ class Application(object):
         self.config["server"]["name"],
         self.config["server"]["description"],
         self.config["server"]["sid"])
+    self.server = self.network.local
 
     self.crypt_context = passlib.context.CryptContext(
         schemes=self.config["crypto"]["hash_schemes"])
@@ -88,10 +90,6 @@ class Application(object):
   def unbind(self):
     yield from self.network.local.unbind()
 
-
-  @property
-  def server_name(self):
-    return self.config["server"]["name"]
 
   @property
   def version(self):
