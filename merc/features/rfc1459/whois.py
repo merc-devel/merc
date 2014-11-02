@@ -137,7 +137,7 @@ class WhoIs(message.Command):
         user.send_reply(WhoIsIdle(
             target.nickname,
             str(int((datetime.datetime.now() -
-                target.last_activity_time).timestamp())),
+                target.last_activity_time).total_seconds())),
             str(int(target.creation_time.timestamp()))))
         if channels:
           user.send_reply(WhoIsChannels(target.nickname, " ".join(channels)))

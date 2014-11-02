@@ -48,11 +48,11 @@ class _Privmsg(message.Command):
           chan.check_is_voiced(user)
 
         app.run_hooks("channel.message", user, chan, self.text)
-        user.relay_to_channel(chan, self.__class__(chan.name, self.text))
+        chan.broadcast(user, user.prefix, self.__class__(chan.name, self.text))
       else:
         target = app.users.get(target_name)
         app.run_hooks("user.message", user, target, self.text)
-        user.relay_to_user(target, self.__class__(target.nickname, self.text))
+        target.send(user.prefix, self.__class__(target.nickname, self.text))
 
 
 @PrivmsgFeature.register_user_command
