@@ -145,7 +145,7 @@ class LocalUser(User):
 
   def on_raw_message(self, app, prefix, command_name, params):
     try:
-      command_type = app.get_user_command(command_name)
+      command_type = app.features.get_user_command(command_name)
     except KeyError:
       if self.is_registered:
         self.send_reply(errors.UnknownCommand(command_name))
@@ -249,7 +249,7 @@ class RemoteUser(User):
 
   def send(self, prefix, msg):
     target = self.network.get_next_hop(self.network.get(self.server_name))
-    target.send(self.network.current.sid, msg, self)
+    target.send(self.network.local.sid, msg, self)
 
 
 class UserStore(object):
@@ -257,11 +257,11 @@ class UserStore(object):
     self.app = app
     self.users = {}
     self.users_by_uid = {}
-    self._local_uid_serial = (self.app.sid + util.uidify(i)
+    self._local_uid_serial = (self.app.network.local.sid + util.uidify(i)
                               for i in itertools.count(0))
 
   def new_local_user(self, protocol):
-    return LocalUser(self, next(self._local_uid_serial), self.app.server_name,
+    return LocalUser(self, next(self._local_uid_serial), self.app.server.name,
                      protocol)
 
   def new_remote_user(self, uid, server_name, hopcount):
@@ -323,7 +323,7 @@ class UserStore(object):
   def modes(self):
     modes = {}
 
-    for feature in self.app.features.values():
+    for feature in self.app.features.all():
       modes.update(feature.USER_MODES)
 
     return modes
@@ -332,7 +332,7 @@ class UserStore(object):
   def capabilities(self):
     capabilities = {}
 
-    for feature in self.app.features.values():
+    for feature in self.app.features.all():
       capabilities.update(feature.USER_CAPABILITIES)
 
     return capabilities

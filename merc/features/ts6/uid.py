@@ -51,10 +51,11 @@ def send_uid(app, server, user):
   if host[0] == ":":
     host = "0" + host
 
-  server.send(app.sid, Uid(user.nickname, str(user.hopcount),
-                           str(int(user.creation_time.timestamp())),
-                           "+", user.username, host, "0", user.uid,
-                           user.realname))
+  server.send(app.network.local.sid,
+    Uid(user.nickname, str(user.hopcount),
+    str(int(user.creation_time.timestamp())),
+    "+", user.username, host, "0", user.uid,
+    user.realname))
 
 
 @UidFeature.hook("network.burst.users")

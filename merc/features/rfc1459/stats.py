@@ -108,7 +108,7 @@ class Stats(message.Command):
 
   @message.Command.requires_registration
   def handle_for(self, app, user, prefix):
-    if self.server is not None and self.server != app.server_name:
+    if self.server is not None and self.server != app.server.name:
       raise errors.NoSuchServer(self.server_name)
 
     app.run_hooks("server.stats", user, self.type)

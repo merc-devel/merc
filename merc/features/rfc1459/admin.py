@@ -77,8 +77,8 @@ class Admin(message.Command):
 
   @message.Command.requires_registration
   def handle_for(self, app, user, prefix):
-    if self.server_name == app.server_name or self.server_name is None:
-      user.send_reply(AdminInfo(app.server_name))
+    if self.server_name == app.server.name or self.server_name is None:
+      user.send_reply(AdminInfo(app.server.name))
       user.send_reply(AdminLocation(app.admin_location))
       user.send_reply(AdminFineLocation(app.admin_location_fine))
 

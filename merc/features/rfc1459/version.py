@@ -36,12 +36,12 @@ class Version(message.Command):
 
   @message.Command.requires_registration
   def handle_for(self, app, user, prefix):
-    if self.server_name is not None and self.server_name != app.server_name:
+    if self.server_name is not None and self.server_name != app.server.name:
       raise errors.NoSuchServer(self.server_name)
 
     reply = util.Expando(version="merc-{}".format(app.version),
-                         server_name=app.server_name,
-                         link_info={"6"}, link_protocol=None, sid=app.sid)
+                         server_name=app.server.name,
+                         link_info={"6"}, link_protocol=None, sid=app.network.local.sid)
     app.run_hooks("server.version.modify", reply)
 
     user.send_reply(VersionReply(

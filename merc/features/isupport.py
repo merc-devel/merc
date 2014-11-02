@@ -50,7 +50,7 @@ def send_isupport(app, user):
 
     try:
       reply = make_isupport_reply(params)
-      reply.emit(user, app.server_name)
+      reply.emit(user, app.server.name)
     except message.MessageTooLongError:
       del reply.support_params[k]
       user.send_reply(reply)

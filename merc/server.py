@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import ssl
 import networkx
 import networkx.algorithms
 
@@ -20,28 +21,61 @@ class Server(object):
     return "server:" + (self.sid if self.sid is not None else "?")
 
 
-class CurrentServer(Server):
-  def __init__(self, network, app):
+class LocalServer(Server):
+  def __init__(self, network, loop, name, desc, sid):
     super().__init__(network)
-    self.app = app
 
+    self.loop = loop
+    self.name = name
+    self.description = desc
+    self.sid = sid
+    self.hopcount = 0
+    self.bindings = []
     self.was_proposed = True
 
-  @property
-  def name(self):
-    return self.app.server_name
 
-  @property
-  def description(self):
-    return self.app.config["server"]["description"]
+  def create_tls_context(self, params):
+    tls_ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+    tls_ctx.load_cert_chain(self.config["tls"]["cert"],
+                              self.config["tls"]["key"])
 
-  @property
-  def sid(self):
-    return self.app.sid
+    # We disable SSLv2, SSLv3, and compression (CRIME).
+    tls_ctx.options |= ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3 | \
+                         getattr(ssl, "OP_NO_COMPRESSION", 0)
+    return tls_ctx
 
-  @property
-  def hopcount(self):
-    return 0
+
+  @asyncio.coroutine
+  def bind(self, app, binds):
+    for bind in binds:
+      if bind["tls"]:
+        tls_ctx = self.create_tls_ctx(bind["tls"])
+
+      protocol_factory = {
+          "users": protocol.UserProtocol,
+          "servers": protocol.LinkProtocol
+      }[bind["type"]]
+
+      binding = yield from self.loop.create_server(
+          lambda protocol_factory=protocol_factory: protocol_factory(app),
+          bind["host"], bind["port"],
+          ssl=tls_ctx if bind["tls"] else None)
+      logger.info("Binding to {}: {}".format(binding.sockets[0].getsockname(),
+                                             protocol_factory.__name__))
+
+      self.bindings.append(binding)
+
+  @asyncio.coroutine
+  def unbind(self):
+    wait_for = []
+
+    while self.bindings:
+      binding = self.bindings.pop()
+      logger.info("Unbinding from {}".format(binding.sockets[0].getsockname()))
+      binding.close()
+      wait_for.append(binding.wait_closed())
+
+    yield from asyncio.gather(*wait_for)
 
 
 class Neighbor(Server):
@@ -79,9 +113,9 @@ class Neighbor(Server):
   def on_raw_message(self, app, prefix, command_name, params):
     try:
       if prefix is not None and util.is_uid(prefix):
-        command_type = app.get_user_command(command_name)
+        command_type = app.features.get_user_command(command_name)
       else:
-        command_type = app.get_server_command(command_name)
+        command_type = app.features.get_server_command(command_name)
     except KeyError:
       host, *_ = self.protocol.transport.get_extra_info("peername")
       self.send(None, errors.UnknownCommand(command_name))
@@ -130,8 +164,13 @@ class Network(object):
     self.tree = networkx.Graph()
     self.servers_by_sid = {}
 
-    self.current = CurrentServer(self, app)
-    self.add(self.current)
+    self.local = None
+
+  def update_local(self, loop, name, desc, sid):
+    if self.local:
+      self.remove(self.local)
+    self.local = LocalServer(self, loop, name, desc, sid)
+    self.add(self.local)
 
   @property
   def name(self):
@@ -188,7 +227,7 @@ class Network(object):
 
   def add_neighbor(self, server):
     self.add(server)
-    self.link(self.current, server)
+    self.link(self.local, server)
 
   def remove(self, server):
     logger.warn("Lost server link to {} ({})".format(server.name, server.sid))
@@ -209,7 +248,7 @@ class Network(object):
 
   def find_shortest_path(self, target, start=None):
     if start is None:
-      start = self.current
+      start = self.local
 
     _, *path = networkx.algorithms.shortest_path(self.tree, start.name,
                                                  target.name)
@@ -221,7 +260,7 @@ class Network(object):
     return next(self.find_shortest_path(target, start))
 
   def neighborhood(self):
-    for name in self.tree.neighbors(self.current.name):
+    for name in self.tree.neighbors(self.local.name):
       yield self.get(name)
 
   def multicast_to_neighbors(self, prefix, message):

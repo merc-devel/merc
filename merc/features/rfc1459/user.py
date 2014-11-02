@@ -101,11 +101,11 @@ def welcome_on_register(app, user):
       "Welcome to the {} Internet Relay Chat Network, {}".format(
           app.network_name, user.nickname)))
   user.send_reply(YourHost("Your host is {}, running {}-{}".format(
-      app.server_name, merc.__name__, app.version)))
+      app.server.name, merc.__name__, app.version)))
   user.send_reply(Created("This server was created {}".format(
       app.creation_time.isoformat())))
   user.send_reply(MyInfo(
-      app.server_name, "{}-{}".format(merc.__name__, merc.__version__),
+      app.server.name, "{}-{}".format(merc.__name__, merc.__version__),
       "".join(sorted(mode.CHAR for mode in app.users.modes.values())),
       "".join(sorted(mode.CHAR for mode in app.channels.modes.values()
                                if not mode.TAKES_PARAM)),
