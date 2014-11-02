@@ -263,6 +263,6 @@ class Network(object):
     for name in self.tree.neighbors(self.local.name):
       yield self.get(name)
 
-  def multicast_to_neighbors(self, prefix, message):
-    for neighbor in self.neighborhood():
-      neighbor.send(prefix, message)
+  def user_broadcast(self, user, prefix, message):
+    for channel in user.channels.values():
+      channel.broadcast(user, prefix, message)

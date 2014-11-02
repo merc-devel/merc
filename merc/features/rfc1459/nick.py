@@ -28,7 +28,7 @@ class _Nick(message.Command):
     app.users.rename(target, self.nickname)
 
     if target.is_registered:
-      target.relay_to_all(Nick(self.nickname), old_hostmask)
+      app.network.user_broadcast(target, old_hostmask, Nick(self.nickname))
       target.send(old_hostmask, Nick(self.nickname))
     else:
       if target.is_ready_for_registration:

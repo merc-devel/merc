@@ -251,7 +251,7 @@ class SAMode(_Mode):
 def send_modes_on_welcome(app, user):
   flags, args = show_modes(user, app.users.modes)
   if flags != "+":
-    user.relay_to_self(Mode(user.nickname, flags, *args))
+    user.send(user.prefix, Mode(user.nickname, flags, *args))
 
 
 @ModeFeature.hook("channel.join")
@@ -269,7 +269,7 @@ def send_channel_modes_on_new_join(app, user, target, channel):
 @ModeFeature.hook("user.mode_change")
 def send_mode_on_user_mode_change(app, user, applied):
   flags, args = Mode._coalesce_modes(applied)
-  user.relay_to_self(Mode(user.nickname, flags, *args))
+  user.send(user.prefix, Mode(user.nickname, flags, *args))
 
 
 @ModeFeature.hook("server.isupport.modify")
