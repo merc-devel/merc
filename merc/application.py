@@ -178,8 +178,8 @@ def main():
     app = Application(args.config)
     app.start()
   except config.ParseError as e:
-    logging.fatal('Could not load configuration file, aborting.')
-    logging.fatal(e)
+    logger.fatal('Could not load configuration file, aborting.')
+    logger.fatal(e)
   except Exception as e:
-    logging.fatal('Could not initialize merc, aborting.')
-    logging.fatal(e)
+    logger.fatal('Could not initialize merc, aborting.')
+    logger.fatal(e)
