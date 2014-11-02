@@ -24,18 +24,12 @@ class Link(config.Section):
   services = config.optional(bool, False)
   autoconnect = config.optional(bool, False)
 
-class Oper(config.Section):
-  password = str
-  hostmasks = [str]
-
 class Config(config.Section):
   class server(config.Section):
     name = str
     description = str
     network_name = str
     sid = config.constrained(str, lambda x: (util.is_sid(x), "not in SID format"))
-
-  motd = str
 
   class admin(config.Section):
     name = str
@@ -49,5 +43,4 @@ class Config(config.Section):
     hash_schemes = [str]
 
   bind = [Bind]
-  opers = {str: Oper}
   links = {str: Link}

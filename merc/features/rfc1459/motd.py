@@ -2,15 +2,18 @@ from merc import config
 from merc import feature
 from merc import message
 
-CONFIG_SECTION = 'motd'
-
 
 class MotdFeature(feature.Feature):
   NAME = __name__
-  CONFIG_SECTION = CONFIG_SECTION
+  CONFIG_SECTION = 'motd'
 
 
 install = MotdFeature.install
+
+
+@MotdFeature.register_config_checker
+def check_config(section):
+  return config.validate(section, str)
 
 
 @MotdFeature.register_server_command
@@ -68,11 +71,6 @@ class Motd(message.Command):
 
     user.send_reply(EndOfMotd())
 
-
-@MotdFeature.hook("config.check")
-def check_config(app, cfg):
-  section = cfg[CONFIG_SECTION]
-  config.validate(section, str)
 
 @MotdFeature.hook("user.welcome")
 def send_motd_on_welcome(app, user):

@@ -1,3 +1,4 @@
+from merc import config
 from merc import errors
 from merc import feature
 from merc import message
@@ -10,6 +11,15 @@ class OperFeature(feature.Feature):
 
 
 install = OperFeature.install
+
+
+@OperFeature.register_config_checker
+def check_config(section):
+  class Oper(config.Section):
+    password = str
+    hostmasks = [str]
+
+  return config.validate(section, {str: Oper})
 
 
 @OperFeature.register_server_command
@@ -86,7 +96,8 @@ class Oper(message.Command):
   @message.Command.requires_registration
   def handle_for(self, app, user, prefix):
     try:
-      oper_spec = app.config["opers"][self.username]
+      opers = app.features.get_config_section(__name__)
+      oper_spec = opers[self.username]
     except KeyError:
       raise errors.PasswordMismatch
 
@@ -113,7 +124,8 @@ def send_oper_hosts(app, user):
   except errors.BaseError as e:
     user.send_reply(e)
   else:
-    for name, oper in app.config["opers"].items():
+    opers = app.features.get_config_section(__name__)
+    for name, oper in opers.items():
       for mask in oper["hostmasks"]:
         user.send_reply(StatsOLine("O", mask, "*", name))
 
