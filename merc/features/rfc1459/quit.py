@@ -34,5 +34,5 @@ class Quit(message.Command):
 
 @QuitFeature.hook("user.remove.check")
 def broadcast_quit_on_quit(app, user):
-  app.network.broadcast(user, user.prefix,
-                        Quit(user.protocol.disconnect_reason))
+  app.network.user_broadcast(user, user.prefix,
+                             Quit(user.protocol.disconnect_reason))

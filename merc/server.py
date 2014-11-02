@@ -224,6 +224,6 @@ class Network(object):
     for name in self.tree.neighbors(self.current.name):
       yield self.get(name)
 
-  def broadcast(self, user, prefix, message):
+  def user_broadcast(self, user, prefix, message):
     for channel in user.channels.values():
       channel.broadcast(user, prefix, message)
