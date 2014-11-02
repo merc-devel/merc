@@ -141,7 +141,7 @@ class LocalUser(User):
     self.protocol.send(prefix, msg)
 
   def on_connect(self, app):
-    asyncio.async(self.resolve_hostname_coro(app), loop=app.loop)
+    asyncio.async(self.resolve_hostname_coro(app, app.resolver, 5), loop=app.loop)
 
   def on_raw_message(self, app, prefix, command_name, params):
     try:
@@ -173,7 +173,7 @@ class LocalUser(User):
       app.channels.get(channel_name).part(self)
 
   @asyncio.coroutine
-  def resolve_hostname_coro(self, app):
+  def resolve_hostname_coro(self, app, resolver, timeout):
     host, *_ = self.protocol.transport.get_extra_info("peername")
     host, _, _ = host.partition("%")
 
@@ -190,9 +190,9 @@ class LocalUser(User):
       rip = ".".join(reversed("".join(ip.exploded.split(":")))) + ".ip6.arpa."
 
     try:
-      forward, *_ = yield from app.resolver.query(rip, "PTR")
-      backward, *_ = yield from app.resolver.query(
-          forward, "AAAA" if not is_ipv4 else "A")
+      forward, *_ = yield from asyncio.wait_for(resolver.query(rip, "PTR"), timeout)
+      backward, *_ = yield from asyncio.wait_for(resolver.query(
+          forward, "AAAA" if not is_ipv4 else "A"), timeout)
 
       if ip == ipaddress.ip_address(backward):
         app.run_hooks("server.notify", self,
@@ -201,7 +201,7 @@ class LocalUser(User):
       else:
         app.run_hooks("server.notify", self,
                          "*** Hostname does not resolve correctly")
-    except aiodns.error.DNSError:
+    except (aiodns.error.DNSError, asyncio.TimeoutError):
       app.run_hooks("server.notify", self,
                        "*** Couldn't look up your hostname")
       self.host = host
