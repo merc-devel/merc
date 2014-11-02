@@ -53,9 +53,10 @@ class Application(object):
 
     try:
       self.check_config(config)
+
       for feature_name in config["features"]:
         self.features.load(feature_name)
-      self.run_hooks("config.check", config)
+      self.features.check_config(config)
     except:
       logger.critical("Configuration invalid.")
       self.features.unload_all()

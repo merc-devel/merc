@@ -6,6 +6,7 @@ from merc import mode
 
 class OperFeature(feature.Feature):
   NAME = __name__
+  CONFIG_SECTION = 'opers'
 
 
 install = OperFeature.install

@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 class FeatureMeta(type):
   def __new__(cls, names, bases, attrs):
     c = super().__new__(cls, names, bases, attrs)
+    c.CONFIG_CHECKERS = []
     c.USER_COMMANDS = {}
     c.SERVER_COMMANDS = {}
     c.USER_MODES = {}
@@ -31,6 +32,11 @@ class Feature(object, metaclass=FeatureMeta):
   @classmethod
   def install(cls, app):
     app.features.install(cls(app))
+
+  @classmethod
+  def register_config_checker(cls, checker):
+    cls.CONFIG_CHECKERS.append(checker)
+    return checker
 
   @classmethod
   def register_user_command(cls, command):
@@ -119,6 +125,17 @@ class FeatureLoader(object):
   def unload_all(self):
     for feature_name in list(self.features.keys()):
       self.unload(feature_name)
+
+  def check_config(self, config):
+    for feature in self.all():
+      if feature.CONFIG_CHECKERS:
+        key = feature.CONFIG_SECTION or feature.NAME
+        section = config.get(key)
+
+        for checker in feature.CONFIG_CHECKERS:
+          section = checker(section)
+
+        config[key] = section
 
   def get_user_command(self, name):
     for feature in self.all():
