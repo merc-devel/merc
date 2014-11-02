@@ -29,27 +29,28 @@ tls:
 bind:
   - host: 0.0.0.0
     port: 6667
-    tls: false
     type: users
 
   - host: 0.0.0.0
     port: 6697
-    tls: true
+    tls:
+      cert: server.crt
+      key: server.key
     type: users
 
   - host: "::"
     port: 6667
-    tls: false
     type: users
 
   - host: "::"
     port: 6697
-    tls: true
+    tls:     
+      cert: server.crt
+      key: server.key
     type: users
 
   - host: 0.0.0.0
     port: 5500
-    tls: false
     type: servers
 
 links:

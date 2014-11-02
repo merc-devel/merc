@@ -19,7 +19,7 @@ class Link(config.Section):
   port = int
   send_password = str
   receive_password = str
-  tls = config.optional(bool, False)
+  tls = config.optional(TLS)
   hub = config.optional(bool, False)
   services = config.optional(bool, False)
   autoconnect = config.optional(bool, False)
@@ -45,7 +45,6 @@ class Config(config.Section):
 
   features = [str]
 
-  tls = config.optional(TLS)
   class crypto(config.Section):
     hash_schemes = [str]
 
