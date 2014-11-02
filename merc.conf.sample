@@ -22,10 +22,6 @@ admin:
   location: Amsterdam, the Netherlands
   location_fine: Schuberg-Philis
 
-tls:
-  cert: server.crt
-  key: server.key
-
 bind:
   - host: 0.0.0.0
     port: 6667

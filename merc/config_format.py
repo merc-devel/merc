@@ -11,7 +11,7 @@ class TLS(config.Section):
 class Bind(config.Section):
   host = config.optional(str, "0.0.0.0")
   port = int
-  tls = config.optional(bool, False)
+  tls = config.optional(TLS)
   type = config.optional(config.any(('servers', 'users')), "users")
 
 class Link(config.Section):
@@ -19,7 +19,7 @@ class Link(config.Section):
   port = int
   send_password = str
   receive_password = str
-  tls = config.optional(TLS)
+  tls = config.optional(bool, False)
   hub = config.optional(bool, False)
   services = config.optional(bool, False)
   autoconnect = config.optional(bool, False)
