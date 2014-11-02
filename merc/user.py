@@ -78,9 +78,6 @@ class User(object):
   def send_reply(self, message, prefix=None):
     self.send(self.server_prefix if prefix is None else prefix, message)
 
-  def relay_to_self(self, message, prefix=None):
-    self.send(self.prefix if prefix is None else prefix, message)
-
   def is_in_channel(self, channel):
     return channel.normalized_name in self.channels
 
