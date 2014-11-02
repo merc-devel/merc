@@ -34,10 +34,9 @@ class LocalServer(Server):
     self.was_proposed = True
 
 
-  def create_tls_context(self, params):
+  def create_tls_context(self, cert, key):
     tls_ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-    tls_ctx.load_cert_chain(self.config["tls"]["cert"],
-                              self.config["tls"]["key"])
+    tls_ctx.load_cert_chain(cert, key)
 
     # We disable SSLv2, SSLv3, and compression (CRIME).
     tls_ctx.options |= ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3 | \
@@ -49,7 +48,9 @@ class LocalServer(Server):
   def bind(self, app, binds):
     for bind in binds:
       if bind["tls"]:
-        tls_ctx = self.create_tls_ctx(bind["tls"])
+        tls_ctx = self.create_tls_context(**bind["tls"])
+      else:
+        tls_ctx = None
 
       protocol_factory = {
           "users": protocol.UserProtocol,
@@ -58,8 +59,7 @@ class LocalServer(Server):
 
       binding = yield from self.loop.create_server(
           lambda protocol_factory=protocol_factory: protocol_factory(app),
-          bind["host"], bind["port"],
-          ssl=tls_ctx if bind["tls"] else None)
+          bind["host"], bind["port"], ssl=tls_ctx)
       logger.info("Binding to {}: {}".format(binding.sockets[0].getsockname(),
                                              protocol_factory.__name__))
 
