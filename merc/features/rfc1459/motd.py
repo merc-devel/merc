@@ -1,9 +1,13 @@
+from merc import config
 from merc import feature
 from merc import message
+
+CONFIG_SECTION = 'motd'
 
 
 class MotdFeature(feature.Feature):
   NAME = __name__
+  CONFIG_SECTION = CONFIG_SECTION
 
 
 install = MotdFeature.install
@@ -55,14 +59,20 @@ class Motd(message.Command):
 
   @message.Command.requires_registration
   def handle_for(self, app, user, prefix):
+    motd = app.features.get_config_section(__name__)
     user.send_reply(MotdStart(
         "- {} Message of the Day".format(app.server.name)))
 
-    for line in app.motd.splitlines():
+    for line in motd.splitlines():
       user.send_reply(MotdReply("- " + line))
 
     user.send_reply(EndOfMotd())
 
+
+@MotdFeature.hook("config.check")
+def check_config(app, cfg):
+  section = cfg[CONFIG_SECTION]
+  config.validate(section, str)
 
 @MotdFeature.hook("user.welcome")
 def send_motd_on_welcome(app, user):

@@ -23,6 +23,8 @@ class FeatureMeta(type):
 
 
 class Feature(object, metaclass=FeatureMeta):
+  CONFIG_SECTION = None
+
   def __init__(self, app):
     self.app = app
 
@@ -116,7 +118,7 @@ class FeatureLoader(object):
 
   def unload_all(self):
     for feature_name in list(self.features.keys()):
-      self.unload_feature(feature_name)
+      self.unload(feature_name)
 
   def get_user_command(self, name):
     for feature in self.all():
@@ -131,3 +133,10 @@ class FeatureLoader(object):
         return feature.SERVER_COMMANDS[name]
 
     raise KeyError(name)
+
+  def get_config_section(self, name):
+    feature = self.features[name]
+    if feature.CONFIG_SECTION:
+      name = feature.CONFIG_SECTION
+
+    return self.app.config.get(name)

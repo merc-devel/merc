@@ -50,9 +50,20 @@ class Application(object):
     self.features.unload_all()
     with open(self.config_filename, "r") as f:
       config = yaml.safe_load(f)
+
     try:
       self.check_config(config)
+      for feature_name in config["features"]:
+        self.features.load(feature_name)
+      self.run_hooks("config.check", config)
     except:
+      logger.critical("Configuration invalid.")
+      self.features.unload_all()
+
+      if self.config:
+        logger.critical("Reloading old configuration.")
+        for feature_name in self.config["features"]:
+          self.features.load(feature_name)
       raise
     else:
       self.config = config
@@ -70,9 +81,6 @@ class Application(object):
 
     self.crypt_context = passlib.context.CryptContext(
         schemes=self.config["crypto"]["hash_schemes"])
-
-    for feature_name in self.config["features"]:
-      self.features.load(feature_name)
 
   def rehash(self):
     @asyncio.coroutine
@@ -98,10 +106,6 @@ class Application(object):
   @property
   def network_name(self):
     return self.config["server"]["network_name"]
-
-  @property
-  def motd(self):
-    return self.config["motd"]
 
   @property
   def admin_location(self):
