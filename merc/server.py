@@ -168,7 +168,7 @@ class Network(object):
 
   def update_local(self, loop, name, desc, sid):
     if self.local:
-      self.remove(self.current)
+      self.remove(self.local)
     self.local = LocalServer(self, loop, name, desc, sid)
     self.add(self.local)
 
@@ -227,7 +227,7 @@ class Network(object):
 
   def add_neighbor(self, server):
     self.add(server)
-    self.link(self.current, server)
+    self.link(self.local, server)
 
   def remove(self, server):
     logger.warn("Lost server link to {} ({})".format(server.name, server.sid))
@@ -248,7 +248,7 @@ class Network(object):
 
   def find_shortest_path(self, target, start=None):
     if start is None:
-      start = self.current
+      start = self.local
 
     _, *path = networkx.algorithms.shortest_path(self.tree, start.name,
                                                  target.name)
@@ -260,7 +260,7 @@ class Network(object):
     return next(self.find_shortest_path(target, start))
 
   def neighborhood(self):
-    for name in self.tree.neighbors(self.current.name):
+    for name in self.tree.neighbors(self.local.name):
       yield self.get(name)
 
   def multicast_to_neighbors(self, prefix, message):
