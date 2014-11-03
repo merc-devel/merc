@@ -1,4 +1,3 @@
-import aiodns
 import asyncio
 import datetime
 import logging
@@ -28,7 +27,6 @@ class Application(object):
 
     self.creation_time = datetime.datetime.now()
 
-    self.resolver = aiodns.DNSResolver(loop=loop)
     self.features = feature.FeatureLoader(self)
     self.users = user.UserStore(self)
     self.channels = channel.ChannelStore(self)

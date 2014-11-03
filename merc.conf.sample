@@ -40,7 +40,7 @@ bind:
 
   - host: "::"
     port: 6697
-    tls:     
+    tls:
       cert: server.crt
       key: server.key
     type: users
@@ -79,3 +79,4 @@ features:
   - .extrole
   - .is_secure
   - .isupport
+  - .resolver

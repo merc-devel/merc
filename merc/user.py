@@ -1,9 +1,6 @@
-import aiodns
-import asyncio
 import collections
 import datetime
 import fnmatch
-import ipaddress
 import itertools
 import regex
 
@@ -127,7 +124,7 @@ class LocalUser(User):
     self.protocol.send(prefix, msg)
 
   def on_connect(self, app):
-    asyncio.async(self.resolve_hostname_coro(app, app.resolver, 5), loop=app.loop)
+    app.run_hooks("user.connect", self)
 
   def on_raw_message(self, app, prefix, command_name, params):
     try:
@@ -157,43 +154,6 @@ class LocalUser(User):
   def on_remove(self, app):
     for channel_name in list(self.channels):
       app.channels.get(channel_name).part(self)
-
-  @asyncio.coroutine
-  def resolve_hostname_coro(self, app, resolver, timeout):
-    host, *_ = self.protocol.transport.get_extra_info("peername")
-    host, _, _ = host.partition("%")
-
-    app.run_hooks("server.notify", self,
-                     "*** Looking up your hostname...")
-    ip = ipaddress.ip_address(host)
-
-    is_ipv4 = False
-
-    if isinstance(ip, ipaddress.IPv4Address):
-      rip = ".".join(reversed(ip.exploded.split("."))) + ".in-addr.arpa."
-      is_ipv4 = True
-    elif isinstance(ip, ipaddress.IPv6Address):
-      rip = ".".join(reversed("".join(ip.exploded.split(":")))) + ".ip6.arpa."
-
-    try:
-      forward, *_ = yield from asyncio.wait_for(resolver.query(rip, "PTR"), timeout)
-      backward, *_ = yield from asyncio.wait_for(resolver.query(
-          forward, "AAAA" if not is_ipv4 else "A"), timeout)
-
-      if ip == ipaddress.ip_address(backward):
-        app.run_hooks("server.notify", self,
-                         "*** Found your hostname ({})".format(forward))
-        self.host = forward
-      else:
-        app.run_hooks("server.notify", self,
-                         "*** Hostname does not resolve correctly")
-    except (aiodns.error.DNSError, asyncio.TimeoutError):
-      app.run_hooks("server.notify", self,
-                       "*** Couldn't look up your hostname")
-      self.host = host
-
-    if self.is_ready_for_registration:
-      self.register(app)
 
   def register(self, app):
     if self.store.has(self.nickname):
