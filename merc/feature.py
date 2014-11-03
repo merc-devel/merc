@@ -88,6 +88,9 @@ class FeatureLoader(object):
   def all(self):
     yield from self.features.values()
 
+  def get(self, feature_factory):
+    return self.features[feature_factory.NAME]
+
   def load(self, name):
     if name[0] == ".":
       name = features.__name__ + name

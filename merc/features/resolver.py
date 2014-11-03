@@ -8,13 +8,16 @@ from merc import feature
 class ResolverFeature(feature.Feature):
   NAME = __name__
 
+  def __init__(self, app):
+    self.resolver = aiodns.DNSResolver(loop=app.loop)
+
 
 install = ResolverFeature.install
 
 
 @asyncio.coroutine
 def resolve_hostname_coro(app, user, timeout):
-  resolver = aiodns.DNSResolver(loop=app.loop)
+  feature = app.features.get(ResolverFeature)
 
   host, *_ = user.protocol.transport.get_extra_info("peername")
   host, _, _ = host.partition("%")
@@ -32,9 +35,9 @@ def resolve_hostname_coro(app, user, timeout):
     rip = ".".join(reversed("".join(ip.exploded.split(":")))) + ".ip6.arpa."
 
   try:
-    forward, *_ = yield from asyncio.wait_for(resolver.query(rip, "PTR"),
-                                              timeout)
-    backward, *_ = yield from asyncio.wait_for(resolver.query(
+    forward, *_ = yield from asyncio.wait_for(
+        feature.resolver.query(rip, "PTR"), timeout)
+    backward, *_ = yield from asyncio.wait_for(feature.resolver.query(
         forward, "AAAA" if not is_ipv4 else "A"), timeout)
 
     if ip == ipaddress.ip_address(backward):
