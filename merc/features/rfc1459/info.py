@@ -13,7 +13,7 @@ INFO_TEMPLATE = """\
 /_    __/_/_/_/\__/_/  \__/
  /_/_/
 
-The Modern Ethereal Relay Chat daemon, version {version}.
+The Modern Extensible Relay Chat daemon, version {version}.
 Copyright (C) {year}, #merc-devel
 
 This software is licensed under the terms of the MIT license. The LICENSE file
