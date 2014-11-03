@@ -19,8 +19,14 @@ def join_ban_checker(app, target, channel, value):
     raise errors.BannedFromChannel(channel.name)
 
 
+def quiet_ban_checker(app, target, channel, value):
+  if target.hostmask_matches(value):
+    channel.check_is_voiced(target)
+
+
 CHECKERS = {
-    "j": join_ban_checker
+    "j": join_ban_checker,
+    "q": quiet_ban_checker
 }
 
 
@@ -38,7 +44,10 @@ def check_ban(app, target, channel, mask):
 
 @ExtBanFeature.hook("channel.join.check_ban")
 def check_join_ban_mask(app, target, channel, mask):
-  check_ban(app, target, channel, mask)
+  try:
+    check_ban(app, target, channel, mask)
+  except (errors.CannotSendToChan, errors.NotOnChannel):
+    pass
 
 
 @ExtBanFeature.hook("channel.message.check_ban")
