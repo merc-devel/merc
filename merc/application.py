@@ -31,7 +31,6 @@ class Application(object):
     self.users = user.UserStore(self)
     self.channels = channel.ChannelStore(self)
     self.network = server.Network(self)
-    self.server = None
     self.crypt_context = None
 
     self.config = None
@@ -40,6 +39,9 @@ class Application(object):
 
     self.register_signal_handlers()
 
+  @property
+  def server(self):
+    return self.network.local
 
   def check_config(self, cfg):
     config.validate(cfg, config_format.Config)
@@ -76,7 +78,6 @@ class Application(object):
         self.config["server"]["name"],
         self.config["server"]["description"],
         self.config["server"]["sid"])
-    self.server = self.network.local
 
     self.crypt_context = passlib.context.CryptContext(
         schemes=self.config["crypto"]["hash_schemes"])
