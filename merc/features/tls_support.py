@@ -4,11 +4,11 @@ from merc import message
 from merc import mode
 
 
-class IsSecureFeature(feature.Feature):
+class TLSSupportFeature(feature.Feature):
   NAME = __name__
 
 
-install = IsSecureFeature.install
+install = TLSSupportFeature.install
 
 
 class SecureOnlyChannel(errors.ParametrizedError):
@@ -16,7 +16,7 @@ class SecureOnlyChannel(errors.ParametrizedError):
   REASON = "Channel can only be joined by securely connected users"
 
 
-@IsSecureFeature.register_user_mode
+@TLSSupportFeature.register_user_mode
 class SecurelyConnected(mode.FlagMode, mode.UModeMixin):
   CHAR = "Z"
 
@@ -27,7 +27,7 @@ class SecurelyConnected(mode.FlagMode, mode.UModeMixin):
     return self.target.is_securely_connected
 
 
-@IsSecureFeature.register_server_command
+@TLSSupportFeature.register_server_command
 class WhoIsSecure(message.Reply):
   NAME = "671"
   FORCE_TRAILING = True
@@ -42,18 +42,18 @@ class WhoIsSecure(message.Reply):
     return [self.nick, self.type, self.reason]
 
 
-@IsSecureFeature.hook("user.whois")
+@TLSSupportFeature.hook("user.whois")
 def send_whois_secure_if_secure(app, user, target):
   if target.is_securely_connected:
     user.send_reply(WhoIsSecure(target.nickname, "*"))
 
 
-@IsSecureFeature.register_channel_mode
+@TLSSupportFeature.register_channel_mode
 class SecureOnly(mode.FlagMode, mode.ChanModeMixin):
   CHAR = "S"
 
 
-@IsSecureFeature.hook("channel.join.check")
+@TLSSupportFeature.hook("channel.join.check")
 def check_channel_ban(app, target, channel, key):
   if SecureOnly(channel).get() and not target.is_securely_connected:
     raise SecureOnlyChannel(channel.name)

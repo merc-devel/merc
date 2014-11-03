@@ -77,6 +77,6 @@ features:
   - .ts6
   - .extban
   - .extrole
-  - .is_secure
   - .isupport
   - .resolver
+  - .tls_support
