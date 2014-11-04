@@ -26,6 +26,7 @@ class _ChgHost(message.Command):
     target.host = self.host
     app.network.user_broadcast(target, old_hostmask,
                                ChgHost(self.username, self.host))
+    target.send(old_hostmask, ChgHost(self.username, self.host))
 
 
 @ChgHostFeature.register_user_command
