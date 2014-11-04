@@ -53,10 +53,14 @@ class KLine(message.Command):
 
     klines[self.hostmask] = KLineDetail(self.reason, expiry)
 
+    kline_message = "K-Lined"
+    if self.reason is not None:
+      kline_message += ": " + self.reason
+
     for target in app.users.all():
       if target.hostmask_matches(self.hostmask):
-        target.send(None, errors.LinkError("K-Lined"))
-        target.close("K-Lined")
+        target.send(None, errors.LinkError(kline_message))
+        target.close(kline_message)
 
 
 @KLineFeature.hook("user.register.check")
@@ -72,5 +76,9 @@ def check_klines(app, user):
         del klines[hostmask]
         continue
 
-      user.send(None, errors.LinkError("K-Lined"))
-      user.close("K-Lined")
+      kline_message = "K-Lined"
+      if detail.reason is not None:
+        kline_message += ": " + detail.reason
+
+      user.send(None, errors.LinkError(kline_message))
+      user.close(kline_message)
