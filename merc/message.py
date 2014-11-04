@@ -23,6 +23,9 @@ class Message(object):
   def as_params(self, client):
     raise NotImplementedError
 
+  def can_send_to(self, client):
+    return True
+
   @classmethod
   def with_params(cls, params):
     from merc import errors
