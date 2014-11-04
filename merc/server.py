@@ -15,10 +15,14 @@ logger = logging.getLogger(__name__)
 class Server(object):
   def __init__(self, network):
     self.network = network
+    self.feature_locals = {}
 
   @property
   def debug_id(self):
     return "server:" + (self.sid if self.sid is not None else "?")
+
+  def get_feature_locals(self, feature):
+    return self.feature_locals.setdefault(feature.NAME, {})
 
 
 class LocalServer(Server):

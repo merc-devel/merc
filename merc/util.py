@@ -1,3 +1,4 @@
+import datetime
 import operator
 import subprocess
 
@@ -51,3 +52,23 @@ def is_uid(uid):
     return False
 
   return is_sid(uid[:3]) and all(c in ID_BASE for c in uid)
+
+
+def parse_duration(s):
+  years, _, s = s.rpartition("y")
+  weeks, _, s = s.rpartition("w")
+  days, _, s = s.rpartition("d")
+  hours, _, s = s.rpartition("h")
+  minutes, _, s = s.rpartition("m")
+  seconds = s.rstrip("s")
+
+  years = int(years) if years else 0
+  weeks = int(weeks) if weeks else 0
+  days = int(days) if days else 0
+  hours = int(hours) if hours else 0
+  minutes = int(minutes) if minutes else 0
+  seconds = int(seconds) if seconds else 0
+
+  return datetime.timedelta(
+      seconds=seconds + (minutes +
+          (hours + (days + weeks * 7 + years * 365) * 24) * 60) * 60)
