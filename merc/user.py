@@ -138,7 +138,7 @@ class LocalUser(User):
         self.on_message(app, prefix, command_type.with_params(params))
       except errors.Error as e:
         self.send(None, e)
-        self.close(e.reason)
+        self.close("Connection closed")
       except errors.BaseError as e:
         self.send_reply(e)
 
