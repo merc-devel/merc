@@ -32,7 +32,9 @@ class Cap(message.Command):
     self.arg = arg
 
   def ls(self, app, user):
-    user.is_negotiating_cap = True
+    if not user.is_registered:
+      user.is_negotiating_cap = True
+
     user.send_reply(CapReply("LS", " ".join(
         capability.NAME for capability in app.users.capabilities.values())))
 
@@ -66,7 +68,8 @@ class Cap(message.Command):
 
   def end(self, app, user):
     user.is_negotiating_cap = False
-    if user.is_ready_for_registration:
+
+    if user.is_ready_for_registration and not user.is_registered:
       user.register(app)
 
   def handle_for(self, app, user, prefix):
