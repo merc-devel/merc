@@ -8,7 +8,7 @@ from merc import message
 from merc import mode
 
 
-BanDetail = collections.namedtuple("BanDetail", ["app", "creation_time"])
+BanDetail = collections.namedtuple("BanDetail", ["server", "creation_time"])
 
 
 class BanFeature(feature.Feature):
@@ -59,7 +59,7 @@ class BanMask(mode.ListMode, mode.ChanModeMixin):
     for mask, detail in sorted(bans.items(),
                                key=lambda v: v[1].creation_time,
                                reverse=True):
-      user.send_reply(BanList(self.target.name, mask, detail.app,
+      user.send_reply(BanList(self.target.name, mask, detail.server,
                                str(int(detail.creation_time.timestamp()))))
     user.send_reply(EndOfBanList(self.target.name))
 
