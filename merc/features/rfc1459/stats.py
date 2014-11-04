@@ -162,7 +162,7 @@ def send_links(app, user):
 
 @StatsFeature.hook("server.stats.m")
 def send_commands(app, user):
-  for feature in app.features.values():
+  for feature in app.features.all():
     for command in feature.USER_COMMANDS.values():
       user.send_reply(StatsCommands(command.NAME, 0))
 
