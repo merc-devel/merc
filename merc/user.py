@@ -121,7 +121,8 @@ class LocalUser(User):
     return self.server_name
 
   def send(self, prefix, msg):
-    self.protocol.send(prefix, msg)
+    if msg.can_send_to(self):
+      self.protocol.send(prefix, msg)
 
   def on_connect(self, app):
     app.run_hooks("user.connect", self)
