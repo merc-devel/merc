@@ -73,7 +73,7 @@ class BanMask(mode.ListMode, mode.ChanModeMixin):
     bans[value] = BanDetail(app.server.name, datetime.datetime.now())
     return True
 
-  def remove(self, user, value):
+  def remove(self, app, user, value):
     locals = self.target.get_feature_locals(BanFeature)
     bans = locals.get("bans", {})
 
