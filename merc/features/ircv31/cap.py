@@ -42,6 +42,9 @@ class Cap(message.Command):
                         if capability(user).get())))
 
   def req(self, app, user, caps):
+    if not caps:
+      return
+
     capabilities = app.users.capabilities
 
     if set(caps) <= set(capabilities.keys()):
