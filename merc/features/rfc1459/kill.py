@@ -15,7 +15,7 @@ class Kill(message.Command):
   NAME = "KILL"
   MIN_ARITY = 2
 
-  def __init__(self, nickname, reason):
+  def __init__(self, nickname, reason, *args):
     self.nickname = nickname
     self.reason = reason
 
