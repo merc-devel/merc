@@ -58,10 +58,9 @@ class InfoReply(message.Reply):
 @InfoFeature.register_server_command
 class EndOfInfo(message.Reply):
   NAME = "374"
-  MIN_ARITY = 2
+  MIN_ARITY = 1
 
-  def __init__(self, line, reason="End of /INFO list", *args):
-    self.line = line
+  def __init__(self, reason="End of /INFO list", *args):
     self.reason = reason
 
   def as_reply_params(self):
