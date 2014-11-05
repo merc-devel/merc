@@ -146,7 +146,7 @@ class SAPart(_Part):
     self.reason = reason
 
   def get_target(self, app, user):
-    return app.users.get(app, self.nickname)
+    return app.users.get(self.nickname)
 
   @message.Command.requires_registration
   def handle_for(self, app, user, prefix):
