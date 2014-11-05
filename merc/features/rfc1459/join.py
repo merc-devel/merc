@@ -149,9 +149,9 @@ class SAPart(_Part):
     return app.users.get(app, self.nickname)
 
   @message.Command.requires_registration
-  def handle_for(self, user, prefix):
+  def handle_for(self, app, user, prefix):
     user.check_is_irc_operator()
-    super().handle_for(user, prefix)
+    super().handle_for(app, user, prefix)
 
 
 @JoinFeature.hook("server.isupport.modify")
