@@ -1,4 +1,4 @@
-__all__ = ["cap", "multi_prefix", "uhnames"]
+__all__ = ["cap", "multi_prefix"]
 
 
 import importlib

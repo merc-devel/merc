@@ -49,12 +49,24 @@ class Cap(message.Command):
 
     capabilities = app.users.capabilities
 
-    if set(caps) <= set(capabilities.keys()):
-      for cap in caps:
-        capabilities[cap](user).set()
-      user.send_reply(CapReply("ACK", " ".join(caps)))
-    else:
-      user.send_reply(CapReply("NAK", " ".join(caps)))
+    for cap_name in caps:
+      try:
+        if cap_name[0] == "-":
+          cap = capabilities[cap_name[1:]]
+          unset = True
+        else:
+          cap = capabilities[cap_name]
+          unset = False
+      except KeyError:
+        user.send_reply(CapReply("NAK", " ".join(caps)))
+        return
+    
+      if unset:
+        cap(user).unset()
+      else:
+        cap(user).set()
+    
+    user.send_reply(CapReply("ACK", " ".join(caps)))
 
   def clear(self, app, user):
     cleared_caps = []

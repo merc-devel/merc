@@ -1,4 +1,4 @@
-__all__ = ["chghost"]
+__all__ = ["chghost", "userhost_in_names"]
 
 
 import importlib
