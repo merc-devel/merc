@@ -9,4 +9,7 @@ class Capability(object):
     self.user.capabilities.add(self.NAME)
 
   def unset(self):
-    self.user.capabilities.remove(self.NAME)
+    try:
+      self.user.capabilities.remove(self.NAME)
+    except KeyError:
+      pass
