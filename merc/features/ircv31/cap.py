@@ -51,7 +51,7 @@ class Cap(message.Command):
 
     for cap_name in caps:
       try:
-        if cap[0] == "-":
+        if cap_name[0] == "-":
           cap = capabilities[cap_name[1:]]
           unset = True
         else:
