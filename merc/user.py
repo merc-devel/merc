@@ -143,7 +143,8 @@ class LocalUser(User):
         self.send_reply(e)
 
   def on_message(self, app, prefix, message):
-    self.last_activity_time = datetime.datetime.now()
+    if message.NAME != "PONG":
+      self.last_activity_time = datetime.datetime.now()
 
     # users are never allowed to send prefixes
     message.handle_for(app, self, None)
