@@ -236,11 +236,14 @@ class UserStore(object):
 
   def remove(self, user):
     self.app.run_hooks("user.remove.check", user)
+    self.remove_unsafe(user)
+    user.on_remove(self.app)
+    self.app.run_hooks("user.remove", user)
+
+  def remove_unsafe(self, user):
     if user.is_registered:
       del self.users[user.normalized_nickname]
       del self.users_by_uid[user.uid]
-    user.on_remove(self.app)
-    self.app.run_hooks("user.remove", user)
 
   def get(self, name):
     try:
