@@ -1,3 +1,5 @@
+import datetime
+
 from merc import errors
 from merc import feature
 from merc import message
@@ -43,6 +45,13 @@ class Uid(message.Command):
     user = app.users.new_remote_user(
         self.uid, origin_server.name,
         int(self.hopcount) + origin_server.hopcount)
+
+    user.nickname = self.nickname
+    user.username = self.username
+    user.host = self.host
+    user.realname = self.realname
+    user.creation_time = datetime.datetime.fromtimestamp(int(self.ts))
+
     app.users.add(user)
     app.network.link_broadcast(server, prefix, self)
 

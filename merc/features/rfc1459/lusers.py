@@ -59,7 +59,9 @@ class LUsers(message.Command):
     user.send_reply(LUserUnknown(str(0)))
     user.send_reply(LUserChannels(str(app.channels.count())))
     user.send_reply(LUserMe("I have {} clients and {} servers".format(
-        app.users.count(), app.network.count())))
+        sum(user.server_name == app.network.local.name
+            for user in app.users.all()),
+        len(list(app.network.neighborhood())))))
 
 
 @LUsersFeature.hook("user.welcome")
