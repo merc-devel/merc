@@ -42,8 +42,7 @@ class Uid(message.Command):
                                      app.network.get_by_sid(self.sid).name,
                                      int(self.hopcount) + 1)
     app.users.add(user)
-
-    # TODO: broadcast this
+    app.network.link_broadcast(server, prefix, self)
 
 
 def send_uid(app, server, user):

@@ -26,12 +26,12 @@ class Server(object):
 
 
 class LocalServer(Server):
-  def __init__(self, network, loop, name, desc, sid):
+  def __init__(self, network, loop, name, description, sid):
     super().__init__(network)
 
     self.loop = loop
     self.name = name
-    self.description = desc
+    self.description = description
     self.sid = sid
     self.hopcount = 0
     self.bindings = []
@@ -89,6 +89,7 @@ class Neighbor(Server):
 
     self.name = None
     self.password = None
+    self.description = None
     self.sid = None
     self.hopcount = None
 
@@ -106,7 +107,7 @@ class Neighbor(Server):
 
   @property
   def displayed_nickname(self):
-    return ""
+    return "*"
 
   def send(self, prefix, msg, source=None):
     self.protocol.send(prefix, msg, source)
@@ -116,32 +117,21 @@ class Neighbor(Server):
 
   def on_raw_message(self, app, prefix, command_name, params):
     try:
-      if prefix is not None and util.is_uid(prefix):
-        command_type = app.features.get_user_command(command_name)
-      else:
-        command_type = app.features.get_server_command(command_name)
+      command_type = app.features.get_server_command(command_name)
     except KeyError:
-      host, *_ = self.protocol.transport.get_extra_info("peername")
-      self.send(None, errors.UnknownCommand(command_name))
+      self.send(None, errors.LinkError("Unknown command"))
+      self.protocol.close("Unknown command")
     else:
-      if prefix is not None and util.is_uid(prefix):
-        target = app.users.get_by_uid(prefix)
-      else:
-        if prefix is not None and util.is_sid(prefix):
-          target = app.network.get_by_sid(prefix)
-        else:
-          target = self
-
       try:
-        self.on_message(app, target, prefix, command_type.with_params(params))
+        self.on_message(app, prefix, command_type.with_params(params))
       except errors.Error as e:
         self.send(None, e)
-        self.protocol.close(e.REASON)
+        self.protocol.close(e.reason)
       except errors.BaseError as e:
         self.send(None, e)
 
-  def on_message(self, app, target, prefix, message):
-    message.handle_for(app, target, prefix)
+  def on_message(self, app, prefix, message):
+    message.handle_for(app, self, prefix)
 
   def on_disconnect(self, exc):
     if self.is_registered:
@@ -150,11 +140,12 @@ class Neighbor(Server):
 
 class NonNeighbor(Server):
   # alternative name: ThatOneOddFamilyMemberYouNeverBotheredWithBecauseTheySeemWeirdButNotWeirdInTheGoodWay
-  def __init__(self, network, name, sid, hopcount):
+  def __init__(self, network, name, hopcount, sid, description):
     super().__init__(network)
     self.name = name
-    self.sid = sid
     self.hopcount = hopcount
+    self.sid = sid
+    self.description = description
 
   def send(self, prefix, msg, source=None):
     target = self.network.get_next_hop(self.network.get(self.name))
@@ -190,8 +181,8 @@ class Network(object):
   def new_neighbor(self, protocol):
     return Neighbor(self, protocol)
 
-  def new_non_neighbor(self, name, sid, hopcount):
-    return NonNeighbor(self, name, sid, hopcount)
+  def new_non_neighbor(self, name, hopcount, sid, description):
+    return NonNeighbor(self, name, hopcount, sid, description)
 
   def add(self, server):
     if server.name in self.tree.node:
@@ -202,6 +193,9 @@ class Network(object):
 
   def has(self, name):
     return name in self.tree
+
+  def has_by_sid(self, sid):
+    return sid in self.servers_by_sid
 
   def connect(self, server_name):
     link_spec = self.app.config["links"][server_name]
@@ -221,10 +215,6 @@ class Network(object):
   def all(self):
     for name in self.tree.node:
       yield self.get(name)
-
-  def all_links(self):
-    for origin, target in self.tree.edges_iter():
-      yield (self.get(origin), self.get(target))
 
   def count(self):
     return len(self.tree)
@@ -270,3 +260,12 @@ class Network(object):
   def user_broadcast(self, user, prefix, message):
     for channel in user.channels.values():
       channel.broadcast(user, prefix, message)
+
+  def link_broadcast(self, previous, prefix, message):
+    for target in self.neighborhood():
+      if target is not previous:
+        target.send(prefix, message)
+
+  def links(self):
+    for origin, target in networkx.bfs_edges(self.tree, self.local.name):
+      yield self.get(origin), self.get(target)

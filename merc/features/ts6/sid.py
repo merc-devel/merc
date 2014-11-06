@@ -26,12 +26,28 @@ class Sid(message.Command):
     return [self.server_name, self.hopcount, self.sid, self.description]
 
   def handle_for(self, app, server, prefix):
-    # TODO: add server links
-    pass
+    if app.network.has_by_sid(self.sid):
+      raise errors.LinkError("SID collision")
+
+    non_neighbor = app.network.new_non_neighbor(self.server_name, self.hopcount,
+                                                self.sid, self.description)
+    app.network.link(app.network.get_by_sid(prefix), non_neighbor)
+
+    # Broadcast the SID message to further servers.
+    app.network.link_broadcast(server, prefix, self)
 
 
 @SidFeature.hook("network.burst.servers")
 def burst_sids(app, server):
-  for source, target in app.network.all_links():
-    server.send(source.sid, Sid(target.name, "1", target.sid,
-                                target.description))
+  for neighbor in app.network.neighborhood():
+    if neighbor is server:
+      continue
+    server.send(app.network.local.sid,
+                Sid(neighbor.name, "1", neighbor.sid, neighbor.description))
+
+
+@SidFeature.hook("server.register")
+def on_connect(app, server):
+  app.network.link_broadcast(server, app.network.local.sid,
+                             Sid(server.name, "1", server.sid,
+                                 server.description))

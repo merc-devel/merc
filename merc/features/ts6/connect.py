@@ -12,10 +12,9 @@ install = ConnectFeature.install
 
 @ConnectFeature.hook("network.connect")
 def on_connect(app, server):
-  current_server = app.network.current
   app.run_hooks("server.pass", server,
                 app.network.get_send_password(server),
-                current_server.sid)
-  app.run_hooks("server.server", server, current_server.name, "1",
-                current_server.description)
+                app.network.local.sid)
+  app.run_hooks("server.server", server, app.network.local.name, "1",
+                app.network.local.description)
   app.run_hooks("server.svinfo", server)
