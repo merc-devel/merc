@@ -266,6 +266,9 @@ class Network(object):
       if target is not previous:
         target.send(prefix, message)
 
-  def links(self):
-    for origin, target in networkx.bfs_edges(self.tree, self.local.name):
+  def links(self, source=None):
+    if source is None:
+      source = self.local
+
+    for origin, target in networkx.bfs_edges(self.tree, source.name):
       yield self.get(origin), self.get(target)

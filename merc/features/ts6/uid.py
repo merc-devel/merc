@@ -38,9 +38,11 @@ class Uid(message.Command):
             self.host, self.ip, self.uid, self.realname]
 
   def handle_for(self, app, server, prefix):
-    user = app.users.new_remote_user(self.uid,
-                                     app.network.get_by_sid(self.sid).name,
-                                     int(self.hopcount) + 1)
+    origin_server = app.network.get_by_sid(self.sid)
+
+    user = app.users.new_remote_user(
+        self.uid, origin_server.name,
+        int(self.hopcount) + origin_server.hopcount)
     app.users.add(user)
     app.network.link_broadcast(server, prefix, self)
 
@@ -51,10 +53,9 @@ def send_uid(app, server, user):
     host = "0" + host
 
   server.send(app.network.local.sid,
-    Uid(user.nickname, str(user.hopcount),
-    str(int(user.creation_time.timestamp())),
-    "+", user.username, host, "0", user.uid,
-    user.realname))
+              Uid(user.nickname, str(user.hopcount),
+                  str(int(user.creation_time.timestamp())), "+", user.username,
+                  host, "0", user.uid, user.realname))
 
 
 @UidFeature.hook("network.burst.users")

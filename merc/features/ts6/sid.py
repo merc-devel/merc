@@ -29,9 +29,13 @@ class Sid(message.Command):
     if app.network.has_by_sid(self.sid):
       raise errors.LinkError("SID collision")
 
-    non_neighbor = app.network.new_non_neighbor(self.server_name, self.hopcount,
-                                                self.sid, self.description)
-    app.network.link(app.network.get_by_sid(prefix), non_neighbor)
+    origin = app.network.get_by_sid(prefix)
+
+    non_neighbor = app.network.new_non_neighbor(
+        self.server_name, int(self.hopcount) + origin.hopcount, self.sid,
+        self.description)
+    app.network.add(non_neighbor)
+    app.network.link(origin, non_neighbor)
 
     # Broadcast the SID message to further servers.
     app.network.link_broadcast(server, prefix, self)
