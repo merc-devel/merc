@@ -10,7 +10,6 @@ class AdminFeature(feature.Feature):
 install = AdminFeature.install
 
 
-@AdminFeature.register_server_command
 class AdminInfo(message.Reply):
   NAME = "256"
   MIN_ARITY = 2
@@ -23,7 +22,6 @@ class AdminInfo(message.Reply):
     return [self.server_name, self.reason]
 
 
-@AdminFeature.register_server_command
 class AdminLocation(message.Reply):
   NAME = "257"
   FORCE_TRAILING = True
@@ -36,7 +34,6 @@ class AdminLocation(message.Reply):
     return [self.location]
 
 
-@AdminFeature.register_server_command
 class AdminFineLocation(message.Reply):
   NAME = "258"
   FORCE_TRAILING = True
@@ -49,7 +46,6 @@ class AdminFineLocation(message.Reply):
     return [self.location]
 
 
-@AdminFeature.register_server_command
 class AdminEmail(message.Reply):
   NAME = "259"
   FORCE_TRAILING = True

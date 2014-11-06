@@ -12,7 +12,6 @@ class TimeFeature(feature.Feature):
 install = TimeFeature.install
 
 
-@TimeFeature.register_server_command
 class TimeReply(message.Reply):
   NAME = "391"
   FORCE_TRAILING = True

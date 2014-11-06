@@ -13,7 +13,6 @@ class UserFeature(feature.Feature):
 install = UserFeature.install
 
 
-@UserFeature.register_server_command
 class Welcome(message.Reply):
   NAME = "001"
   FORCE_TRAILING = True
@@ -26,7 +25,6 @@ class Welcome(message.Reply):
     return [self.reason]
 
 
-@UserFeature.register_server_command
 class YourHost(message.Reply):
   NAME = "002"
   FORCE_TRAILING = True
@@ -39,7 +37,6 @@ class YourHost(message.Reply):
     return [self.reason]
 
 
-@UserFeature.register_server_command
 class Created(message.Reply):
   NAME = "003"
   FORCE_TRAILING = True
@@ -52,7 +49,6 @@ class Created(message.Reply):
     return [self.reason]
 
 
-@UserFeature.register_server_command
 class MyInfo(message.Reply):
   NAME = "004"
   MIN_ARITY = 5

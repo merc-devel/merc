@@ -109,8 +109,8 @@ class Neighbor(Server):
   def displayed_nickname(self):
     return "*"
 
-  def send(self, prefix, msg, source=None):
-    self.protocol.send(prefix, msg, source)
+  def send(self, prefix, msg):
+    self.protocol.send(prefix, msg)
 
   def on_connect(self, app):
     pass
@@ -119,6 +119,9 @@ class Neighbor(Server):
     try:
       command_type = app.features.get_server_command(command_name)
     except KeyError:
+      if command_name.isnumeric():
+        # TODO: handle numerics
+        return
       self.send(None, errors.LinkError("Unknown command"))
       self.protocol.close("Unknown command")
     else:
@@ -147,9 +150,9 @@ class NonNeighbor(Server):
     self.sid = sid
     self.description = description
 
-  def send(self, prefix, msg, source=None):
+  def send(self, prefix, msg):
     target = self.network.get_next_hop(self.network.get(self.name))
-    target.send(prefix, msg, source)
+    target.send(prefix, msg)
 
 
 class Network(object):

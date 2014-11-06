@@ -43,10 +43,6 @@ class Reply(Message):
   def as_reply_params(self):
     raise NotImplementedError
 
-  def handle_for(self, app, server, prefix):
-    target = app.users.get_by_uid(self.client_target)
-    target.send_reply(self, app.network.get_by_sid(prefix).name)
-
   @classmethod
   def with_params(cls, params):
     target, *params = params

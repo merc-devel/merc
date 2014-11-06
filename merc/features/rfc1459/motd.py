@@ -16,7 +16,6 @@ def check_config(section):
   return config.validate(section, str)
 
 
-@MotdFeature.register_server_command
 class MotdReply(message.Reply):
   NAME = "372"
   FORCE_TRAILING = True
@@ -29,7 +28,6 @@ class MotdReply(message.Reply):
     return [self.line]
 
 
-@MotdFeature.register_server_command
 class MotdStart(message.Reply):
   NAME = "375"
   FORCE_TRAILING = True
@@ -42,7 +40,6 @@ class MotdStart(message.Reply):
     return [self.reason]
 
 
-@MotdFeature.register_server_command
 class EndOfMotd(message.Reply):
   NAME = "376"
   FORCE_TRAILING = True

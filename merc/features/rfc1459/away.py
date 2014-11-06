@@ -13,7 +13,6 @@ install = AwayFeature.install
 MAX_AWAY_LENGTH = 200
 
 
-@AwayFeature.register_server_command
 class IsAway(message.Reply):
   NAME = "301"
   FORCE_TRAILING = True
@@ -27,7 +26,6 @@ class IsAway(message.Reply):
     return [self.nick, self.msg]
 
 
-@AwayFeature.register_server_command
 class NowAway(message.Reply):
   NAME = "306"
   MIN_ARITY = 1
@@ -39,7 +37,6 @@ class NowAway(message.Reply):
     return [self.reason]
 
 
-@AwayFeature.register_server_command
 class UnAway(message.Reply):
   NAME = "305"
   MIN_ARITY = 1

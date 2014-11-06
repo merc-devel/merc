@@ -12,7 +12,6 @@ class WhoFeature(feature.Feature):
 install = WhoFeature.install
 
 
-@WhoFeature.register_server_command
 class EndOfWho(message.Reply):
   NAME = "315"
   FORCE_TRAILING = True
@@ -26,7 +25,6 @@ class EndOfWho(message.Reply):
     return [self.target, self.reason]
 
 
-@WhoFeature.register_server_command
 class WhoReply(message.Reply):
   NAME = "352"
   FORCE_TRAILING = True

@@ -71,7 +71,6 @@ class Pong(message.Command):
     pass
 
 
-@PingFeature.register_server_command
 class PongReply(message.Reply):
   NAME = "PONG"
   MIN_ARITY = 1

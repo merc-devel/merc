@@ -9,7 +9,6 @@ class LUsersFeature(feature.Feature):
 install = LUsersFeature.install
 
 
-@LUsersFeature.register_server_command
 class LUserUnknown(message.Reply):
   NAME = "253"
   FORCE_TRAILING = True
@@ -23,7 +22,6 @@ class LUserUnknown(message.Reply):
     return [self.num_unknown, self.reason]
 
 
-@LUsersFeature.register_server_command
 class LUserChannels(message.Reply):
   NAME = "254"
   FORCE_TRAILING = True
@@ -37,7 +35,6 @@ class LUserChannels(message.Reply):
     return [self.num_channels, self.reason]
 
 
-@LUsersFeature.register_server_command
 class LUserMe(message.Reply):
   NAME = "255"
   FORCE_TRAILING = True

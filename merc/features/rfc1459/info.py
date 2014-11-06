@@ -42,7 +42,6 @@ class InfoFeature(feature.Feature):
 install = InfoFeature.install
 
 
-@InfoFeature.register_server_command
 class InfoReply(message.Reply):
   NAME = "371"
   FORCE_TRAILING = True
@@ -55,7 +54,6 @@ class InfoReply(message.Reply):
     return [self.line]
 
 
-@InfoFeature.register_server_command
 class EndOfInfo(message.Reply):
   NAME = "374"
   MIN_ARITY = 1

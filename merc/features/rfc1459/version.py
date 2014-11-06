@@ -11,7 +11,6 @@ class VersionFeature(feature.Feature):
 install = VersionFeature.install
 
 
-@VersionFeature.register_server_command
 class VersionReply(message.Reply):
   NAME = "351"
   FORCE_TRAILING = True

@@ -18,7 +18,6 @@ class BanFeature(feature.Feature):
 install = BanFeature.install
 
 
-@BanFeature.register_server_command
 class BanList(message.Reply):
   NAME = "367"
   MIN_ARITY = 4
@@ -34,7 +33,6 @@ class BanList(message.Reply):
             self.creation_time]
 
 
-@BanFeature.register_server_command
 class EndOfBanList(message.Reply):
   NAME = "368"
   FORCE_TRAILING = True

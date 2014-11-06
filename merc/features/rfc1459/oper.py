@@ -22,7 +22,6 @@ def check_config(section):
   return config.validate(section, {str: Oper})
 
 
-@OperFeature.register_server_command
 class LUserOp(message.Reply):
   NAME = "252"
   FORCE_TRAILING = True
@@ -36,7 +35,6 @@ class LUserOp(message.Reply):
     return [self.num_irc_operators, self.reason]
 
 
-@OperFeature.register_server_command
 class YoureOper(message.Reply):
   NAME = "381"
   FORCE_TRAILING = True
@@ -49,7 +47,6 @@ class YoureOper(message.Reply):
     return [self.reason]
 
 
-@OperFeature.register_server_command
 class StatsOLine(message.Reply):
   NAME = "243"
   MIN_ARITY = 4

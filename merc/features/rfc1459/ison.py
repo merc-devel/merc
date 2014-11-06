@@ -10,7 +10,6 @@ class IsOnFeature(feature.Feature):
 install = IsOnFeature.install
 
 
-@IsOnFeature.register_server_command
 class IsOnReply(message.Reply):
   NAME = "303"
   FORCE_TRAILING = True

@@ -11,7 +11,6 @@ class UserHostFeature(feature.Feature):
 install = UserHostFeature.install
 
 
-@UserHostFeature.register_server_command
 class UserHostReply(message.Reply):
   NAME = "302"
   FORCE_TRAILING = True

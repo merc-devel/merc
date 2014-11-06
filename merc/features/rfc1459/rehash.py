@@ -9,7 +9,6 @@ class RehashFeature(feature.Feature):
 install = RehashFeature.install
 
 
-@RehashFeature.register_server_command
 class Rehashing(message.Reply):
   NAME = "382"
   FORCE_TRAILING = True

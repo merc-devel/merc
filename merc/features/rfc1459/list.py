@@ -13,7 +13,6 @@ install = ListFeature.install
 MAX_TARGETS = 1
 
 
-@ListFeature.register_server_command
 class ListStart(message.Reply):
   NAME = "321"
   FORCE_TRAILING = True
@@ -27,7 +26,6 @@ class ListStart(message.Reply):
     return [self.heading, self.subheading]
 
 
-@ListFeature.register_server_command
 class ListReply(message.Reply):
   NAME = "322"
   FORCE_TRAILING = True
@@ -42,7 +40,6 @@ class ListReply(message.Reply):
     return [self.channel_name, self.num_visible, self.topic]
 
 
-@ListFeature.register_server_command
 class ListEnd(message.Reply):
   NAME = "323"
   FORCE_TRAILING = True

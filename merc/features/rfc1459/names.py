@@ -16,7 +16,6 @@ install = NamesFeature.install
 MAX_TARGETS = 1
 
 
-@NamesFeature.register_server_command
 class LUserClient(message.Reply):
   NAME = "251"
   FORCE_TRAILING = True
@@ -29,7 +28,6 @@ class LUserClient(message.Reply):
     return [self.reason]
 
 
-@NamesFeature.register_server_command
 class NameReply(message.Reply):
   NAME = "353"
   FORCE_TRAILING = True
@@ -44,7 +42,6 @@ class NameReply(message.Reply):
     return [self.type, self.channel_name, self.users]
 
 
-@NamesFeature.register_server_command
 class EndOfNames(message.Reply):
   NAME = "366"
   FORCE_TRAILING = True

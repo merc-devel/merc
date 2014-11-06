@@ -21,7 +21,6 @@ class TopicFeature(feature.Feature):
 install = TopicFeature.install
 
 
-@TopicFeature.register_server_command
 class NoTopic(message.Reply):
   NAME = "331"
   FORCE_TRAILING = True
@@ -35,7 +34,6 @@ class NoTopic(message.Reply):
     return [self.channel_name, self.reason]
 
 
-@TopicFeature.register_server_command
 class TopicReply(message.Reply):
   NAME = "332"
   FORCE_TRAILING = True
@@ -49,7 +47,6 @@ class TopicReply(message.Reply):
     return [self.channel_name, self.text]
 
 
-@TopicFeature.register_server_command
 class TopicWhoTime(message.Reply):
   NAME = "333"
   MIN_ARITY = 3
