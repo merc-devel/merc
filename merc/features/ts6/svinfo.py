@@ -33,11 +33,11 @@ class SvInfo(message.Command):
     except ValueError:
       raise errors.LinkError("Bad TS version")
 
-    if ts_version < 6:
+    if ts_version < 8:
       raise errors.LinkError("Bad TS version")
 
 
 @SvInfoFeature.hook("server.svinfo")
 def send_svinfo(app, server):
-  server.send(None, SvInfo("6", "6", "0",
+  server.send(None, SvInfo("8", "8", "0",
                            str(int(datetime.datetime.now().timestamp()))))
