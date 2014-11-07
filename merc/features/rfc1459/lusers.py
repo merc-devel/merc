@@ -61,7 +61,7 @@ class LUsers(message.Command):
     user.send_reply(LUserMe("I have {} clients and {} servers".format(
         sum(user.server_name == app.network.local.name
             for user in app.users.all()),
-        len(list(app.network.neighborhood())))))
+        len(list(app.network.neighbors())))))
 
 
 @LUsersFeature.hook("user.welcome")

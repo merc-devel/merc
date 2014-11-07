@@ -43,7 +43,7 @@ class Sid(message.Command):
 
 @SidFeature.hook("network.burst.servers")
 def burst_sids(app, server):
-  for neighbor in app.network.neighborhood():
+  for neighbor in app.network.neighbors():
     if neighbor is server:
       continue
     server.send(app.network.local.sid,

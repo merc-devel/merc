@@ -256,7 +256,7 @@ class Network(object):
   def get_next_hop(self, target, start=None):
     return next(self.find_shortest_path(target, start))
 
-  def neighborhood(self):
+  def neighbors(self):
     for name in self.tree.neighbors(self.local.name):
       yield self.get(name)
 
@@ -265,7 +265,7 @@ class Network(object):
       channel.broadcast(user, prefix, message)
 
   def link_broadcast(self, previous, prefix, message):
-    for target in self.neighborhood():
+    for target in self.neighbors():
       if target is not previous:
         target.send(prefix, message)
 

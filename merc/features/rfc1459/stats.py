@@ -155,7 +155,7 @@ def send_links(app, user):
       user.send_reply(StatsLinkInfo("{}[{}]".format(user.username, mask),
           0, 0, 0, 0, 0, datetime.datetime.now() - user.creation_time))
 
-    for server in app.network.neighborhood():
+    for server in app.network.neighbors():
       mask = "*@{}".format(app.config["links"][server.name]["host"])
       user.send_reply(StatsLinkInfo("{}[{}]".format(server.name, mask),
           0, 0, 0, 0, 0, 0))

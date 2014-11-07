@@ -75,5 +75,5 @@ def burst_uids(app, server):
 
 @UidFeature.hook("user.register")
 def send_uids_on_register(app, user):
-  for neighbor in app.network.neighborhood():
+  for neighbor in app.network.neighbors():
     send_uid(app, neighbor, user)
