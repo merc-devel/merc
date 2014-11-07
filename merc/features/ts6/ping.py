@@ -30,9 +30,9 @@ class Ping(message.Command):
     target = app.users.get_by_uid(prefix)
 
     if self.server_name == app.server.name:
-      target = app.network.get_next_hop(app.network.get(target.server_name))
-      target.send(app.network.local.sid,
-                  Pong(prefix, app.server.name, self.value))
+      app.network.get(target.server_name).send(
+          app.network.local.sid,
+          Pong(prefix, app.server.name, self.value))
     else:
       send_ping(app, target, self.value, self.server_name)
 
@@ -69,11 +69,9 @@ class Pong(message.Command):
                     app.network.get_by_sid(prefix).name,
                     self.value)
     else:
-      target = app.network.get_next_hop(app.network.get_by_sid(self.sid))
-      target.send(prefix, self)
+      app.network.get_by_sid(self.sid).send(prefix, self)
 
 
 @PingFeature.hook("server.ping")
 def send_ping(app, user, value, server_name):
-  target = app.network.get_next_hop(app.network.get(server_name))
-  target.send(user.link_prefix, Ping(value, server_name))
+  app.network.get(server_name).send(user.link_prefix, Ping(value, server_name))

@@ -34,7 +34,8 @@ class Ping(message.Command):
 
   def handle_for(self, app, user, prefix):
     if self.server_name == app.server.name or self.server_name is None:
-      send_pong(user, self.server_name if self.server_name is not None
+      send_pong(app,
+                user, self.server_name if self.server_name is not None
                                        else app.server.name,
                 self.value)
       return
