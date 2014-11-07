@@ -162,9 +162,8 @@ def send_links(app, user):
 
 @StatsFeature.hook("server.stats.m")
 def send_commands(app, user):
-  for feature in app.features.all():
-    for command in feature.USER_COMMANDS.values():
-      user.send_reply(StatsCommands(command.NAME, 0))
+  for command in app.features.user_commands.values():
+    user.send_reply(StatsCommands(command.NAME, 0))
 
 @StatsFeature.hook("server.stats.u")
 def send_uptime(app, user):

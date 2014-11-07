@@ -56,7 +56,7 @@ class Application(object):
       for feature_name in config["features"]:
         self.features.load(feature_name)
       self.features.check_config(config)
-    except:
+    except Exception:
       logger.critical("Configuration invalid.")
       self.features.unload_all()
 
