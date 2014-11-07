@@ -20,30 +20,31 @@ install = PingFeature.install
 class Ping(message.Command):
   NAME = "PING"
   MIN_ARITY = 1
-  FORCE_TRAILING = True
 
-  def __init__(self, value, server_name=None, *args):
-    self.value = value
-    self.server_name = server_name
+  def __init__(self, origin, destination=None, *args):
+    self.origin = origin
+    self.destination = destination
 
   def as_command_params(self):
-    params = [self.value]
-    if self.server_name is not None:
-      params.append(self.server_name)
+    params = [self.origin]
+    if self.destination is not None:
+      params.append(self.destination)
     return params
 
   def handle_for(self, app, user, prefix):
-    if self.server_name == app.server.name or self.server_name is None:
+    if self.destination == app.server.name or self.destination is None:
       send_pong(app,
-                user, self.server_name if self.server_name is not None
+                user, self.destination if self.destination is not None
                                        else app.server.name,
-                self.value)
+                self.origin)
       return
 
-    if not app.network.has(self.server_name):
-      raise errors.NoSuchServer(self.server_name)
+    if not app.network.has(self.destination):
+      raise errors.NoSuchServer(self.destination)
 
-    app.run_hooks("server.ping", user, self.value, self.server_name)
+    app.run_hooks("server.ping", user,
+                  self.origin,
+                  app.network.get(self.destination))
 
 
 @PingFeature.register_user_command
@@ -51,19 +52,15 @@ class Pong(message.Command):
   NAME = "PONG"
   MIN_ARITY = 1
 
-  @property
-  def FORCE_TRAILING(self):
-    return self.value is not None
-
-  def __init__(self, server_name, value=None, *args):
-    self.server_name = server_name
-    self.value = value
+  def __init__(self, origin, destination=None, *args):
+    self.origin = origin
+    self.destination = destination
 
   def as_command_params(self):
-    params = [self.server_name]
+    params = [self.origin]
 
-    if self.value is not None:
-      params.append(self.value)
+    if self.destination is not None:
+      params.append(self.destination)
 
     return params
 
@@ -75,19 +72,19 @@ class PongReply(message.Reply):
   NAME = "PONG"
   MIN_ARITY = 1
 
-  @property
-  def FORCE_TRAILING(self):
-    return self.value is not None
+  def __init__(self, destination, origin=None, *args):
+    self.destination = destination
+    self.origin = origin
 
-  def __init__(self, server_name, value=None, *args):
-    self.server_name = server_name
-    self.value = value
+  def __init__(self, origin, destination=None, *args):
+    self.origin = origin
+    self.destination = destination
 
   def as_reply_params(self):
-    params = [self.server_name]
+    params = [self.origin]
 
-    if self.value is not None:
-      params.append(self.value)
+    if self.destination is not None:
+      params.append(self.destination)
 
     return params
 
@@ -122,5 +119,5 @@ def reschedule_ping_check_after_message(app, user, message, prefix):
 
 
 @PingFeature.hook("user.pong")
-def send_pong(app, user, server_name, value):
-  user.send_reply(PongReply(server_name, value))
+def send_pong(app, user, origin, destination):
+  user.send_reply(PongReply(origin, destination))

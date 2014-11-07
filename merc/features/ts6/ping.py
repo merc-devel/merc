@@ -13,28 +13,24 @@ install = PingFeature.install
 @PingFeature.register_server_command
 class Ping(message.Command):
   NAME = "PING"
-  MIN_ARITY = 1
-  FORCE_TRAILING = True
+  MIN_ARITY = 2
 
-  def __init__(self, value, server_name=None, *args):
-    self.value = value
-    self.server_name = server_name
+  def __init__(self, source, destination, *args):
+    self.source = source
+    self.destination = destination
 
   def as_command_params(self):
-    params = [self.value]
-    if self.server_name is not None:
-      params.append(self.server_name)
-    return params
+    return [self.source, self.destination]
 
   def handle_for(self, app, server, prefix):
     target = app.users.get_by_uid(prefix)
 
-    if self.server_name == app.server.name:
+    if self.destination == app.network.local.sid:
       app.network.get(target.server_name).send(
           app.network.local.sid,
-          Pong(prefix, app.server.name, self.value))
+          Pong(prefix, self.source))
     else:
-      send_ping(app, target, self.value, self.server_name)
+      app.network.get_by_sid(self.destination).send(prefix, self)
 
 
 @PingFeature.register_server_command
@@ -43,35 +39,25 @@ class Pong(message.Command):
   MIN_ARITY = 2
 
   @property
-  def FORCE_TRAILING(self):
-    return self.value is not None
-
-  @property
   def sid(self):
-    return self.target[:3]
+    return self.source[:3]
 
-  def __init__(self, target, server_name, value=None, *args):
-    self.target = target
-    self.server_name = server_name
-    self.value = value
+  def __init__(self, source, destination, *args):
+    self.source = source
+    self.destination = destination
 
   def as_command_params(self):
-    params = [self.target, self.server_name]
-
-    if self.value is not None:
-      params.append(self.value)
-
-    return params
+    return [self.source, self.destination]
 
   def handle_for(self, app, server, prefix):
     if self.sid == app.network.local.sid:
-      app.run_hooks("user.pong", app.users.get_by_uid(self.target),
+      app.run_hooks("user.pong", app.users.get_by_uid(self.source),
                     app.network.get_by_sid(prefix).name,
-                    self.value)
+                    self.destination)
     else:
       app.network.get_by_sid(self.sid).send(prefix, self)
 
 
 @PingFeature.hook("server.ping")
-def send_ping(app, user, value, server_name):
-  app.network.get(server_name).send(user.link_prefix, Ping(value, server_name))
+def send_ping(app, user, source, destination):
+  destination.send(user.link_prefix, Ping(source, destination.sid))
