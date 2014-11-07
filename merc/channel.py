@@ -1,7 +1,5 @@
-import collections
 import datetime
 import fnmatch
-import functools
 import regex
 
 from merc import errors

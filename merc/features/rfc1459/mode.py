@@ -5,7 +5,6 @@ from merc import errors
 from merc import feature
 from merc import message
 from merc import mode
-from merc import util
 
 
 MAX_MODES = 4
@@ -22,11 +21,11 @@ def show_modes(target, modes):
   args = []
 
   for k, mode_factory in sorted(modes.items(), key=operator.itemgetter(0)):
-    mode = mode_factory(target)
-    value = mode.get()
+    m = mode_factory(target)
+    value = m.get()
 
     if value:
-      flags.append(mode.CHAR)
+      flags.append(m.CHAR)
 
       if value is not True:
         args.append(str(value))
@@ -99,17 +98,17 @@ class _Mode(message.Command):
       arg = None
 
       try:
-        mode = modes[c]
+        m = modes[c]
       except KeyError:
         raise errors.UnknownMode(c)
 
-      if mode.TAKES_PARAM:
+      if m.TAKES_PARAM:
         try:
           arg = next(args_iter)
         except StopIteration:
           pass
 
-      expanded.append((mode, op, arg))
+      expanded.append((m, op, arg))
     return expanded
 
   @staticmethod
@@ -119,11 +118,11 @@ class _Mode(message.Command):
 
     last_op = None
 
-    for mode, op, arg in applied:
+    for m, op, arg in applied:
       if op != last_op:
         flags += op
         last_op = op
-      flags += mode.CHAR
+      flags += m.CHAR
 
       if arg is not None:
         args.append(str(arg))
@@ -146,10 +145,10 @@ class _Mode(message.Command):
       self.check_can_set_channel_modes(app, user, chan, expanded)
 
       for mode_factory, op, arg in expanded:
-        mode = mode_factory(chan)
+        m = mode_factory(chan)
 
-        if (op == "+" and mode.set(app, user, arg)) or \
-           (op == "-" and mode.unset(app, user, arg)):
+        if (op == "+" and m.set(app, user, arg)) or \
+           (op == "-" and m.unset(app, user, arg)):
           applied.append((mode_factory, op, arg))
 
       if applied:
@@ -169,16 +168,14 @@ class _Mode(message.Command):
       self.check_can_set_user_modes(app, user, target, expanded)
 
       for mode_factory, op, arg in expanded:
-        mode = mode_factory(target)
+        m = mode_factory(target)
 
-        if (op == "+" and mode.set(app, target, arg)) or \
-           (op == "-" and mode.unset(app, target, arg)):
+        if (op == "+" and m.set(app, target, arg)) or \
+           (op == "-" and m.unset(app, target, arg)):
           applied.append((mode_factory, op, arg))
 
       if applied:
         flags, args = self._coalesce_modes(applied)
-
-        msg_prefix = self.get_prefix(app, user)
         target.send(self.get_prefix(app, user),
                     Mode(target.nickname, flags, *args))
 

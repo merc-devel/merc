@@ -1,4 +1,3 @@
-from merc import channel
 from merc import feature
 from merc import message
 

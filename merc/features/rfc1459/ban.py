@@ -1,7 +1,6 @@
 import collections
 import datetime
 
-from merc import channel
 from merc import errors
 from merc import feature
 from merc import message

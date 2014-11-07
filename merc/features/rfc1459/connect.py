@@ -22,6 +22,6 @@ class Connect(message.Command):
   def handle_for(self, app, user, prefix):
     user.check_is_irc_operator()
     try:
-      fut = app.network.connect(self.server_name)
+      app.network.connect(self.server_name)
     except KeyError:
       raise errors.NoSuchServer(self.server_name)

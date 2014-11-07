@@ -3,7 +3,6 @@ from merc import errors
 from merc import feature
 from merc import message
 from merc import mode
-from merc import util
 
 
 class PrivmsgFeature(feature.Feature):

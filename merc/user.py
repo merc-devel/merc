@@ -1,5 +1,4 @@
 import asyncio
-import collections
 import datetime
 import fnmatch
 import itertools
@@ -8,7 +7,6 @@ import regex
 from merc import async
 from merc import errors
 from merc import emitter
-from merc import message
 from merc import util
 
 

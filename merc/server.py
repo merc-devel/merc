@@ -6,7 +6,6 @@ import networkx.algorithms
 
 from merc import errors
 from merc import protocol
-from merc import util
 
 
 logger = logging.getLogger(__name__)

@@ -1,9 +1,7 @@
 import datetime
 
-from merc import errors
 from merc import feature
 from merc import message
-from merc import util
 
 
 class UidFeature(feature.Feature):

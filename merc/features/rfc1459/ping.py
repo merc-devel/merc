@@ -76,10 +76,6 @@ class PongReply(message.Reply):
     self.destination = destination
     self.origin = origin
 
-  def __init__(self, origin, destination=None, *args):
-    self.origin = origin
-    self.destination = destination
-
   def as_reply_params(self):
     params = [self.origin]
 

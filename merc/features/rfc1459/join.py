@@ -5,7 +5,6 @@ from merc import channel
 from merc import errors
 from merc import feature
 from merc import message
-from merc import util
 
 
 class JoinFeature(feature.Feature):
@@ -35,21 +34,21 @@ class _Join(message.Command):
         raise errors.NoSuchChannel(channel_name)
 
       try:
-        channel = app.channels.get(channel_name)
+        chan = app.channels.get(channel_name)
       except errors.NoSuchNick:
-        channel = app.channels.new(channel_name)
+        chan = app.channels.new(channel_name)
         is_new = True
 
-      if channel.has_user(target):
+      if chan.has_user(target):
         continue
 
-      self.check_can_join(app, target, channel, key)
+      self.check_can_join(app, target, chan, key)
 
-      channel.join(target)
-      channel.broadcast(None, target.hostmask, Join(channel.name))
-      app.run_hooks("channel.join", user, target, channel)
+      chan.join(target)
+      chan.broadcast(None, target.hostmask, Join(chan.name))
+      app.run_hooks("channel.join", user, target, chan)
       if is_new:
-        app.run_hooks("channel.join_new", user, target, channel)
+        app.run_hooks("channel.join_new", user, target, chan)
 
 
 @JoinFeature.register_user_command
@@ -103,13 +102,12 @@ class _Part(message.Command):
 
     for channel_name in self.channel_names:
       try:
-        channel = app.channels.get(channel_name)
+        chan = app.channels.get(channel_name)
       except errors.NoSuchNick:
         raise errors.NoSuchChannel(channel_name)
       else:
-        channel.broadcast(None, target.hostmask,
-                          Part(channel.name, self.reason))
-        channel.part(user)
+        chan.broadcast(None, target.hostmask, Part(chan.name, self.reason))
+        chan.part(user)
 
 
 @JoinFeature.register_user_command

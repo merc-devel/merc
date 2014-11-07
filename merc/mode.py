@@ -1,6 +1,8 @@
 import collections
 import datetime
 
+from merc import errors
+
 
 ListDetail = collections.namedtuple("ListDetail", ["app", "creation_time"])
 
@@ -67,7 +69,7 @@ class ListMode(Mode):
     if value in list:
       return False
 
-    if len(list) >= MAX_ITEMS:
+    if len(list) >= self.MAX_ITEMS:
       return False
 
     list[value] = ListDetail(app.server.name, datetime.datetime.now())

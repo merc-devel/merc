@@ -1,11 +1,9 @@
 import collections
 import datetime
 
-from merc import channel
 from merc import feature
 from merc import message
 from merc import mode
-from merc import util
 
 
 MAX_TOPIC_LENGTH = 390

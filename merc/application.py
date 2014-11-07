@@ -11,7 +11,6 @@ from merc import config
 from merc import config_format
 from merc import channel
 from merc import feature
-from merc import protocol
 from merc import server
 from merc import user
 from merc import util

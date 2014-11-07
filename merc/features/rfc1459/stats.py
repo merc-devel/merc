@@ -90,7 +90,7 @@ class StatsHLine(message.Reply):
 
   def __init__(self, hostmask, server):
     self.hostmask = hostmask
-    self.server = server_name
+    self.server = server
 
   def as_reply_params(self):
     return ["H", self.hostmask, "*", self.server]

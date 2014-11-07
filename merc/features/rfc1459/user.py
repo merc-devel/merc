@@ -3,7 +3,6 @@ import merc
 from merc import errors
 from merc import feature
 from merc import message
-from merc import util
 
 
 class UserFeature(feature.Feature):
