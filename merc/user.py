@@ -126,7 +126,7 @@ class LocalUser(User):
 
   def on_connect(self, app):
     app.run_hooks("user.connect", self)
-    asyncio.async(self.registration_semaphore.acquire(), loop=app.loop) \
+    asyncio.async(self.registration_latch.wait(), loop=app.loop) \
         .add_done_callback(lambda fut: self.register(app))
 
   def on_raw_message(self, app, prefix, command_name, params):

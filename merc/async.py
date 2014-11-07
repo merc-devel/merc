@@ -7,7 +7,7 @@ class CountDownLatch(object):
       loop = asyncio.get_event_loop()
 
     self.count = count
-    self.cond = asyncio.Condition(loop=loop)
+    self.event = asyncio.Event(loop=loop)
 
   def increment(self, num=1):
     self.count += num
@@ -17,7 +17,7 @@ class CountDownLatch(object):
 
     if self.count <= 0:
       self.count = 0
-      self.cond.notify_all()
+      self.event.set()
 
   def wait(self):
-    yield from self.cond.wait()
+    yield from self.event.wait()
