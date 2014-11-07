@@ -34,6 +34,9 @@ class Feature(object, metaclass=FeatureMeta):
   def install(cls, app):
     app.features.install(cls(app))
 
+  def uninstall(self, app):
+    app.features.uninstall(self)
+
   @classmethod
   def register_config_checker(cls, checker):
     cls.CONFIG_CHECKERS.append(checker)
@@ -140,7 +143,7 @@ class FeatureLoader(object):
     except KeyError:
       logging.warn("{} could not be loaded as it was not loaded.".format(name))
     else:
-      self.uninstall(feature)
+      feature.uninstall(self.app)
 
   def uninstall(self, feature):
     del self.features[feature.NAME]
