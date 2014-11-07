@@ -1,5 +1,5 @@
 import collections
-import weakref
+import functools
 import logging
 import imp
 import importlib
@@ -15,6 +15,7 @@ class FeatureMeta(type):
     c.CONFIG_CHECKERS = []
     c.USER_COMMANDS = {}
     c.SERVER_COMMANDS = {}
+    c.SERVER_NUMERIC_COMMAND = None
     c.USER_MODES = {}
     c.CHANNEL_MODES = {}
     c.USER_CAPABILITIES = {}
@@ -46,6 +47,14 @@ class Feature(object, metaclass=FeatureMeta):
   @classmethod
   def register_server_command(cls, command):
     cls.SERVER_COMMANDS[command.NAME] = command
+    return command
+
+  @classmethod
+  def register_server_numeric_command(cls, command):
+    if cls.SERVER_NUMERIC_COMMAND is not None:
+      raise ValueError("cannot register two numeric command handlers")
+
+    cls.SERVER_NUMERIC_COMMAND = command
     return command
 
   @classmethod
@@ -149,6 +158,9 @@ class FeatureLoader(object):
 
   def get_server_command(self, name):
     for feature in self.all():
+      if name.isnumeric() and feature.SERVER_NUMERIC_COMMAND is not None:
+        return functools.partial(feature.SERVER_NUMERIC_COMMAND, name)
+
       if name in feature.SERVER_COMMANDS:
         return feature.SERVER_COMMANDS[name]
 
