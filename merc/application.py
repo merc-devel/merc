@@ -128,8 +128,8 @@ class Application(object):
     signal.signal(signal.SIGHUP, lambda signum, frame: self.rehash())
 
   def run_hooks(self, hook_name, *args, **kwargs):
-    for feature in self.features.all():
-      feature.run_hooks(hook_name, self, *args, **kwargs)
+    for hook in self.features.get_hooks(hook_name):
+      hook(self, *args, **kwargs)
 
   def get_feature_locals(self, feature):
     return self.features[feature.NAME].server_locals

@@ -20,7 +20,7 @@ class FeatureMeta(type):
     c.CHANNEL_MODES = {}
     c.USER_CAPABILITIES = {}
     c.SERVER_CAPABILITIES = {}
-    c.HOOKS = collections.defaultdict(list)
+    c.HOOKS = collections.defaultdict(set)
     return c
 
 
@@ -80,18 +80,20 @@ class Feature(object, metaclass=FeatureMeta):
   @classmethod
   def hook(cls, name):
     def _wrapper(f):
-      cls.HOOKS[name].append(f)
+      cls.HOOKS[name].add(f)
       return f
     return _wrapper
-
-  def run_hooks(self, name, app, *args, **kwargs):
-    for hook in self.HOOKS[name]:
-      hook(app, *args, **kwargs)
 
 
 class FeatureLoader(object):
   def __init__(self, app):
     self.features = {}
+
+    self.user_commands = {}
+    self.server_commands = {}
+    self.server_numeric_command = None
+    self.hooks = collections.defaultdict(set)
+
     self.app = app
 
   def all(self):
@@ -120,6 +122,13 @@ class FeatureLoader(object):
 
   def install(self, feature):
     self.features[feature.NAME] = feature
+
+    self.user_commands.update(feature.USER_COMMANDS)
+    self.server_commands.update(feature.SERVER_COMMANDS)
+    self.server_numeric_command = feature.SERVER_NUMERIC_COMMAND
+    for name, hooks in feature.HOOKS.items():
+      self.hooks[name].update(hooks)
+
     logger.info("{} installed.".format(feature.NAME))
 
   def unload(self, name):
@@ -131,8 +140,24 @@ class FeatureLoader(object):
     except KeyError:
       logging.warn("{} could not be loaded as it was not loaded.".format(name))
     else:
-      del self.features[name]
-      logger.info("{} unloaded.".format(feature.NAME))
+      self.uninstall(feature)
+
+  def uninstall(self, feature):
+    del self.features[feature.NAME]
+
+    for name in feature.USER_COMMANDS:
+      del self.user_commands[name]
+
+    for name in feature.SERVER_COMMANDS:
+      del self.server_commands[name]
+
+    if feature.SERVER_NUMERIC_COMMAND is not None:
+      self.server_numeric_command = None
+
+    for name, hooks in feature.HOOKS.items():
+      self.hooks[name].difference_update(hooks)
+
+    logger.info("{} uninstalled.".format(feature.NAME))
 
   def unload_all(self):
     for feature_name in list(self.features.keys()):
@@ -150,21 +175,15 @@ class FeatureLoader(object):
         config[key] = section
 
   def get_user_command(self, name):
-    for feature in self.all():
-      if name in feature.USER_COMMANDS:
-        return feature.USER_COMMANDS[name]
-
-    raise KeyError(name)
+    return self.user_commands[name]
 
   def get_server_command(self, name):
-    for feature in self.all():
-      if name.isnumeric() and feature.SERVER_NUMERIC_COMMAND is not None:
-        return functools.partial(feature.SERVER_NUMERIC_COMMAND, name)
+    if name.isnumeric() and self.server_numeric_command is not None:
+      return functools.partial(self.server_numeric_command, name)
+    return self.server_commands[name]
 
-      if name in feature.SERVER_COMMANDS:
-        return feature.SERVER_COMMANDS[name]
-
-    raise KeyError(name)
+  def get_hooks(self, name):
+    return self.hooks.get(name, [])
 
   def get_config_section(self, name):
     feature = self.features[name]
