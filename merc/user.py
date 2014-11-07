@@ -214,10 +214,6 @@ class RemoteUser(User):
   def displayed_nickname(self):
     return self.uid
 
-  def send(self, prefix, msg):
-    target = self.network.get_next_hop(self.network.get(self.server_name))
-    target.send(self.network.local.sid, msg, self)
-
 
 class UserStore(object):
   def __init__(self, app):

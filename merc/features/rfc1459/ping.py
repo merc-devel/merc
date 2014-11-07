@@ -34,16 +34,15 @@ class Ping(message.Command):
 
   def handle_for(self, app, user, prefix):
     if self.server_name == app.server.name or self.server_name is None:
-      user.send_reply(PongReply(
-          self.server_name if self.server_name is not None else app.server.name,
-          self.value))
+      send_pong(user, self.server_name if self.server_name is not None
+                                       else app.server.name,
+                self.value)
       return
 
     if not app.network.has(self.server_name):
       raise errors.NoSuchServer(self.server_name)
 
-    app.network.get(self.server_name).send(
-        prefix if prefix is not None else user.link_prefix, self)
+    app.run_hooks("server.ping", user, self.value, self.server_name)
 
 
 @PingFeature.register_user_command
@@ -119,3 +118,8 @@ def reschedule_ping_check(app, user):
 @PingFeature.hook("user.command")
 def reschedule_ping_check_after_message(app, user, message, prefix):
   reschedule_ping_check(app, user)
+
+
+@PingFeature.hook("user.pong")
+def send_pong(app, user, server_name, value):
+  user.send_reply(PongReply(server_name, value))

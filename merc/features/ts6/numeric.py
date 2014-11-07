@@ -22,7 +22,6 @@ class Numeric(message.Command):
   def as_command_params(self):
     return [self.name, self.target] + self.args
 
-  @message.Command.requires_registration
   def handle_for(self, app, server, prefix):
     target = app.users.get_by_uid(self.target)
     target.send_reply(self, app.network.get_by_sid(prefix).name)

@@ -23,10 +23,6 @@ class Quit(message.Command):
     self.reason = reason
 
   @property
-  def sid(self):
-    return self.uid[:3]
-
-  @property
   def FORCE_TRAILING(self):
     return self.reason is not None
 
