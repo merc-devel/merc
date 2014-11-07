@@ -165,10 +165,8 @@ class Network(object):
     self.local = None
 
   def update_local(self, loop, name, desc, sid):
-    if self.local:
-      self.remove(self.local)
     self.local = LocalServer(self, loop, name, desc, sid)
-    self.add(self.local)
+    self.upsert(self.local)
 
   @property
   def name(self):
@@ -190,7 +188,9 @@ class Network(object):
   def add(self, server):
     if server.name in self.tree.node:
       raise KeyError(server.name)
+    self.upsert(server)
 
+  def upsert(self, server):
     self.tree.add_node(server.name, {"server": server})
     self.servers_by_sid[server.sid] = server
 
