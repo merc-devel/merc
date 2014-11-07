@@ -33,7 +33,7 @@ class Cap(message.Command):
 
   def ls(self, app, user):
     if not user.is_registered:
-      user.is_negotiating_cap = True
+      user.registration_latch.increment()
 
     user.send_reply(CapReply("LS", " ".join(
         capability.NAME for capability in app.users.capabilities.values())))
@@ -60,12 +60,12 @@ class Cap(message.Command):
       except KeyError:
         user.send_reply(CapReply("NAK", " ".join(caps)))
         return
-    
+
       if unset:
         cap(user).unset()
       else:
         cap(user).set()
-    
+
     user.send_reply(CapReply("ACK", " ".join(caps)))
 
   def clear(self, app, user):
@@ -82,10 +82,8 @@ class Cap(message.Command):
                              " ".join("-" + cap for cap in cleared_caps)))
 
   def end(self, app, user):
-    user.is_negotiating_cap = False
-
-    if user.is_ready_for_registration and not user.is_registered:
-      user.register(app)
+    if not user.is_registered:
+      user.registration_latch.decrement()
 
   def handle_for(self, app, user, prefix):
     subcommand = self.subcommand.upper()

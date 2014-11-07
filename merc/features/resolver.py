@@ -52,10 +52,10 @@ def resolve_hostname_coro(app, user, timeout):
                      "*** Couldn't look up your hostname")
     user.host = host
 
-  if user.is_ready_for_registration:
-    user.register(app)
+  user.registration_latch.decrement()
 
 
 @ResolverFeature.hook("user.connect")
 def resolve_hostname(app, user):
+  user.registration_latch.increment()
   asyncio.async(resolve_hostname_coro(app, user, 5), loop=app.loop)

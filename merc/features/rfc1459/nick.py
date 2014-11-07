@@ -31,8 +31,7 @@ class _Nick(message.Command):
       app.network.user_broadcast(target, old_hostmask, Nick(self.nickname))
       target.send(old_hostmask, Nick(self.nickname))
     else:
-      if target.is_ready_for_registration:
-        target.register(app)
+      target.registration_latch.decrement()
 
 
 @NickFeature.register_user_command
@@ -71,3 +70,8 @@ class SANick(_Nick):
 @NickFeature.hook("server.isupport.modify")
 def modify_isupport(app, isupport):
   isupport["NICKLEN"] = MAX_NICKNAME_LENGTH
+
+
+@NickFeature.hook("user.connect")
+def on_connect(app, user):
+  user.registration_latch.increment()

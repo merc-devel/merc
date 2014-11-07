@@ -1,9 +1,11 @@
+import asyncio
 import collections
 import datetime
 import fnmatch
 import itertools
 import regex
 
+from merc import async
 from merc import errors
 from merc import emitter
 from merc import message
@@ -21,8 +23,6 @@ class User(object):
     self.username = None
     self.host = None
     self.realname = None
-
-    self.is_negotiating_cap = False
 
     self.channels = {}
     self.modes = {}
@@ -64,11 +64,6 @@ class User(object):
     return util.to_irc_lower(self.nickname) if self.nickname is not None \
                                             else None
 
-  @property
-  def is_ready_for_registration(self):
-    return self.nickname is not None and self.username is not None and \
-           self.host is not None and not self.is_negotiating_cap
-
   def send(self):
     raise NotImplementedError
 
@@ -99,10 +94,15 @@ class LocalUser(User):
 
     self.is_registered = False
 
+    host, *_ = protocol.transport.get_extra_info("peername")
+    self.host, _, _ = host.partition("%")
+
     self.protocol = protocol
     self.is_local = True
     self.is_securely_connected = \
         self.protocol.transport.get_extra_info("sslcontext") is not None
+
+    self.registration_latch = async.CountDownLatch(loop=store.app.loop)
 
   @property
   def hopcount(self):
@@ -126,6 +126,8 @@ class LocalUser(User):
 
   def on_connect(self, app):
     app.run_hooks("user.connect", self)
+    asyncio.async(self.registration_semaphore.acquire(), loop=app.loop) \
+        .add_done_callback(lambda fut: self.register(app))
 
   def on_raw_message(self, app, prefix, command_name, params):
     try:

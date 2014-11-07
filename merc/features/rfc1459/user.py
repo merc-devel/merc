@@ -87,8 +87,12 @@ class User(message.Command):
     user.username = self.username
     user.realname = self.realname
 
-    if user.is_ready_for_registration:
-      user.register(app)
+    user.registration_latch.decrement()
+
+
+@UserFeature.hook("user.connect")
+def on_connect(app, user):
+  user.registration_latch.increment()
 
 
 @UserFeature.hook("user.register")
