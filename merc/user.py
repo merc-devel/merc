@@ -89,6 +89,8 @@ class User(object):
 
 
 class LocalUser(User):
+  REGISTRATION_TIMEOUT = 30
+
   def __init__(self, store, uid, server_name, protocol):
     super().__init__(store, uid, server_name)
 
@@ -126,8 +128,23 @@ class LocalUser(User):
 
   def on_connect(self, app):
     app.run_hooks("user.connect", self)
-    asyncio.async(self.registration_latch.wait(), loop=app.loop) \
-        .add_done_callback(lambda fut: self.register(app))
+
+    @asyncio.coroutine
+    def registration_coro():
+      try:
+        try:
+          yield from asyncio.wait_for(self.registration_latch.wait(),
+                                      self.REGISTRATION_TIMEOUT,
+                                      loop=app.loop)
+        except asyncio.TimeoutError:
+          raise errors.LinkError("Registration timed out")
+        else:
+          self.register(app)
+      except errors.Error as e:
+        self.send(None, e)
+        self.close("Connection closed")
+
+    asyncio.async(registration_coro(), loop=app.loop)
 
   def on_raw_message(self, app, prefix, command_name, params):
     try:
