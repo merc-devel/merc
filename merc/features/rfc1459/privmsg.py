@@ -26,32 +26,42 @@ class _Privmsg(message.Command):
   def as_command_params(self):
     return [",".join(self.targets), self.text]
 
+  def compute_targets(self, app, user, target_name):
+    if channel.Channel.is_channel_name(target_name):
+      chan = app.channels.get(target_name)
+
+      if DisallowingExternalMessages(chan).get():
+        try:
+          chan.check_has_user(user)
+        except errors.NoSuchNick:
+          raise errors.CannotSendToChan(chan.name)
+
+        app.run_hooks("channel.message.check", user, chan)
+
+      if Moderated(chan).get():
+        chan.check_is_voiced(user)
+
+      app.run_hooks("channel.message", user, chan, self.text)
+      return (app.users.get_by_uid(uid) for uid in chan.users
+                                        if uid != user.uid)
+    else:
+      target = app.users.get(target_name)
+      app.run_hooks("user.message", user, target, self.text)
+      return [target]
+
+  def get_real_target_name(self, app, target_name):
+    if channel.Channel.is_channel_name(target_name):
+      return app.channels.get(target_name).name
+    else:
+      return app.users.get(target_name).nickname
+
   @message.Command.requires_registration
   def handle_for(self, app, user, prefix):
     for target_name in self.targets[:MAX_TARGETS]:
-      if channel.Channel.is_channel_name(target_name):
-        try:
-          chan = app.channels.get(target_name)
-        except errors.NoSuchNick:
-          continue
+      real_target_name = self.get_real_target_name(app, target_name)
 
-        if DisallowingExternalMessages(chan).get():
-          try:
-            chan.check_has_user(user)
-          except errors.NoSuchNick:
-            raise errors.CannotSendToChan(chan.name)
-
-          app.run_hooks("channel.message.check", user, chan)
-
-        if Moderated(chan).get():
-          chan.check_is_voiced(user)
-
-        app.run_hooks("channel.message", user, chan, self.text)
-        chan.broadcast(user, user.prefix, self.__class__(chan.name, self.text))
-      else:
-        target = app.users.get(target_name)
-        app.run_hooks("user.message", user, target, self.text)
-        target.send(user.prefix, self.__class__(target.nickname, self.text))
+      for target in self.compute_targets(app, user, target_name):
+        target.send(user.prefix, self.__class__(real_target_name, self.text))
 
 
 @PrivmsgFeature.register_user_command
