@@ -1,6 +1,8 @@
 import datetime
 import subprocess
 
+from merc import message
+
 
 def to_irc_lower(s):
   return s.casefold()
@@ -71,3 +73,21 @@ def parse_duration(s):
   return datetime.timedelta(
       seconds=seconds + (minutes +
           (hours + (days + weeks * 7 + years * 365) * 24) * 60) * 60)
+
+
+def split_reply(make_reply, user, prefix, args):
+  current_args = []
+
+  for arg in args:
+    current_args.append(arg)
+
+    try:
+      reply = make_reply(current_args)
+      reply.emit(user, prefix)
+    except message.MessageTooLongError:
+      current_args.pop()
+      yield make_reply(current_args)
+      current_args = [arg]
+
+  if current_args:
+    yield make_reply(current_args)

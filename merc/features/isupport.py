@@ -1,5 +1,6 @@
 from merc import feature
 from merc import message
+from merc import util
 
 
 class ISupportFeature(feature.Feature):
@@ -24,7 +25,7 @@ class ISupport(message.Reply):
 
 def make_isupport_reply(params):
   return ISupport(*(
-    ["{}={}".format(k, v) for k, v in params.items()] + \
+    ["{}={}".format(k, v) for k, v in params] + \
     ["are supported by this server"]))
 
 
@@ -42,18 +43,6 @@ def send_isupport(app, user):
   }
   app.run_hooks("server.isupport.modify", isupport)
 
-  params = {}
-
-  for k, v in isupport.items():
-    params[k] = v
-
-    try:
-      reply = make_isupport_reply(params)
-      reply.emit(user, app.server.name)
-    except message.MessageTooLongError:
-      del reply.support_params[k]
-      user.send_reply(reply)
-      params = {}
-
-  if params:
-    user.send_reply(make_isupport_reply(params))
+  for reply in util.split_reply(make_isupport_reply, user, app.server.name,
+                                list(isupport.items())):
+    user.send_reply(reply)
